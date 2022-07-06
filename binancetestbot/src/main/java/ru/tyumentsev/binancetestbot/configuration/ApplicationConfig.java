@@ -20,9 +20,13 @@ public class ApplicationConfig {
     
     String apiKey;
     String secret;
+    boolean useTestnet;
+    boolean useTestnetStreaming;
 
     @Bean
     public BinanceApiClientFactory binanceApiClientFactory() {
-        return BinanceApiClientFactory.newInstance(apiKey, secret, true, true);
+        // System.out.println("apiKey = " + apiKey);
+        // System.out.println("secret = " + secret);
+        return BinanceApiClientFactory.newInstance(apiKey, secret, useTestnet, useTestnetStreaming);
     }
 }
