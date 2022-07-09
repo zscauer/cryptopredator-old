@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.binance.api.client.BinanceApiCallback;
@@ -22,6 +23,7 @@ import com.binance.api.client.domain.market.CandlestickInterval;
 import com.binance.api.client.domain.market.OrderBook;
 import com.binance.api.client.domain.market.OrderBookEntry;
 import com.binance.api.client.domain.market.TickerPrice;
+import com.binance.api.client.domain.market.TickerStatistics;
 
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
@@ -132,6 +134,15 @@ public class TestController {
         return restClient.getBookTickers();
         
     }
+
+    @GetMapping("/windowPriceChange")
+    public TickerStatistics getWindowPriceChange(@RequestParam("symbol") String symbol, @RequestParam("windowSize") String windowSize) {
+        return restClient.getWindowPriceChangeStatistics(symbol, windowSize);
+    }
     
+    @GetMapping("/windowPriceChange/list")
+    public List<TickerStatistics> getAllWindowPriceChange(@RequestParam("symbols") String symbols, @RequestParam("windowSize") String windowSize) {
+        return restClient.getAllWindowPriceChangeStatistics(symbols, windowSize);
+    }    
 
 }
