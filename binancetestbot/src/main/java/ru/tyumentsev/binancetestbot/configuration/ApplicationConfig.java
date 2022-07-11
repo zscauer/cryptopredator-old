@@ -3,8 +3,11 @@ package ru.tyumentsev.binancetestbot.configuration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 
 import com.binance.api.client.BinanceApiClientFactory;
+import com.binance.api.client.BinanceApiRestClient;
+import com.binance.api.client.BinanceApiWebSocketClient;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -23,10 +26,20 @@ public class ApplicationConfig {
     boolean useTestnet;
     boolean useTestnetStreaming;
 
-    @Bean
+    @Bean(name = "binanceApiClientFactory")
     public BinanceApiClientFactory binanceApiClientFactory() {
-        // System.out.println("apiKey = " + apiKey);
-        // System.out.println("secret = " + secret);
         return BinanceApiClientFactory.newInstance(apiKey, secret, useTestnet, useTestnetStreaming);
+    }
+
+    @Bean
+    @DependsOn("binanceApiClientFactory")
+    public BinanceApiRestClient binanceApiRestClient() {
+        return binanceApiClientFactory().newRestClient();
+    }
+
+    @Bean
+    @DependsOn("binanceApiClientFactory")
+    public BinanceApiWebSocketClient binanceApiWebSocketClient() {
+        return binanceApiClientFactory().newWebSocketClient();
     }
 }

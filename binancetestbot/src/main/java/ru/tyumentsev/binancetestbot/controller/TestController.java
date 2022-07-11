@@ -2,7 +2,9 @@ package ru.tyumentsev.binancetestbot.controller;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.binance.api.client.BinanceApiCallback;
-import com.binance.api.client.BinanceApiClientFactory;
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.BinanceApiWebSocketClient;
 import com.binance.api.client.domain.account.Account;
@@ -26,37 +27,41 @@ import com.binance.api.client.domain.market.TickerPrice;
 import com.binance.api.client.domain.market.TickerStatistics;
 
 import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import ru.tyumentsev.binancetestbot.service.MarketInfo;
+import ru.tyumentsev.binancetestbot.strategy.BuyFastGrowth;
 
 @RestController
 @RequestMapping("/test")
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@RequiredArgsConstructor
 public class TestController {
 
-    // final BinanceApiClientFactory factory;
     final BinanceApiRestClient restClient;
     final BinanceApiWebSocketClient webSocketClient;
+    final MarketInfo marketInfo;
+    final BuyFastGrowth buyFastGrowth;
 
     Closeable openedWebSocket;
 
-    public TestController(BinanceApiClientFactory factory) {
-        // this.factory = factory;
-        this.restClient = factory.newRestClient();
-        this.webSocketClient = factory.newWebSocketClient();
-    }
-
-    @GetMapping("/closeWS")
-    public void closeWebSocket() {
+    @GetMapping(value = "/closeWS")
+    public Map<String, String> closeWebSocket() {
         try {
             if (openedWebSocket == null) {
-                System.out.println("WebSocket is null");
+                return Collections.singletonMap("response", "WebSocket is null");
             } else {
-                System.out.println("Closing web socket " + openedWebSocket.toString());
                 openedWebSocket.close();
+                return Collections.singletonMap("response", "Closing web socket " + openedWebSocket.toString());
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            return Collections.singletonMap("response", e.getStackTrace().toString());
         }
+    }
+
+    @GetMapping("/availablePairs/{ticker}")
+    public List<String> getAvailableTradePairs(@PathVariable final String ticker) {
+        return marketInfo.getAvailableTradePairs(ticker);
     }
 
     @GetMapping("/accountBalance")
@@ -75,7 +80,7 @@ public class TestController {
     public OrderBook orderBook(@PathVariable String pair) { // get orders
         return restClient.getOrderBook(pair.toUpperCase(), 10);
     }
-    
+
     @GetMapping("/orderBook/{pair}/asks")
     public OrderBookEntry orderBookAsks(@PathVariable String pair) { // get orders
         OrderBook orderBook = restClient.getOrderBook(pair.toUpperCase(), 10);
@@ -99,7 +104,7 @@ public class TestController {
     @GetMapping("/bookTickerEvent/{pair}")
     public void printBookTickerEvents(@PathVariable String pair) {
         closeWebSocket();
-        
+
         openedWebSocket = webSocketClient.onBookTickerEvent(pair.toLowerCase(), (BookTickerEvent response) -> {
             System.out.println("Ask price " + response.getAskPrice() + " / " + "Bid price " + response.getBidPrice());
         });
@@ -108,7 +113,7 @@ public class TestController {
     @GetMapping("/candlesTickEvent/{pair}")
     public void printCandleStickEvents(@PathVariable String pair) {
         closeWebSocket();
-        
+
         openedWebSocket = webSocketClient.onCandlestickEvent(pair.toLowerCase(), CandlestickInterval.ONE_MINUTE,
                 new BinanceApiCallback<CandlestickEvent>() {
                     @Override
@@ -132,17 +137,24 @@ public class TestController {
     @GetMapping("/bookTickers")
     public List<BookTicker> getBookTickers() {
         return restClient.getBookTickers();
-        
+
     }
 
     @GetMapping("/windowPriceChange")
-    public TickerStatistics getWindowPriceChange(@RequestParam("symbol") String symbol, @RequestParam("windowSize") String windowSize) {
-        return restClient.getWindowPriceChangeStatistics(symbol, windowSize);
+    public TickerStatistics getWindowPriceChange(@RequestParam("symbol") String symbol,
+            @RequestParam("windowSize") String windowSize) {
+        return marketInfo.getWindowPriceChange(symbol, windowSize);
     }
-    
+
     @GetMapping("/windowPriceChange/list")
-    public List<TickerStatistics> getAllWindowPriceChange(@RequestParam("symbols") String symbols, @RequestParam("windowSize") String windowSize) {
-        return restClient.getAllWindowPriceChangeStatistics(symbols, windowSize);
-    }    
+    public List<TickerStatistics> getAllWindowPriceChange(@RequestParam("symbols") String symbols,
+            @RequestParam("windowSize") String windowSize) {
+        return marketInfo.getAllWindowPriceChange(symbols, windowSize);
+    }
+
+    @GetMapping("/buyFastGrowth")
+    public List<TickerStatistics> buyFastGrowth(@RequestParam("asset") String asset) {
+        return buyFastGrowth.addPairsToBuy(asset);
+    }
 
 }
