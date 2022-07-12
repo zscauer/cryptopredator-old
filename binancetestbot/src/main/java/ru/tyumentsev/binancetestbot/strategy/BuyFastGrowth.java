@@ -1,7 +1,10 @@
 package ru.tyumentsev.binancetestbot.strategy;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,12 +15,14 @@ import com.binance.api.client.domain.market.TickerStatistics;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.log4j.Log4j2;
 import ru.tyumentsev.binancetestbot.cache.MarketData;
 import ru.tyumentsev.binancetestbot.service.MarketInfo;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Log4j2
 public class BuyFastGrowth {
 
     /*
@@ -30,12 +35,12 @@ public class BuyFastGrowth {
     @Autowired
     MarketData marketData;
 
+    // build query in format, that accepts by binance API.
+    final StringBuilder symbolsParameterBuilder = new StringBuilder(); // required format is "["BTCUSDT","BNBUSDT"]".
     final String WINDOW_SIZE = "3h";
     final String QUERY_SYMBOLS_BEGIN = "[", QUERY_SYMBOLS_END = "]";
     final String DELIMETER = "\"";
     final int QUERY_SYMBOLS_PART_SIZE = 40;
-
-    StringBuilder symbolsParameterBuilder = new StringBuilder(); // build query in format, that accepts by binance API.
 
     public List<TickerStatistics> addPairsToBuy(String asset) {
         // get assets that paired to USDT.
@@ -61,11 +66,51 @@ public class BuyFastGrowth {
             accumulatedResponses.addAll(getPartOfStatistics(pairs, fromIndex, toIndex));
         }
 
-        marketData.loadPairsToBuy(accumulatedResponses);
-        
+        marketData.loadPairsToBuy(accumulatedResponses); // pairs that growth.
+
         return new ArrayList<>(marketData.getPairsToBuy());
     }
 
+    public void makeOrdersForSelectedPairsToBuy() {
+        Set<TickerStatistics> pairsToBuy = marketData.getPairsToBuy();
+        // place all pairs in another collection like it was bought:
+        for (TickerStatistics tickerStatistics : pairsToBuy) {
+            log.info("Buy " + tickerStatistics.getSymbol() + " for " + tickerStatistics.getLastPrice());
+            marketData.putOpenedPosition(tickerStatistics.getSymbol(),
+                    Double.parseDouble(tickerStatistics.getLastPrice()));
+        }
+        // remove from list because they bought.
+        pairsToBuy.clear();
+
+        // Iterator<TickerStatistics> iterator = pairsToBuy.iterator();
+        // while (iterator.hasNext()) {
+        //     TickerStatistics tickerStatistics = iterator.next();
+        //     log.info("Buy " + tickerStatistics.getSymbol() + " for " + tickerStatistics.getLastPrice());
+        //     marketData.putOpenedPosition(tickerStatistics.getSymbol(),
+        //             Double.parseDouble(tickerStatistics.getLastPrice()));
+        //     pairsToBuy.remove(tickerStatistics);
+        // }
+    }
+
+    public void closeOpenedPositions() {
+        Map<String, Double> openedPositions = marketData.getOpenedPositions();
+        Map<String, Long> positionsToClose = new HashMap<>();
+        openedPositions.entrySet().stream().forEach(entrySet -> {
+            Double lastPrice = Double.parseDouble(marketInfo.getLastTickerPrice(entrySet.getKey()).getPrice());
+            if (lastPrice > entrySet.getValue() * 1.05) {
+                log.info("Price of " + entrySet.getKey() + " growth more then 5% and now equals " + lastPrice);
+                entrySet.setValue(lastPrice);
+                // positionsToClose.put(entrySet.getKey(), System.currentTimeMillis());
+            } else if (lastPrice < entrySet.getValue() * 0.95) {
+                log.info("Price of " + entrySet.getKey() + " decreased more then 5% and now equals" + lastPrice);
+                positionsToClose.put(entrySet.getKey(), System.currentTimeMillis());
+            }
+        });
+
+        marketData.representClosingPositions(positionsToClose);
+    }
+
+    // filter pairs that growth more then 5% in window (3h).
     private List<TickerStatistics> getPartOfStatistics(List<String> pairs, int fromIndex, int toIndex) {
         symbolsParameterBuilder.append(QUERY_SYMBOLS_BEGIN);
 
@@ -76,7 +121,7 @@ public class BuyFastGrowth {
             symbolsParameterBuilder.append(",");
         }
         symbolsParameterBuilder.deleteCharAt(symbolsParameterBuilder.length() - 1); // delete "," in last line.
-        symbolsParameterBuilder.append(QUERY_SYMBOLS_END); // result must be in format "["BTCUSDT","BNBUSDT"]".
+        symbolsParameterBuilder.append(QUERY_SYMBOLS_END);
 
         List<TickerStatistics> statistics = marketInfo
                 .getAllWindowPriceChange(symbolsParameterBuilder.toString(), WINDOW_SIZE);

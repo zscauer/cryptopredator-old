@@ -4,6 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.binance.api.client.BinanceApiClientFactory;
 import com.binance.api.client.BinanceApiRestClient;
@@ -18,6 +19,7 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @Configuration
 @ConfigurationProperties(prefix = "applicationconfig")
+@EnableScheduling
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ApplicationConfig {
     

@@ -11,6 +11,7 @@ import com.binance.api.client.BinanceApiWebSocketClient;
 import com.binance.api.client.domain.general.ExchangeInfo;
 import com.binance.api.client.domain.general.SymbolInfo;
 import com.binance.api.client.domain.general.SymbolStatus;
+import com.binance.api.client.domain.market.TickerPrice;
 import com.binance.api.client.domain.market.TickerStatistics;
 
 @Service
@@ -42,5 +43,9 @@ public class MarketInfo {
 
     public List<TickerStatistics> getAllWindowPriceChange(String symbols, String windowSize) {
         return restClient.getAllWindowPriceChangeStatistics(symbols, windowSize);
+    }
+
+    public TickerPrice getLastTickerPrice(String symbol) {
+        return restClient.getPrice(symbol);
     }
 }

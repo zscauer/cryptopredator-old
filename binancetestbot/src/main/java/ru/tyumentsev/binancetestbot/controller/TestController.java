@@ -29,6 +29,7 @@ import com.binance.api.client.domain.market.TickerStatistics;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import ru.tyumentsev.binancetestbot.cache.MarketData;
 import ru.tyumentsev.binancetestbot.service.MarketInfo;
 import ru.tyumentsev.binancetestbot.strategy.BuyFastGrowth;
 
@@ -41,6 +42,7 @@ public class TestController {
     final BinanceApiRestClient restClient;
     final BinanceApiWebSocketClient webSocketClient;
     final MarketInfo marketInfo;
+    final MarketData marketData;
     final BuyFastGrowth buyFastGrowth;
 
     Closeable openedWebSocket;
@@ -137,7 +139,6 @@ public class TestController {
     @GetMapping("/bookTickers")
     public List<BookTicker> getBookTickers() {
         return restClient.getBookTickers();
-
     }
 
     @GetMapping("/windowPriceChange")
@@ -157,4 +158,8 @@ public class TestController {
         return buyFastGrowth.addPairsToBuy(asset);
     }
 
+    @GetMapping("/buyFastGrowth/openedPositions")
+    public Map<String, Double> getOpenedPositions() {
+        return marketData.getOpenedPositions();
+    }
 }
