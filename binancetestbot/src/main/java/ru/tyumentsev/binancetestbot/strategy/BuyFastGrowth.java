@@ -81,15 +81,6 @@ public class BuyFastGrowth {
         }
         // remove from list because they bought.
         pairsToBuy.clear();
-
-        // Iterator<TickerStatistics> iterator = pairsToBuy.iterator();
-        // while (iterator.hasNext()) {
-        //     TickerStatistics tickerStatistics = iterator.next();
-        //     log.info("Buy " + tickerStatistics.getSymbol() + " for " + tickerStatistics.getLastPrice());
-        //     marketData.putOpenedPosition(tickerStatistics.getSymbol(),
-        //             Double.parseDouble(tickerStatistics.getLastPrice()));
-        //     pairsToBuy.remove(tickerStatistics);
-        // }
     }
 
     public void closeOpenedPositions() {
@@ -100,9 +91,8 @@ public class BuyFastGrowth {
             if (lastPrice > entrySet.getValue() * 1.05) {
                 log.info("Price of " + entrySet.getKey() + " growth more then 5% and now equals " + lastPrice);
                 entrySet.setValue(lastPrice);
-                // positionsToClose.put(entrySet.getKey(), System.currentTimeMillis());
             } else if (lastPrice < entrySet.getValue() * 0.95) {
-                log.info("Price of " + entrySet.getKey() + " decreased more then 5% and now equals" + lastPrice);
+                log.info("Price of " + entrySet.getKey() + " decreased more then 5% and now equals " + lastPrice);
                 positionsToClose.put(entrySet.getKey(), System.currentTimeMillis());
             }
         });
