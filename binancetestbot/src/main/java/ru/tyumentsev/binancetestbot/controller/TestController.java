@@ -31,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import ru.tyumentsev.binancetestbot.cache.MarketData;
 import ru.tyumentsev.binancetestbot.service.MarketInfo;
+import ru.tyumentsev.binancetestbot.strategy.BuyBigVolumeChange;
 import ru.tyumentsev.binancetestbot.strategy.BuyFastGrowth;
 
 @RestController
@@ -44,6 +45,7 @@ public class TestController {
     final MarketInfo marketInfo;
     final MarketData marketData;
     final BuyFastGrowth buyFastGrowth;
+    final BuyBigVolumeChange buyBigVolumeChange;
 
     Closeable openedWebSocket;
 
@@ -161,5 +163,10 @@ public class TestController {
     @GetMapping("/buyFastGrowth/openedPositions")
     public Map<String, Double> getOpenedPositions() {
         return marketData.getOpenedPositions();
+    }
+
+    @GetMapping("/buyBigVolumeChange/findBigVolumeChanges")
+    public void findBigVolumeChanges() {
+        buyBigVolumeChange.findBigVolumeChanges();
     }
 }

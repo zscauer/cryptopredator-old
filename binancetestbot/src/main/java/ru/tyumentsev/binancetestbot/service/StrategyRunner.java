@@ -14,25 +14,25 @@ public class StrategyRunner {
     @Autowired
     BuyFastGrowth buyFastGrowth;
 
-    @Scheduled(fixedDelayString = "${strategy.buyFastGrowth.collectPairsToBuy.fixedDelay}", initialDelayString = "${strategy.buyFastGrowth.collectPairsToBuy.initialDelay}")
-    private void buyFastGrowth_collectPairsToBuy() {
-        System.out.println("Collecting pairs runs");
-        log.info("Test logging info");
-        log.info("Found next pairs to buy:");
-        buyFastGrowth.addPairsToBuy("USDT").stream().forEach(element -> {
-            log.info(element.getSymbol() + " changed to " + element.getPriceChangePercent() + "%");
-        });
-    }
+    // @Scheduled(fixedDelayString = "${strategy.buyFastGrowth.collectPairsToBuy.fixedDelay}", initialDelayString = "${strategy.buyFastGrowth.collectPairsToBuy.initialDelay}")
+    // private void buyFastGrowth_collectPairsToBuy() {
+    //     System.out.println("Collecting pairs runs");
+    //     log.info("Test logging info");
+    //     log.info("Found next pairs to buy:");
+    //     buyFastGrowth.addPairsToBuy("USDT").stream().forEach(element -> {
+    //         log.info(element.getSymbol() + " changed to " + element.getPriceChangePercent() + "%");
+    //     });
+    // }
     
-    @Scheduled(fixedDelayString = "${strategy.buyFastGrowth.buyCollectedPairs.fixedDelay}", initialDelayString = "${strategy.buyFastGrowth.buyCollectedPairs.initialDelay}")
-    private void buyFastGrowth_buyCollectedPairs() {
-        log.info("Buying collected pairs runs");
-        buyFastGrowth.makeOrdersForSelectedPairsToBuy();
-    }
+    // @Scheduled(fixedDelayString = "${strategy.buyFastGrowth.buyCollectedPairs.fixedDelay}", initialDelayString = "${strategy.buyFastGrowth.buyCollectedPairs.initialDelay}")
+    // private void buyFastGrowth_buyCollectedPairs() {
+    //     log.info("Buying collected pairs runs");
+    //     buyFastGrowth.makeOrdersForSelectedPairsToBuy();
+    // }
 
-    @Scheduled(fixedDelayString = "${strategy.buyFastGrowth.closeOpenedPositions.fixedDelay}", initialDelayString = "${strategy.buyFastGrowth.closeOpenedPositions.initialDelay}")
-    private void buyFastGrowth_closeOpenedPositions() {
-        log.info("Closing opened positions runs");
-        buyFastGrowth.closeOpenedPositions();
-    }
+    // @Scheduled(fixedDelayString = "${strategy.buyFastGrowth.closeOpenedPositions.fixedDelay}", initialDelayString = "${strategy.buyFastGrowth.closeOpenedPositions.initialDelay}")
+    // private void buyFastGrowth_closeOpenedPositions() {
+    //     log.info("Closing opened positions runs");
+    //     buyFastGrowth.closeOpenedPositions();
+    // }
 }

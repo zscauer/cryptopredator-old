@@ -1,6 +1,8 @@
 package ru.tyumentsev.binancetestbot.service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,8 @@ import com.binance.api.client.BinanceApiWebSocketClient;
 import com.binance.api.client.domain.general.ExchangeInfo;
 import com.binance.api.client.domain.general.SymbolInfo;
 import com.binance.api.client.domain.general.SymbolStatus;
+import com.binance.api.client.domain.market.Candlestick;
+import com.binance.api.client.domain.market.CandlestickInterval;
 import com.binance.api.client.domain.market.TickerPrice;
 import com.binance.api.client.domain.market.TickerStatistics;
 
@@ -47,5 +51,27 @@ public class MarketInfo {
 
     public TickerPrice getLastTickerPrice(String symbol) {
         return restClient.getPrice(symbol);
+    }
+
+    public Set<Candlestick> getCandleSticks(List<String> symbols, CandlestickInterval interval, Integer limit) {
+        Set<Candlestick> filteredSticks = new HashSet<>();
+        
+        for (String symbol : symbols) {
+            List<Candlestick> sticks = restClient.getCandlestickBars(symbol.toUpperCase(), interval, limit);
+            Candlestick stick = sticks.get(0);
+            if (Double.parseDouble(stick.getClose()) < 1) {
+                filteredSticks.add(sticks.get(limit - 1));
+            }  
+        }
+
+        // symbols.stream().forEach(symbol -> {
+        //     List<Candlestick> sticks = restClient.getCandlestickBars(symbol.toUpperCase(), interval, limit);
+        //     Candlestick stick = sticks.get(0);
+        //     if (Double.parseDouble(stick.getClose()) < 1) {
+        //         filteredSticks.add(sticks.get(limit - 1));
+        //     }
+        // });
+
+        return filteredSticks;
     }
 }
