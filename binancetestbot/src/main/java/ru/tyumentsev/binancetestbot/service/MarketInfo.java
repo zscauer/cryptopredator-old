@@ -53,16 +53,24 @@ public class MarketInfo {
         return restClient.getPrice(symbol);
     }
 
+    public List<TickerPrice> getLastTickersPrices(String symbols) {
+        return restClient.getPrices(symbols);
+    }
+
     public Set<Candlestick> getCandleSticks(List<String> symbols, CandlestickInterval interval, Integer limit) {
         Set<Candlestick> filteredSticks = new HashSet<>();
         
-        for (String symbol : symbols) {
-            List<Candlestick> sticks = restClient.getCandlestickBars(symbol.toUpperCase(), interval, limit);
-            Candlestick stick = sticks.get(0);
-            if (Double.parseDouble(stick.getClose()) < 1) {
-                filteredSticks.add(sticks.get(limit - 1));
-            }  
-        }
+        // for (String symbol : symbols) {
+        //     // List<Candlestick> sticks = restClient.getCandlestickBars(symbol.toUpperCase(), interval, limit);
+        //     // Candlestick stick = sticks.get(0);
+        //     // if (Double.parseDouble(stick.getClose()) < 1) {
+        //         filteredSticks.add(restClient.getCandlestickBars(symbol.toUpperCase(), interval, limit).get(0));
+        //     // }  
+        // }
+
+        symbols.stream().forEach(symbol -> {
+            filteredSticks.add(restClient.getCandlestickBars(symbol, interval, limit).get(0));
+        });
 
         // symbols.stream().forEach(symbol -> {
         //     List<Candlestick> sticks = restClient.getCandlestickBars(symbol.toUpperCase(), interval, limit);
@@ -72,6 +80,6 @@ public class MarketInfo {
         //     }
         // });
 
-        return filteredSticks;
+       return filteredSticks;
     }
 }

@@ -35,11 +35,7 @@ public class BuyFastGrowth {
     @Autowired
     MarketData marketData;
 
-    // build query in format, that accepts by binance API.
-    final StringBuilder symbolsParameterBuilder = new StringBuilder(); // required format is "["BTCUSDT","BNBUSDT"]".
     final String WINDOW_SIZE = "3h";
-    final String QUERY_SYMBOLS_BEGIN = "[", QUERY_SYMBOLS_END = "]";
-    final String DELIMETER = "\"";
     final int QUERY_SYMBOLS_PART_SIZE = 40;
 
     public List<TickerStatistics> addPairsToBuy(String asset) {
@@ -63,7 +59,7 @@ public class BuyFastGrowth {
                 fromIndex = QUERY_SYMBOLS_PART_SIZE * i;
                 toIndex = QUERY_SYMBOLS_PART_SIZE * i + QUERY_SYMBOLS_PART_SIZE;
             }
-            accumulatedResponses.addAll(getPartOfStatistics(pairs, fromIndex, toIndex));
+            accumulatedResponses.addAll(getPartOfTickerStatistics(pairs, fromIndex, toIndex));
         }
 
         marketData.loadPairsToBuy(accumulatedResponses); // pairs that growth.
@@ -101,22 +97,9 @@ public class BuyFastGrowth {
     }
 
     // filter pairs that growth more then 5% in window (3h).
-    private List<TickerStatistics> getPartOfStatistics(List<String> pairs, int fromIndex, int toIndex) {
-        symbolsParameterBuilder.append(QUERY_SYMBOLS_BEGIN);
-
-        for (String pair : pairs.subList(fromIndex, toIndex)) {
-            symbolsParameterBuilder.append(DELIMETER);
-            symbolsParameterBuilder.append(pair);
-            symbolsParameterBuilder.append(DELIMETER);
-            symbolsParameterBuilder.append(",");
-        }
-        symbolsParameterBuilder.deleteCharAt(symbolsParameterBuilder.length() - 1); // delete "," in last line.
-        symbolsParameterBuilder.append(QUERY_SYMBOLS_END);
-
+    private List<TickerStatistics> getPartOfTickerStatistics(List<String> pairs, int fromIndex, int toIndex) {
         List<TickerStatistics> statistics = marketInfo
-                .getAllWindowPriceChange(symbolsParameterBuilder.toString(), WINDOW_SIZE);
-
-        symbolsParameterBuilder.delete(0, symbolsParameterBuilder.capacity());
+                .getAllWindowPriceChange(marketData.getAvailablePairsSymbolsFormatted(pairs, fromIndex, toIndex), WINDOW_SIZE);
 
         return statistics.stream()
                 .filter(tickerStatistics -> Double.parseDouble(tickerStatistics.getPriceChangePercent()) > 5)
