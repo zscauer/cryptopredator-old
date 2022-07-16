@@ -1,9 +1,9 @@
 package ru.tyumentsev.binancetestbot.cache;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,7 +14,6 @@ import com.binance.api.client.domain.event.CandlestickEvent;
 import com.binance.api.client.domain.market.TickerStatistics;
 
 import lombok.Getter;
-import lombok.Setter;
 
 @Repository
 public class MarketData {
@@ -28,18 +27,21 @@ public class MarketData {
     Map<String, Long> closedPositions = new HashMap<>();
     // - "Buy fast growth" strategy
 
-    // + "Buy big volume changes" 
+    // + "Buy big volume changes"
     // stores candles, that have price < 1 USDT.
-    @Getter @Setter
-    List<String> cheapPairs = new ArrayList<>();
+    Map<String, List<String>> cheapPairs = new HashMap<>();
     // Set<Candlestick> monitoredCandles = new HashSet<>(); // slow method
-    Map<String, CandlestickEvent> monitoredCandlesticks = new HashMap<>();
+    // stores current and previous candlestick events for each pair to compare them.
+    // first element - previous, last element - current.
+    Map<String, LinkedList<CandlestickEvent>> cachedCandlesticks = new HashMap<>();
     @Getter
     Map<String, Double> testMapToBuy = new HashMap<>();
     // - "Buy big volume changes" strategy
 
-    final StringBuilder symbolsParameterBuilder = new StringBuilder(); // build query in format, that accepts by binance API.
-    final String QUERY_SYMBOLS_BEGIN = "[", DELIMETER = "\"", QUERY_SYMBOLS_END = "]"; // required format is "["BTCUSDT","BNBUSDT"]".
+    final StringBuilder symbolsParameterBuilder = new StringBuilder(); // build query in format, that accepts by binance
+                                                                       // API.
+    final String QUERY_SYMBOLS_BEGIN = "[", DELIMETER = "\"", QUERY_SYMBOLS_END = "]"; // required format is
+                                                                                       // "["BTCUSDT","BNBUSDT"]".
 
     public void addAvailablePairs(String asset, List<String> pairs) {
         availablePairs.put(asset.toUpperCase(), pairs);
@@ -49,8 +51,10 @@ public class MarketData {
         return availablePairs.getOrDefault(asset.toUpperCase(), Collections.emptyList());
     }
 
+    // return string, that formatted to websocket stream requires.
     public String getAvailablePairsSymbols(String asset) {
         StringBuilder sb = new StringBuilder();
+
         availablePairs.get(asset).stream().forEach(pair -> {
             sb.append(pair.toLowerCase() + ",");
         });
@@ -62,7 +66,7 @@ public class MarketData {
     public String getAvailablePairsSymbolsFormatted(List<String> pairs, int fromIndex, int toIndex) {
         symbolsParameterBuilder.delete(0, symbolsParameterBuilder.capacity());
         symbolsParameterBuilder.append(QUERY_SYMBOLS_BEGIN);
-        
+
         for (String pair : pairs.subList(fromIndex, toIndex)) {
             symbolsParameterBuilder.append(DELIMETER);
             symbolsParameterBuilder.append(pair);
@@ -73,6 +77,26 @@ public class MarketData {
         symbolsParameterBuilder.append(QUERY_SYMBOLS_END);
 
         return symbolsParameterBuilder.toString();
+    }
+
+    public void putCheapPairs(String asset, List<String> pairs) {
+        cheapPairs.put(asset, pairs);
+    }
+
+    public List<String> getCheapPairs(String asset) {
+        return cheapPairs.getOrDefault(asset, Collections.emptyList());
+    }
+
+    // return string, that formatted to websocket stream requires.
+    public String getCheapPairsSymbols(String asset) {
+        StringBuilder sb = new StringBuilder();
+
+        cheapPairs.get(asset).stream().forEach(pair -> {
+            sb.append(pair.toLowerCase() + ",");
+        });
+        sb.deleteCharAt(sb.length() - 1);
+
+        return sb.toString();
     }
 
     // TODO change to get asset as a parameter.
@@ -106,20 +130,32 @@ public class MarketData {
     }
 
     // public void fillMonitoredCandles(Set<Candlestick> sticks) {
-    //     monitoredCandles.clear();
-    //     monitoredCandles.addAll(sticks);
+    // monitoredCandles.clear();
+    // monitoredCandles.addAll(sticks);
     // }
 
     // public Set<Candlestick> getMonitoredCandles() {
-    //     return monitoredCandles;
+    // return monitoredCandles;
     // }
 
     public void addCandlestickEventToMonitoring(String ticker, CandlestickEvent candlestickEvent) {
-        monitoredCandlesticks.put(ticker, candlestickEvent);
+        if (cachedCandlesticks.get(ticker) == null) {
+            LinkedList<CandlestickEvent> candlestickEventQueue = new LinkedList<>();
+            candlestickEventQueue.addFirst(candlestickEvent);
+            cachedCandlesticks.put(ticker, candlestickEventQueue);
+        } else {
+            cachedCandlesticks.get(ticker).add(1, candlestickEvent);
+        }
     }
 
-    public Map<String, CandlestickEvent> getMonitoredCandleSticks() {
-        return monitoredCandlesticks;
+    public void pushCandlestickEventToMonitoring(String ticker, CandlestickEvent candlestickEvent) {
+        LinkedList<CandlestickEvent> candlestickEventQueue = cachedCandlesticks.get(ticker);
+        candlestickEventQueue.addFirst(candlestickEventQueue.pollLast());
+        candlestickEventQueue.add(candlestickEvent);
+    }
+
+    public Map<String, LinkedList<CandlestickEvent>> getCachedCandleSticks() {
+        return cachedCandlesticks;
     }
 
     public void addPairToTestBuy(String symbol, Double price) {

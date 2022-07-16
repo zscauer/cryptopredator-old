@@ -3,6 +3,7 @@ package ru.tyumentsev.binancetestbot.controller;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -169,8 +170,8 @@ public class TestController {
     // }
 
     @GetMapping("/buyBigVolumeChange/getMonitoredCandleSticks")
-    public Map<String, CandlestickEvent> getMonitoredCandleSticks() {
-        return marketData.getMonitoredCandleSticks();
+    public List<CandlestickEvent> getMonitoredCandleSticks(@RequestParam("asset") String asset) {
+        return marketData.getCachedCandleSticks().get(asset);
     }
 
 }

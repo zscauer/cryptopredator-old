@@ -59,13 +59,19 @@ public class StrategyRunner {
         log.info("Find big volume growth from strategy runner.");
         Closeable candlestickEventStream = buyBigVolumeGrowth.updateMonitoredCandleSticks();
         try {
-            Thread.sleep(25_000);
+            Thread.sleep(60_000);
             candlestickEventStream.close();
         } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
-        
+
+        buyBigVolumeGrowth_CompareCandlesVolumes();
         buyBigVolumeGrowth_buyGrownAssets();
+    }
+
+    private void buyBigVolumeGrowth_CompareCandlesVolumes() {
+        log.info("Compare candles volumes from strategy runner.");
+        buyBigVolumeGrowth.compareCandlesVolumes();
     }
 
     // @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.buyGrownAssets.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.buyGrownAssets.initialDelay}")
