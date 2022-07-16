@@ -1,5 +1,6 @@
 package ru.tyumentsev.binancetestbot.cache;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,7 +34,7 @@ public class MarketData {
     // Set<Candlestick> monitoredCandles = new HashSet<>(); // slow method
     // stores current and previous candlestick events for each pair to compare them.
     // first element - previous, last element - current.
-    Map<String, LinkedList<CandlestickEvent>> cachedCandlesticks = new HashMap<>();
+    Map<String, CandlestickEvent> cachedCandlesticks = new HashMap<>();
     @Getter
     Map<String, Double> testMapToBuy = new HashMap<>();
     // - "Buy big volume changes" strategy
@@ -139,22 +140,26 @@ public class MarketData {
     // }
 
     public void addCandlestickEventToMonitoring(String ticker, CandlestickEvent candlestickEvent) {
-        if (cachedCandlesticks.get(ticker) == null) {
-            LinkedList<CandlestickEvent> candlestickEventQueue = new LinkedList<>();
-            candlestickEventQueue.addFirst(candlestickEvent);
-            cachedCandlesticks.put(ticker, candlestickEventQueue);
-        } else {
-            cachedCandlesticks.get(ticker).add(1, candlestickEvent);
-        }
+            cachedCandlesticks.put(ticker, candlestickEvent);
+        // if (cachedCandlesticks.get(ticker) == null) {
+        //     LinkedList<CandlestickEvent> candlestickEventQueue = new LinkedList<>();
+        //     candlestickEventQueue.addFirst(candlestickEvent);
+        //     cachedCandlesticks.put(ticker, candlestickEventQueue);
+        // } else {
+        //     cachedCandlesticks.get(ticker).add(1, candlestickEvent);
+        // }
     }
 
-    public void pushCandlestickEventToMonitoring(String ticker, CandlestickEvent candlestickEvent) {
-        LinkedList<CandlestickEvent> candlestickEventQueue = cachedCandlesticks.get(ticker);
-        candlestickEventQueue.addFirst(candlestickEventQueue.pollLast());
-        candlestickEventQueue.add(candlestickEvent);
-    }
+    // public void pushCandlestickEventToMonitoring(String ticker, CandlestickEvent candlestickEvent) {
+    //     CandlestickEvent[] candlestickEventQueue = cachedCandlesticks.get(ticker);
+    //     candlestickEventQueue[0] = candlestickEventQueue[1];
+    //     candlestickEventQueue[1] = candlestickEvent;
+    //     // LinkedList<CandlestickEvent> candlestickEventQueue = cachedCandlesticks.get(ticker);
+    //     // candlestickEventQueue.addFirst(candlestickEventQueue.pollLast());
+    //     // candlestickEventQueue.add(candlestickEvent);
+    // }
 
-    public Map<String, LinkedList<CandlestickEvent>> getCachedCandleSticks() {
+    public Map<String, CandlestickEvent> getCachedCandleSticks() {
         return cachedCandlesticks;
     }
 

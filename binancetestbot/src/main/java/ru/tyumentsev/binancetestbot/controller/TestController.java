@@ -170,8 +170,8 @@ public class TestController {
     // }
 
     @GetMapping("/buyBigVolumeChange/getMonitoredCandleSticks")
-    public List<CandlestickEvent> getMonitoredCandleSticks(@RequestParam("asset") String asset) {
-        return marketData.getCachedCandleSticks().get(asset);
+    public Map<String, CandlestickEvent> getMonitoredCandleSticks(@RequestParam("asset") String asset) {
+        return marketData.getCachedCandleSticks();//.get(asset);
     }
 
 }
