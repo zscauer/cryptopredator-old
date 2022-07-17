@@ -2,6 +2,7 @@ package ru.tyumentsev.binancetestbot.service;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,26 +23,34 @@ public class StrategyRunner {
 
     // +++++++++++++++++++++++++++++++ BuyFastGrowth strategy
 
-    // @Scheduled(fixedDelayString = "${strategy.buyFastGrowth.collectPairsToBuy.fixedDelay}", initialDelayString = "${strategy.buyFastGrowth.collectPairsToBuy.initialDelay}")
+    // @Scheduled(fixedDelayString =
+    // "${strategy.buyFastGrowth.collectPairsToBuy.fixedDelay}", initialDelayString
+    // = "${strategy.buyFastGrowth.collectPairsToBuy.initialDelay}")
     // private void buyFastGrowth_collectPairsToBuy() {
-    //     System.out.println("Collecting pairs runs");
-    //     log.info("Test logging info");
-    //     log.info("Found next pairs to buy:");
-    //     buyFastGrowth.addPairsToBuy("USDT").stream().forEach(element -> {
-    //         log.info(element.getSymbol() + " changed to " + element.getPriceChangePercent() + "%");
-    //     });
-    // }
-    
-    // @Scheduled(fixedDelayString = "${strategy.buyFastGrowth.buyCollectedPairs.fixedDelay}", initialDelayString = "${strategy.buyFastGrowth.buyCollectedPairs.initialDelay}")
-    // private void buyFastGrowth_buyCollectedPairs() {
-    //     log.info("Buying collected pairs runs");
-    //     buyFastGrowth.makeOrdersForSelectedPairsToBuy();
+    // System.out.println("Collecting pairs runs");
+    // log.info("Test logging info");
+    // log.info("Found next pairs to buy:");
+    // buyFastGrowth.addPairsToBuy("USDT").stream().forEach(element -> {
+    // log.info(element.getSymbol() + " changed to " +
+    // element.getPriceChangePercent() + "%");
+    // });
     // }
 
-    // @Scheduled(fixedDelayString = "${strategy.buyFastGrowth.closeOpenedPositions.fixedDelay}", initialDelayString = "${strategy.buyFastGrowth.closeOpenedPositions.initialDelay}")
+    // @Scheduled(fixedDelayString =
+    // "${strategy.buyFastGrowth.buyCollectedPairs.fixedDelay}", initialDelayString
+    // = "${strategy.buyFastGrowth.buyCollectedPairs.initialDelay}")
+    // private void buyFastGrowth_buyCollectedPairs() {
+    // log.info("Buying collected pairs runs");
+    // buyFastGrowth.makeOrdersForSelectedPairsToBuy();
+    // }
+
+    // @Scheduled(fixedDelayString =
+    // "${strategy.buyFastGrowth.closeOpenedPositions.fixedDelay}",
+    // initialDelayString =
+    // "${strategy.buyFastGrowth.closeOpenedPositions.initialDelay}")
     // private void buyFastGrowth_closeOpenedPositions() {
-    //     log.info("Closing opened positions runs");
-    //     buyFastGrowth.closeOpenedPositions();
+    // log.info("Closing opened positions runs");
+    // buyFastGrowth.closeOpenedPositions();
     // }
 
     // ------------------------------- BuyFastGrowth strategy
@@ -57,13 +66,17 @@ public class StrategyRunner {
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.initialDelay}")
     private void buyBigVolumeGrowth_updateMonitoredCandleSticks() {
         log.info("Find big volume growth from strategy runner.");
-        Closeable candlestickEventStream = buyBigVolumeGrowth.updateMonitoredCandleSticks();
-        try {
-            Thread.sleep(60_000);
-            candlestickEventStream.close();
-        } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
-        }
+        List<String> cheapPairs = buyBigVolumeGrowth.getCheapPairs("USDT");
+        // for (int i = 0; i < 10; i++) {
+            Closeable candlestickEventStream = buyBigVolumeGrowth
+                    .updateMonitoredCandleSticks(cheapPairs);
+            try {
+                Thread.sleep(10_000);
+                candlestickEventStream.close();
+            } catch (InterruptedException | IOException e) {
+                e.printStackTrace();
+            }
+        // }
 
         buyBigVolumeGrowth_CompareCandlesVolumes();
         buyBigVolumeGrowth_buyGrownAssets();
@@ -74,7 +87,10 @@ public class StrategyRunner {
         buyBigVolumeGrowth.compareCandlesVolumes();
     }
 
-    // @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.buyGrownAssets.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.buyGrownAssets.initialDelay}")
+    // @Scheduled(fixedDelayString =
+    // "${strategy.buyBigVolumeGrowth.buyGrownAssets.fixedDelay}",
+    // initialDelayString =
+    // "${strategy.buyBigVolumeGrowth.buyGrownAssets.initialDelay}")
     private void buyBigVolumeGrowth_buyGrownAssets() {
         log.info("Buy grown assets from strategy runner.");
         buyBigVolumeGrowth.buyGrownAssets();

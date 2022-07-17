@@ -52,38 +52,43 @@ public class BuyBigVolumeGrowth {
         marketData.putCheapPairs("USDT", filteredPairs);
     }
 
-    public Closeable updateMonitoredCandleSticks() {
+    public List<String> getCheapPairs(String asset) {
+        return marketData.getCheapPairs(asset);
+    }
+
+    public Closeable updateMonitoredCandleSticks(List<String> pairs) {
         // get candlesticks cache to compare previous candle with current.
         final Map<String, CandlestickEvent> cachedCandlesticks = marketData.getCachedCandleSticks();
         log.info("There is " + marketData.getCheapPairs("USDT").size() + " in cheap pairs.");
 
         // listen candlestick events of each of pairs that have low price.
-        return binanceApiWebSocketClient.onCandlestickEvent(marketData.getCheapPairsSymbols("USDT"),
+        return binanceApiWebSocketClient.onCandlestickEvent(marketData.getCheapPairsSymbols(pairs),
                 CandlestickInterval.HOURLY, callback -> {
-                    // if cache have queue of candles of previous(!) period:
-                    if (cachedCandlesticks.containsKey(callback.getSymbol())) {
-                        // get oldest candle event to compare with.
-                        CandlestickEvent previousEvent = cachedCandlesticks.get(callback.getSymbol());
+                    // // if cache have queue of candles of previous(!) period:
+                    // if (cachedCandlesticks.containsKey(callback.getSymbol())) {
+                    //     // get oldest candle event to compare with.
+                    //     CandlestickEvent previousEvent = cachedCandlesticks.get(callback.getSymbol());
                         
-                        if (callback.getCloseTime().equals(previousEvent.getCloseTime())) {
-                            marketData.addCandlestickEventToMonitoring(callback.getSymbol(), callback);
-                        }
+                    //     if (callback.getCloseTime().equals(previousEvent.getCloseTime())) {
+                    //         marketData.addCandlestickEventToMonitoring(callback.getSymbol(), callback);
+                    //     }
 
-                        // // if time of close of older candle is different from current more then 1 hour,
-                        // // it means need to update compared candles by replacing candles in queue.
-                        // else if (callback.getCloseTime() - previousEvent.getCloseTime() > 3_600_000L) { // 3_600_000 = 1
-                        //                                                                                 // hour
-                        //     log.info(
-                        //             "Update candlestick for pair " + callback.getSymbol()
-                        //                     + new Date(previousEvent.getCloseTime())
-                        //                     + " replaced to " + new Date(callback.getCloseTime()));
-                        //     marketData.pushCandlestickEventToMonitoring(callback.getSymbol(), callback);
-                        // } else { // else update last candle.
-                        //     marketData.addCandlestickEventToMonitoring(callback.getSymbol(), callback);
-                        // }
-                    } else { // else update candle.
-                        marketData.addCandlestickEventToMonitoring(callback.getSymbol(), callback);
-                    }
+                    //     // // if time of close of older candle is different from current more then 1 hour,
+                    //     // // it means need to update compared candles by replacing candles in queue.
+                    //     // else if (callback.getCloseTime() - previousEvent.getCloseTime() > 3_600_000L) { // 3_600_000 = 1
+                    //     //                                                                                 // hour
+                    //     //     log.info(
+                    //     //             "Update candlestick for pair " + callback.getSymbol()
+                    //     //                     + new Date(previousEvent.getCloseTime())
+                    //     //                     + " replaced to " + new Date(callback.getCloseTime()));
+                    //     //     marketData.pushCandlestickEventToMonitoring(callback.getSymbol(), callback);
+                    //     // } else { // else update last candle.
+                    //     //     marketData.addCandlestickEventToMonitoring(callback.getSymbol(), callback);
+                    //     // }
+                    // } else { // else update candle.
+                    //     marketData.addCandlestickEventToMonitoring(callback.getSymbol(), callback);
+                    // }
+                    marketData.addCandlestickEventToMonitoring(callback.getSymbol(), callback);
                 });
         // // get candlesticks cache to compare previous candle with current.
         // final Map<String, LinkedList<CandlestickEvent>> cachedCandlesticks =

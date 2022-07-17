@@ -100,6 +100,17 @@ public class MarketData {
         return sb.toString();
     }
 
+    public String getCheapPairsSymbols(List<String> asset) {
+        StringBuilder sb = new StringBuilder();
+
+        asset.stream().forEach(pair -> {
+            sb.append(pair.toLowerCase() + ",");
+        });
+        sb.deleteCharAt(sb.length() - 1);
+
+        return sb.toString();
+    }
+
     // TODO change to get asset as a parameter.
     public void loadPairsToBuy(List<TickerStatistics> pairs) {
         toBuy.clear();
