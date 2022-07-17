@@ -1,17 +1,17 @@
 package ru.tyumentsev.binancetestbot.cache;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Repository;
 
 import com.binance.api.client.domain.event.CandlestickEvent;
+import com.binance.api.client.domain.market.Candlestick;
 import com.binance.api.client.domain.market.TickerStatistics;
 
 import lombok.Getter;
@@ -24,17 +24,18 @@ public class MarketData {
     Set<TickerStatistics> toBuy = new HashSet<>();
     // key - pair, value - last price.
     Map<String, Double> openedPositions = new HashMap<>();
-    // key - pair, value - time of closing.
-    Map<String, Long> closedPositions = new HashMap<>();
+    // key - pair, value - price of closing.
+    Map<String, Double> closedPositions = new HashMap<>();
     // - "Buy fast growth" strategy
 
     // + "Buy big volume changes"
     // stores candles, that have price < 1 USDT.
     Map<String, List<String>> cheapPairs = new HashMap<>();
-    // Set<Candlestick> monitoredCandles = new HashSet<>(); // slow method
+    @Getter
+    Map<String, List<Candlestick>> cachedCandles = new HashMap<>(); // slow method
     // stores current and previous candlestick events for each pair to compare them.
     // first element - previous, last element - current.
-    Map<String, CandlestickEvent> cachedCandlesticks = new HashMap<>();
+    Map<String, CandlestickEvent> cachedCandlestickEvents = new ConcurrentHashMap<>();
     @Getter
     Map<String, Double> testMapToBuy = new HashMap<>();
     // - "Buy big volume changes" strategy
@@ -84,8 +85,15 @@ public class MarketData {
         cheapPairs.put(asset, pairs);
     }
 
+    /**
+     * 
+     * @param asset
+     * @return list of cheap pairs, exclude pairs of opened positions.
+     */
     public List<String> getCheapPairs(String asset) {
-        return cheapPairs.getOrDefault(asset, Collections.emptyList());
+        List<String> pairs = cheapPairs.getOrDefault(asset, Collections.emptyList());
+        pairs.removeAll(openedPositions.keySet());
+        return pairs;
     }
 
     // return string, that formatted to websocket stream requires.
@@ -133,48 +141,39 @@ public class MarketData {
         return openedPositions;
     }
 
-    public void representClosingPositions(Map<String, Long> closedPairs) {
+    public void representClosingPositions(Map<String, Double> closedPairs) {
         closedPairs.entrySet().stream().forEach(entrySet -> {
             openedPositions.remove(entrySet.getKey());
         });
 
-        closedPositions.putAll(closedPairs);
+        // closedPositions.putAll(closedPairs);
     }
 
-    // public void fillMonitoredCandles(Set<Candlestick> sticks) {
-    // monitoredCandles.clear();
-    // monitoredCandles.addAll(sticks);
-    // }
+    public void addCandlesticksToCache(String ticker, List<Candlestick> sticks) {
+        cachedCandles.put(ticker, sticks);
+    }
 
-    // public Set<Candlestick> getMonitoredCandles() {
-    // return monitoredCandles;
-    // }
+    public void clearCandleSticksCache() {
+        cachedCandles.clear();
+    }
 
     public void addCandlestickEventToMonitoring(String ticker, CandlestickEvent candlestickEvent) {
-            cachedCandlesticks.put(ticker, candlestickEvent);
+        cachedCandlestickEvents.put(ticker, candlestickEvent);
         // if (cachedCandlesticks.get(ticker) == null) {
-        //     LinkedList<CandlestickEvent> candlestickEventQueue = new LinkedList<>();
-        //     candlestickEventQueue.addFirst(candlestickEvent);
-        //     cachedCandlesticks.put(ticker, candlestickEventQueue);
+        // LinkedList<CandlestickEvent> candlestickEventQueue = new LinkedList<>();
+        // candlestickEventQueue.addFirst(candlestickEvent);
+        // cachedCandlesticks.put(ticker, candlestickEventQueue);
         // } else {
-        //     cachedCandlesticks.get(ticker).add(1, candlestickEvent);
+        // cachedCandlesticks.get(ticker).add(1, candlestickEvent);
         // }
     }
 
-    // public void pushCandlestickEventToMonitoring(String ticker, CandlestickEvent candlestickEvent) {
-    //     CandlestickEvent[] candlestickEventQueue = cachedCandlesticks.get(ticker);
-    //     candlestickEventQueue[0] = candlestickEventQueue[1];
-    //     candlestickEventQueue[1] = candlestickEvent;
-    //     // LinkedList<CandlestickEvent> candlestickEventQueue = cachedCandlesticks.get(ticker);
-    //     // candlestickEventQueue.addFirst(candlestickEventQueue.pollLast());
-    //     // candlestickEventQueue.add(candlestickEvent);
-    // }
-
-    public Map<String, CandlestickEvent> getCachedCandleSticks() {
-        return cachedCandlesticks;
+    public Map<String, CandlestickEvent> getCachedCandleStickEvents() {
+        return cachedCandlestickEvents;
     }
 
     public void addPairToTestBuy(String symbol, Double price) {
         testMapToBuy.put(symbol, price);
     }
+
 }

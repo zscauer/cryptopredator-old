@@ -81,7 +81,7 @@ public class BuyFastGrowth {
 
     public void closeOpenedPositions() {
         Map<String, Double> openedPositions = marketData.getOpenedPositions();
-        Map<String, Long> positionsToClose = new HashMap<>();
+        Map<String, Double> positionsToClose = new HashMap<>();
         openedPositions.entrySet().stream().forEach(entrySet -> {
             Double lastPrice = Double.parseDouble(marketInfo.getLastTickerPrice(entrySet.getKey()).getPrice());
             if (lastPrice > entrySet.getValue() * 1.05) {
@@ -89,7 +89,7 @@ public class BuyFastGrowth {
                 entrySet.setValue(lastPrice);
             } else if (lastPrice < entrySet.getValue() * 0.95) {
                 log.info("Price of " + entrySet.getKey() + " decreased more then 5% and now equals " + lastPrice);
-                positionsToClose.put(entrySet.getKey(), System.currentTimeMillis());
+                positionsToClose.put(entrySet.getKey(), lastPrice);
             }
         });
 
