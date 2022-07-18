@@ -180,14 +180,14 @@ public class BuyBigVolumeGrowth {
         Map<String, Double> positionsToClose = new HashMap<>();
 
         List<TickerPrice> currentPrices = marketInfo.getLastTickersPrices(marketData.getAvailablePairsSymbolsFormatted(
-                new ArrayList<>(openedPositions.keySet()), 0, openedPositions.size() - 1));
+                new ArrayList<>(openedPositions.keySet()), 0, openedPositions.size()));
 
         currentPrices.stream().forEach(tickerPrice -> {
             Double currentPrice = Double.parseDouble(tickerPrice.getPrice());
             if (currentPrice > openedPositions.get(tickerPrice.getSymbol())) { // update current price if it growth
                 log.info("Price of " + tickerPrice.getSymbol() + " growth and now equals " + currentPrice);
                 openedPositions.put(tickerPrice.getSymbol(), currentPrice);
-            } else if (openedPositions.get(tickerPrice.getSymbol()) > currentPrice * 0.93) { // close position if price decreased
+            } else if (currentPrice < openedPositions.get(tickerPrice.getSymbol()) * 0.93) { // close position if price decreased
                 positionsToClose.put(tickerPrice.getSymbol(), currentPrice);
             }
         });
