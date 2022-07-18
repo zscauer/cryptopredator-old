@@ -1,0 +1,4 @@
+candles 1h
+buy when volume > 2.5 and price > 1.05
+sell when price < 0.93
+
