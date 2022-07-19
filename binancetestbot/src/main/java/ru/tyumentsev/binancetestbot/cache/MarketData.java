@@ -141,9 +141,12 @@ public class MarketData {
         return openedPositions;
     }
 
-    public void representClosingPositions(Map<String, Double> closedPairs) {
+    public void representClosingPositions(Map<String, Double> closedPairs, String asset) {
         closedPairs.entrySet().stream().forEach(entrySet -> {
             openedPositions.remove(entrySet.getKey());
+            if (entrySet.getValue() < 1) {
+                cheapPairs.get(asset).add(entrySet.getKey());
+            }
         });
 
         // closedPositions.putAll(closedPairs);

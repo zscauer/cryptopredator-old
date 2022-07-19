@@ -93,7 +93,7 @@ public class BuyFastGrowth {
             }
         });
 
-        marketData.representClosingPositions(positionsToClose);
+        marketData.representClosingPositions(positionsToClose, "USDT");
     }
 
     // filter pairs that growth more then 5% in window (3h).

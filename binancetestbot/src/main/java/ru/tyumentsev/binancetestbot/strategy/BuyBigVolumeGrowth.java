@@ -17,7 +17,9 @@ import com.binance.api.client.domain.market.TickerPrice;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import ru.tyumentsev.binancetestbot.cache.MarketData;
+import ru.tyumentsev.binancetestbot.service.AccountManager;
 import ru.tyumentsev.binancetestbot.service.MarketInfo;
+import ru.tyumentsev.binancetestbot.service.SpotTrading;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +35,10 @@ public class BuyBigVolumeGrowth {
     MarketInfo marketInfo;
     @Autowired
     MarketData marketData;
+    @Autowired
+    SpotTrading spotTrading;
+    @Autowired
+    AccountManager accountManager;
     @Autowired
     BinanceApiWebSocketClient binanceApiWebSocketClient;
 
@@ -162,12 +168,48 @@ public class BuyBigVolumeGrowth {
         if (pairsToBuy.size() > 0) {
             log.info("There is " + pairsToBuy.size() + " elements in test map to buy.");
             log.info("Buy pairs " + pairsToBuy);
-            pairsToBuy.entrySet()
-                    .forEach(entrySet -> marketData.putOpenedPosition(entrySet.getKey(), entrySet.getValue()));
+            for (Map.Entry<String, Double> entrySet : pairsToBuy.entrySet()) {
+                if (accountManager.getFreeAssetBalance("USDT") > 12 / entrySet.getValue()) {
+                    spotTrading.placeMarketOrder(entrySet.getKey(), 12 / entrySet.getValue());
+                } else {
+                    log.info("!!! Not enough USDT balance to buy " + entrySet.getKey() + " for " + entrySet.getValue());
+                    marketData.putOpenedPosition(entrySet.getKey(), entrySet.getValue());
+                }
+            }
+            
+            // pairsToBuy.entrySet()
+            //         .forEach(entrySet ->
+            //         marketData.putOpenedPosition(entrySet.getKey(), entrySet.getValue()));
             pairsToBuy.clear();
         } else {
             log.info("Nothing to buy");
         }
+    }
+
+    public void checkMarketPositions() {
+        Map<String, Double> marketPositions = marketData.getOpenedPositions();
+        
+        if (openedPositions.isEmpty()) {
+            return;
+        }
+
+        Map<String, Double> positionsToClose = new HashMap<>();
+
+        List<TickerPrice> currentPrices = marketInfo.getLastTickersPrices(marketData.getAvailablePairsSymbolsFormatted(
+                new ArrayList<>(openedPositions.keySet()), 0, openedPositions.size()));
+
+        currentPrices.stream().forEach(tickerPrice -> {
+            Double currentPrice = Double.parseDouble(tickerPrice.getPrice());
+            if (currentPrice > openedPositions.get(tickerPrice.getSymbol())) { // update current price if it growth
+                log.info("Price of " + tickerPrice.getSymbol() + " growth and now equals " + currentPrice);
+                openedPositions.put(tickerPrice.getSymbol(), currentPrice);
+            } else if (currentPrice < openedPositions.get(tickerPrice.getSymbol()) * 0.93) { // close position if price decreased
+                positionsToClose.put(tickerPrice.getSymbol(), currentPrice);
+            }
+        });
+
+        log.info("!!! Prices of this pairs decreased, selling: " + positionsToClose.toString());
+        marketData.representClosingPositions(positionsToClose, "USDT");
     }
 
     public void checkOpenedPositions() {
@@ -193,7 +235,7 @@ public class BuyBigVolumeGrowth {
         });
 
         log.info("!!! Prices of this pairs decreased, selling: " + positionsToClose.toString());
-        marketData.representClosingPositions(positionsToClose);
+        marketData.representClosingPositions(positionsToClose, "USDT");
     }
 
 }
