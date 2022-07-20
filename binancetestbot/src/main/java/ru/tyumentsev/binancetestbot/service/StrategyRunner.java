@@ -57,7 +57,7 @@ public class StrategyRunner {
     // ------------------------------- BuyFastGrowth strategy
 
     // +++++++++++++++++++++++++++++++ BuyBigVolumeGrowth strategy
-
+    
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.initialDelay}")
     private void buyBigVolumeGrowth_fillCheapPairs() {
         log.info("Fill cheap pairs from strategy runner.");
@@ -66,7 +66,7 @@ public class StrategyRunner {
 
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.initialDelay}")
     private void buyBigVolumeGrowth_updateMonitoredCandles() {
-        log.info("Find big volume growth from strategy runner.");
+        // log.info("Find big volume growth from strategy runner.");
         buyBigVolumeGrowth.updateMonitoredCandles("USDT", CandlestickInterval.HOURLY, 2);
 
         log.info("Monitored candles size is: " + marketData.getCachedCandles().size());
@@ -92,7 +92,7 @@ public class StrategyRunner {
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.checkOpenedPositions.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.checkOpenedPositions.initialDelay}")
     private void buyBigVolumeGrowth_checkOpenedPositions() {
         log.info("Check opened positions from strategy runner.");
-        buyBigVolumeGrowth.checkOpenedPositions();
+        buyBigVolumeGrowth.checkMarketPositions();
     }
 
     // ------------------------------- BuyBigVolumeGrowth strategy

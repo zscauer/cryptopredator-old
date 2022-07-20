@@ -23,7 +23,7 @@ public class MarketData {
     // + "Buy fast growth" strategy
     Set<TickerStatistics> toBuy = new HashSet<>();
     // key - pair, value - last price.
-    Map<String, Double> openedPositions = new HashMap<>();
+    Map<String, Double> openedPositionsCache = new HashMap<>();
     // key - pair, value - price of closing.
     Map<String, Double> closedPositions = new HashMap<>();
     // - "Buy fast growth" strategy
@@ -90,9 +90,9 @@ public class MarketData {
      * @param asset
      * @return list of cheap pairs, exclude pairs of opened positions.
      */
-    public List<String> getCheapPairs(String asset) {
+    public List<String> getCheapPairsWithoutOpenedPositions(String asset) {
         List<String> pairs = cheapPairs.getOrDefault(asset, Collections.emptyList());
-        pairs.removeAll(openedPositions.keySet());
+        pairs.removeAll(openedPositionsCache.keySet());
         return pairs;
     }
 
@@ -134,16 +134,16 @@ public class MarketData {
     }
 
     public void putOpenedPosition(String pair, Double price) {
-        openedPositions.put(pair, price);
+        openedPositionsCache.put(pair, price);
     }
 
-    public Map<String, Double> getOpenedPositions() {
-        return openedPositions;
+    public Map<String, Double> getOpenedPositionsCache() {
+        return openedPositionsCache;
     }
 
     public void representClosingPositions(Map<String, Double> closedPairs, String asset) {
         closedPairs.entrySet().stream().forEach(entrySet -> {
-            openedPositions.remove(entrySet.getKey());
+            openedPositionsCache.remove(entrySet.getKey());
             if (entrySet.getValue() < 1) {
                 cheapPairs.get(asset).add(entrySet.getKey());
             }

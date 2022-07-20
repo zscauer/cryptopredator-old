@@ -160,7 +160,7 @@ public class TestController {
 
     @GetMapping("/buyFastGrowth/openedPositions")
     public Map<String, Double> getOpenedPositions() {
-        return marketData.getOpenedPositions();
+        return marketData.getOpenedPositionsCache();
     }
 
     // @GetMapping("/buyBigVolumeChange/findCheapPairs")

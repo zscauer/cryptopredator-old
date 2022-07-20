@@ -80,7 +80,7 @@ public class BuyFastGrowth {
     }
 
     public void closeOpenedPositions() {
-        Map<String, Double> openedPositions = marketData.getOpenedPositions();
+        Map<String, Double> openedPositions = marketData.getOpenedPositionsCache();
         Map<String, Double> positionsToClose = new HashMap<>();
         openedPositions.entrySet().stream().forEach(entrySet -> {
             Double lastPrice = Double.parseDouble(marketInfo.getLastTickerPrice(entrySet.getKey()).getPrice());
