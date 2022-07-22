@@ -1,0 +1,62 @@
+{"properties": [
+  {
+    "name": "strategy.buy-fast-growth.collect-pairs-to-buy.initial-delay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.buy-fast-growth.collect-pairs-to-buy.initial-delay'"
+  },
+  {
+    "name": "strategy.buy-fast-growth.collect-pairs-to-buy.fixedDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.buy-fast-growth.collect-pairs-to-buy.fixedDelay'"
+  },
+  {
+    "name": "strategy.buyBigVolumeGrowth.fill-cheap-pairs.initial-delay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.buyBigVolumeGrowth.fill-cheap-pairs.initial-delay'"
+  },
+  {
+    "name": "strategy.buyBigVolumeGrowth.checkOpenedPositions.fixed-delay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.buyBigVolumeGrowth.checkOpenedPositions.fixed-delay'"
+  },
+  {
+    "name": "strategy.buyBigVolumeGrowth.checkOpenedPositions.initialDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.buyBigVolumeGrowth.checkOpenedPositions.initialDelay'"
+  },
+  {
+    "name": "strategy.buy-fast-growth.buyCollectedPairs.fixed-delay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.buy-fast-growth.buyCollectedPairs.fixed-delay'"
+  },
+  {
+    "name": "strategy.buy-fast-growth.buyCollectedPairs.initialDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.buy-fast-growth.buyCollectedPairs.initialDelay'"
+  },
+  {
+    "name": "strategy.buy-fast-growth.closeOpenedPositions.fixed-delay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.buy-fast-growth.closeOpenedPositions.fixed-delay'"
+  },
+  {
+    "name": "strategy.buy-fast-growth.closeOpenedPositions.initialDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.buy-fast-growth.closeOpenedPositions.initialDelay'"
+  },
+  {
+    "name": "strategy.buyBigVolumeGrowth.fill-cheap-pairs.fixedDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.buyBigVolumeGrowth.fill-cheap-pairs.fixedDelay'"
+  },
+  {
+    "name": "strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.fixed-delay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.fixed-delay'"
+  },
+  {
+    "name": "strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.initialDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.initialDelay'"
+  }
+]}

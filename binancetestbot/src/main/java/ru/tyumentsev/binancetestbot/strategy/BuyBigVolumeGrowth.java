@@ -233,12 +233,11 @@ public class BuyBigVolumeGrowth {
                                                                                                   // price
                 // decreased
                 positionsToClose.put(tickerPrice.getSymbol(),
-                        accountManager.getFreeAssetBalance(tickerPrice.getSymbol()));
-                // positionsToClose.put(tickerPrice.getSymbol(), currentPrice);
+                        accountManager.getFreeAssetBalance(tickerPrice.getSymbol().replace("USDT", "")));
             }
         });
 
-        log.info("!!! Prices of this pairs decreased, selling: " + positionsToClose);
+        log.info("!!! Prices of " + positionsToClose.size() + " pairs decreased, selling: " + positionsToClose);
         spotTrading.closeAllPostitions(positionsToClose);
 
         for (Map.Entry<String, Double> entrySet : positionsToClose.entrySet()) {
@@ -271,7 +270,7 @@ public class BuyBigVolumeGrowth {
             }
         });
 
-        log.info("!!! Prices of this pairs decreased, selling: " + positionsToClose.toString());
+        log.info("!!! Prices of " + positionsToClose.size() + " pairs decreased, selling: " + positionsToClose.toString());
         marketData.representClosingPositions(positionsToClose, "USDT");
     }
 
