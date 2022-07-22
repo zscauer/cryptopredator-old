@@ -20,12 +20,12 @@ public class SpotTrading {
     @Autowired
     BinanceApiRestClient restClient;
 
-    public NewOrderResponse placeMarketOrder(String symbol, Double quantity) {
-        log.info("Placing market order to buy " + symbol + " " + quantity);
+    public NewOrderResponse placeMarketBuyOrder(String symbol, Double quantity) {
+        log.info("Placing market order to buy " + symbol + " " + Math.ceil(quantity));
         return restClient.newOrder(NewOrder.marketBuy(symbol, String.valueOf(Math.ceil(quantity))));
     }
 
-    public NewOrderResponse placeLimitOrder(String symbol, String quantity, String price) {
+    public NewOrderResponse placeLimitBuyOrder(String symbol, String quantity, String price) {
         return restClient.newOrder(NewOrder.limitBuy(symbol, TimeInForce.GTC, quantity, price));
     }
 

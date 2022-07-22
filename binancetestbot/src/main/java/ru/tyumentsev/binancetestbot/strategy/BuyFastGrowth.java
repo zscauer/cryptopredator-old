@@ -72,7 +72,7 @@ public class BuyFastGrowth {
         // place all pairs in another collection like it was bought:
         for (TickerStatistics tickerStatistics : pairsToBuy) {
             log.info("Buy " + tickerStatistics.getSymbol() + " for " + tickerStatistics.getLastPrice());
-            marketData.putOpenedPosition(tickerStatistics.getSymbol(),
+            marketData.putOpenedPositionToPriceMonitoring(tickerStatistics.getSymbol(),
                     Double.parseDouble(tickerStatistics.getLastPrice()));
         }
         // remove from list because they bought.
@@ -80,7 +80,7 @@ public class BuyFastGrowth {
     }
 
     public void closeOpenedPositions() {
-        Map<String, Double> openedPositions = marketData.getOpenedPositionsCache();
+        Map<String, Double> openedPositions = marketData.getOpenedPositionsLastPrices();
         Map<String, Double> positionsToClose = new HashMap<>();
         openedPositions.entrySet().stream().forEach(entrySet -> {
             Double lastPrice = Double.parseDouble(marketInfo.getLastTickerPrice(entrySet.getKey()).getPrice());

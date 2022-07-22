@@ -50,12 +50,12 @@ public class BuyBigVolumeGrowth {
         List<AssetBalance> accountAssetBalance = accountManager.getAccountBalances();
         accountAssetBalance.stream().filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
                 .forEach(balance -> {
-                    marketData.putOpenedPosition(balance.getAsset() + "USDT",
+                    marketData.putOpenedPositionToPriceMonitoring(balance.getAsset() + "USDT",
                             Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + "USDT").getPrice()));
                 });
 
-        log.info("Next pairs initialized from account manager to opened positions cache: "
-                + marketData.getOpenedPositionsCache());
+        log.info("Next pairs initialized from account manager to opened positions price monitoring: "
+                + marketData.getOpenedPositionsLastPrices());
     }
 
     public void fillCheapPairs(String asset) {
@@ -89,51 +89,6 @@ public class BuyBigVolumeGrowth {
         });
     }
 
-    // public Closeable updateMonitoredCandleSticks(List<String> pairs) {
-    // // get candlesticks cache to compare previous candle with current.
-    // // final Map<String, LinkedList<CandlestickEvent>> cachedCandlesticks =
-    // // marketData.getCachedCandleSticks();
-    // // log.info("There is " + marketData.getCheapPairs("USDT").size() + " in
-    // cheap
-    // // pairs.");
-    // // // listen candlestick events of each of pairs that have low price.
-    // // return
-    // //
-    // binanceApiWebSocketClient.onCandlestickEvent(marketData.getCheapPairsSymbols("USDT"),
-    // // CandlestickInterval.HOURLY, callback -> {
-    // // // if cache have queue of candles of previous(!) period:
-    // // if (cachedCandlesticks.containsKey(callback.getSymbol()) &&
-    // // cachedCandlesticks
-    // // .get(callback.getSymbol()).getFirst().getCloseTime() <
-    // // callback.getCloseTime()) {
-
-    // // // get oldest candle event to compare with.
-    // // CandlestickEvent previousEvent =
-    // // cachedCandlesticks.get(callback.getSymbol()).getFirst();
-
-    // // // if time of close of older candle is different from current more then 1
-    // // hour,
-    // // // it means need to update compared candles by replacing candles in queue.
-    // // if (callback.getCloseTime() - previousEvent.getCloseTime() > 3_600_000L) {
-    // //
-    // // 3_600_000 = 1 hour
-    // // log.info(
-    // // "Update candlestick for pair " + callback.getSymbol() + new
-    // // Date(previousEvent.getCloseTime())
-    // // + " replaced to " + new Date(callback.getCloseTime()));
-    // // marketData.pushCandlestickEventToMonitoring(callback.getSymbol(),
-    // callback);
-    // // } else { // else update last candle.
-    // // marketData.addCandlestickEventToMonitoring(callback.getSymbol(),
-    // callback);
-    // // }
-    // // } else { // else update candle.
-    // // marketData.addCandlestickEventToMonitoring(callback.getSymbol(),
-    // callback);
-    // // }
-    // // });
-    // }
-
     // compare volumes in current and previous candles to find big volume growth.
     public void compareCandlesVolumes() {
         Map<String, List<Candlestick>> cachedCandlesticks = marketData.getCachedCandles();
@@ -143,40 +98,10 @@ public class BuyBigVolumeGrowth {
                         .parseDouble(entrySet.getValue().get(0).getVolume()) * 2.5 // current volume bigger then
                                                                                    // previous.
                         && Double.parseDouble(entrySet.getValue().get(1).getClose()) > Double
-                                .parseDouble(entrySet.getValue().get(0).getClose()) * 1.05) // current price bigger the
+                                .parseDouble(entrySet.getValue().get(0).getClose()) * 1.03) // current price bigger then
                                                                                             // previous.
                 .forEach(entrySet -> marketData.addPairToTestBuy(entrySet.getKey(),
                         Double.parseDouble(entrySet.getValue().get(1).getClose()))); // add this pairs to buy.
-
-        // Map<String, CandlestickEvent> cachedCandlestickEvents =
-        // marketData.getCachedCandleStickEvents();
-        // log.info("There is " + cachedCandlestickEvents.size() + " elements in cache
-        // of candle sticks.");
-        // cachedCandlestickEvents.values().stream()
-        // .filter(candleSticksList -> candleSticksList.getCloseTime() <
-        // candleSticksList
-        // .getCloseTime()
-        // && Double.parseDouble(candleSticksList.getVolume()) > Double
-        // .parseDouble(candleSticksList.getVolume()) * 2.5)
-        // .map(sticksList -> sticksList).forEach(candleStickEvent -> {
-        // marketData.addPairToTestBuy(candleStickEvent.getSymbol(),
-        // Double.parseDouble(candleStickEvent.getClose()));
-        // });
-
-        // Map<String, LinkedList<CandlestickEvent>> cachedCandlesticks =
-        // marketData.getCachedCandleSticks();
-        // log.info("There is " + cachedCandlesticks.size() + " elements in cache of
-        // candle sticks.");
-        // cachedCandlesticks.values().stream()
-        // .filter(candleSticksList -> candleSticksList.peekFirst().getCloseTime() <
-        // candleSticksList.peekLast()
-        // .getCloseTime()
-        // && Double.parseDouble(candleSticksList.peekLast().getVolume()) > Double
-        // .parseDouble(candleSticksList.peekFirst().getVolume()) * 2.5)
-        // .map(sticksList -> sticksList.getLast()).forEach(candleStickEvent -> {
-        // marketData.addPairToTestBuy(candleStickEvent.getSymbol(),
-        // Double.parseDouble(candleStickEvent.getClose()));
-        // });
     }
 
     public void buyGrownAssets() {
@@ -187,10 +112,10 @@ public class BuyBigVolumeGrowth {
             // log.info("Buy pairs " + pairsToBuy);
             for (Map.Entry<String, Double> entrySet : pairsToBuy.entrySet()) {
                 if (accountManager.getFreeAssetBalance("USDT") > 13) { // if account balance is enough
-                    NewOrderResponse response = spotTrading.placeMarketOrder(entrySet.getKey(),
+                    NewOrderResponse response = spotTrading.placeMarketBuyOrder(entrySet.getKey(),
                             11 / entrySet.getValue());
                     if (response.getStatus() == OrderStatus.FILLED) {
-                        marketData.putOpenedPosition(entrySet.getKey(), Double.parseDouble(response.getPrice()));
+                        marketData.putOpenedPositionToPriceMonitoring(entrySet.getKey(), Double.parseDouble(response.getPrice()));
                     } else {
                         System.out.println(response);
                     }
@@ -206,8 +131,8 @@ public class BuyBigVolumeGrowth {
         }
     }
 
-    public void checkMarketPositions() { // real deals
-        Map<String, Double> openedPositionsCache = marketData.getOpenedPositionsCache();
+    public void checkMarketPositions(String quoteAsset) { // real deals
+        Map<String, Double> openedPositionsLastPrices = marketData.getOpenedPositionsLastPrices();
         List<AssetBalance> currentBalances = accountManager.getAccountBalances().stream()
                 .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB"))).toList();
 
@@ -217,7 +142,7 @@ public class BuyBigVolumeGrowth {
 
         Map<String, Double> positionsToClose = new HashMap<>();
 
-        List<String> pairsQuoteAssetsOnBalance = currentBalances.stream().map(balance -> balance.getAsset() + "USDT")
+        List<String> pairsQuoteAssetsOnBalance = currentBalances.stream().map(balance -> balance.getAsset() + quoteAsset)
                 .toList();
         List<TickerPrice> currentPrices = marketInfo
                 .getLastTickersPrices(
@@ -226,29 +151,31 @@ public class BuyBigVolumeGrowth {
 
         currentPrices.stream().forEach(tickerPrice -> {
             Double currentPrice = Double.parseDouble(tickerPrice.getPrice());
-            if (currentPrice > openedPositionsCache.get(tickerPrice.getSymbol())) { // update current price if it growth
+            if (currentPrice > openedPositionsLastPrices.get(tickerPrice.getSymbol())) { // update current price if it growth
                 log.info("Price of " + tickerPrice.getSymbol() + " growth and now equals " + currentPrice);
-                openedPositionsCache.put(tickerPrice.getSymbol(), currentPrice);
-            } else if (currentPrice < openedPositionsCache.get(tickerPrice.getSymbol()) * 0.93) { // close position if
+                marketData.putOpenedPositionToPriceMonitoring(tickerPrice.getSymbol(), currentPrice);
+            } else if (currentPrice < openedPositionsLastPrices.get(tickerPrice.getSymbol()) * 0.93) { // close position if
                                                                                                   // price
                 // decreased
                 positionsToClose.put(tickerPrice.getSymbol(),
-                        accountManager.getFreeAssetBalance(tickerPrice.getSymbol().replace("USDT", "")));
+                        accountManager.getFreeAssetBalance(tickerPrice.getSymbol().replace(quoteAsset, "")));
             }
         });
 
         log.info("!!! Prices of " + positionsToClose.size() + " pairs decreased, selling: " + positionsToClose);
         spotTrading.closeAllPostitions(positionsToClose);
 
-        for (Map.Entry<String, Double> entrySet : positionsToClose.entrySet()) {
-            openedPositionsCache.remove(entrySet.getKey());
-        }
+        // is it correct to remove like that?
+        openedPositionsLastPrices.keySet().removeAll(positionsToClose.keySet());
+        // for (Map.Entry<String, Double> entrySet : positionsToClose.entrySet()) {
+        //     openedPositionsCache.remove(entrySet.getKey());
+        // }
 
         // marketData.representClosingPositions(positionsToClose, "USDT");
     }
 
     public void checkOpenedPositions() { // test method
-        Map<String, Double> openedPositions = marketData.getOpenedPositionsCache();
+        Map<String, Double> openedPositions = marketData.getOpenedPositionsLastPrices();
 
         if (openedPositions.isEmpty()) {
             return;
@@ -263,7 +190,7 @@ public class BuyBigVolumeGrowth {
             Double currentPrice = Double.parseDouble(tickerPrice.getPrice());
             if (currentPrice > openedPositions.get(tickerPrice.getSymbol())) { // update current price if it growth
                 log.info("Price of " + tickerPrice.getSymbol() + " growth and now equals " + currentPrice);
-                openedPositions.put(tickerPrice.getSymbol(), currentPrice);
+                marketData.putOpenedPositionToPriceMonitoring(tickerPrice.getSymbol(), currentPrice);
             } else if (currentPrice < openedPositions.get(tickerPrice.getSymbol()) * 0.93) { // close position if price
                                                                                              // decreased
                 positionsToClose.put(tickerPrice.getSymbol(), currentPrice);

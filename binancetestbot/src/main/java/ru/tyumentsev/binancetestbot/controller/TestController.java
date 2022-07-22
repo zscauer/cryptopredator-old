@@ -9,20 +9,20 @@ import java.util.Map;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.domain.account.Account;
 import com.binance.api.client.domain.account.AssetBalance;
-import com.binance.api.client.domain.event.CandlestickEvent;
+import com.binance.api.client.domain.market.Candlestick;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import ru.tyumentsev.binancetestbot.cache.MarketData;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/state")
@@ -35,7 +35,7 @@ public class TestController {
 
     Closeable openedWebSocket;
 
-    @GetMapping(value = "/closeWS")
+    @GetMapping("/closeWS")
     public Map<String, String> closeWebSocket() {
         try {
             if (openedWebSocket == null) {
@@ -64,19 +64,29 @@ public class TestController {
         return account.getAssetBalance(ticker.toUpperCase());
     }
 
-    @GetMapping("/openedPositions")
-    public Map<String, Double> getOpenedPositions() {
-        return marketData.getOpenedPositionsCache();
+    @GetMapping("/buyBigVolumeChange/getCheapPairsWithoutOpenedPositions")
+    public List<String> getCheapPairsWithoutOpenedPositions(@RequestParam String asset) {
+        return marketData.getCheapPairsWithoutOpenedPositions(asset);
+    }
+    
+    @GetMapping("/buyBigVolumeChange/getCachedCandleSticks")
+    public Map<String, List<Candlestick>> getCachedCandleSticks() {
+        return marketData.getCachedCandles();
     }
 
-    @GetMapping("/buyBigVolumeChange/getMonitoredCandleSticks")
-    public Map<String, CandlestickEvent> getMonitoredCandleSticks(@RequestParam("asset") String asset) {
-        return marketData.getCachedCandleStickEvents();
+    @GetMapping("/openedPositions")
+    public Map<String, Double> getOpenedPositions() {
+        return marketData.getOpenedPositionsLastPrices();
+    }
+
+    @DeleteMapping("/openedPositions/{pair}")
+    public void deletePairFromOpenedPositionsCache(@PathVariable String pair) {
+        marketData.getOpenedPositionsLastPrices().remove(pair.toUpperCase());
     }
 
     @DeleteMapping("/openedPositions")
-    public void deletePairFromOpenedPositionsCache(@RequestBody String pair) {
-        marketData.getOpenedPositionsCache().remove(pair.toUpperCase());
+    public void closeAllOpenedPositions() {
+        // TODO write positions closing.
     }
 
 }
