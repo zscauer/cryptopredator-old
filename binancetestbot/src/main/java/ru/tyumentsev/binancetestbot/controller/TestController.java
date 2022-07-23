@@ -3,6 +3,7 @@ package ru.tyumentsev.binancetestbot.controller;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,8 +22,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import ru.tyumentsev.binancetestbot.cache.MarketData;
-import org.springframework.web.bind.annotation.RequestParam;
+import ru.tyumentsev.binancetestbot.service.SpotTrading;
 
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/state")
@@ -32,6 +34,7 @@ public class TestController {
 
     final BinanceApiRestClient restClient;
     final MarketData marketData;
+    final SpotTrading spotTrading;
 
     Closeable openedWebSocket;
 
@@ -68,7 +71,7 @@ public class TestController {
     public List<String> getCheapPairsWithoutOpenedPositions(@RequestParam String asset) {
         return marketData.getCheapPairsWithoutOpenedPositions(asset);
     }
-    
+
     @GetMapping("/buyBigVolumeChange/getCachedCandleSticks")
     public Map<String, List<Candlestick>> getCachedCandleSticks() {
         return marketData.getCachedCandles();
@@ -86,7 +89,13 @@ public class TestController {
 
     @DeleteMapping("/openedPositions")
     public void closeAllOpenedPositions() {
-        // TODO write positions closing.
-    }
+        Map<String, Double> positionsToClose = new HashMap<>();
 
+        for (Map.Entry<String, Double> entrySet : marketData.getOpenedPositionsLastPrices().entrySet()) {
+            positionsToClose.put(entrySet.getKey(),
+                    Double.parseDouble(restClient.getAccount().getAssetBalance(entrySet.getKey().replace("USDT", "")).getFree()));
+        }
+
+        spotTrading.closeAllPostitions(positionsToClose);
+    }
 }

@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import com.binance.api.client.BinanceApiAsyncRestClient;
 import com.binance.api.client.BinanceApiClientFactory;
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.BinanceApiWebSocketClient;
@@ -37,6 +38,12 @@ public class ApplicationConfig {
     @DependsOn("binanceApiClientFactory")
     public BinanceApiRestClient binanceApiRestClient() {
         return binanceApiClientFactory().newRestClient();
+    }
+
+    @Bean
+    @DependsOn("binanceApiClientFactory")
+    public BinanceApiAsyncRestClient binanceApiAsyncRestClient() {
+        return binanceApiClientFactory().newAsyncRestClient();
     }
 
     @Bean

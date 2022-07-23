@@ -138,6 +138,10 @@ public class MarketData {
         openedPositionsLastPrices.put(pair, price);
     }
 
+    public void removeClodesPositoinsFromPriceMonitoring(String pair) {
+        openedPositionsLastPrices.remove(pair);
+    }
+
     public void representClosingPositions(Map<String, Double> closedPairs, String asset) {
         closedPairs.entrySet().stream().forEach(entrySet -> {
             openedPositionsLastPrices.remove(entrySet.getKey());

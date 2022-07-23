@@ -48,7 +48,8 @@ public class BuyBigVolumeGrowth {
     public void initializeMarketData() {
         // fill cache of opened positions with last market price of each.
         List<AssetBalance> accountAssetBalance = accountManager.getAccountBalances();
-        accountAssetBalance.stream().filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
+        accountAssetBalance.stream()
+                .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
                 .forEach(balance -> {
                     marketData.putOpenedPositionToPriceMonitoring(balance.getAsset() + "USDT",
                             Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + "USDT").getPrice()));
@@ -109,23 +110,35 @@ public class BuyBigVolumeGrowth {
 
         if (pairsToBuy.size() > 0) {
             log.info("There is " + pairsToBuy.size() + " elements in test map to buy: " + pairsToBuy);
-            // log.info("Buy pairs " + pairsToBuy);
-            for (Map.Entry<String, Double> entrySet : pairsToBuy.entrySet()) {
-                if (accountManager.getFreeAssetBalance("USDT") > 13) { // if account balance is enough
-                    NewOrderResponse response = spotTrading.placeMarketBuyOrder(entrySet.getKey(),
-                            11 / entrySet.getValue());
-                    if (response.getStatus() == OrderStatus.FILLED) {
-                        marketData.putOpenedPositionToPriceMonitoring(entrySet.getKey(), Double.parseDouble(response.getPrice()));
-                    } else {
-                        System.out.println(response);
-                    }
-                } else {
-                    log.info("!!! Not enough USDT balance to buy " + entrySet.getKey() + " for " + entrySet.getValue());
-                    // marketData.putOpenedPosition(entrySet.getKey(), entrySet.getValue()); // put
-                    // pair to monitoring it
+            if (accountManager.getFreeAssetBalance("USDT") > 13 * pairsToBuy.size()) {
+                for (Map.Entry<String, Double> entrySet : pairsToBuy.entrySet()) {
+                    spotTrading.placeLimitBuyOrderAtLastMarketPrice(entrySet.getKey(), 11 / entrySet.getValue());
                 }
             }
             pairsToBuy.clear();
+            
+            
+            // log.info("There is " + pairsToBuy.size() + " elements in test map to buy: " + pairsToBuy);
+            // // log.info("Buy pairs " + pairsToBuy);
+            // for (Map.Entry<String, Double> entrySet : pairsToBuy.entrySet()) {
+            //     if (accountManager.getFreeAssetBalance("USDT") > 13) { // if account balance is
+            //                                                                                // enough
+            //         // NewOrderResponse response =
+            //         // spotTrading.placeMarketBuyOrder(entrySet.getKey(),
+            //         // 11 / entrySet.getValue());
+            //         // if (response.getStatus() == OrderStatus.FILLED) {
+            //         // marketData.putOpenedPositionToPriceMonitoring(entrySet.getKey(),
+            //         // Double.parseDouble(response.getPrice()));
+            //         // } else {
+            //         // System.out.println(response);
+            //         // }
+            //     } else {
+            //         log.info("!!! Not enough USDT balance to buy " + entrySet.getKey() + " for " + entrySet.getValue());
+            //         // marketData.putOpenedPosition(entrySet.getKey(), entrySet.getValue()); // put
+            //         // pair to monitoring it
+            //     }
+            // }
+            // pairsToBuy.clear();
         } else {
             // log.info("Nothing to buy");
         }
@@ -142,7 +155,8 @@ public class BuyBigVolumeGrowth {
 
         Map<String, Double> positionsToClose = new HashMap<>();
 
-        List<String> pairsQuoteAssetsOnBalance = currentBalances.stream().map(balance -> balance.getAsset() + quoteAsset)
+        List<String> pairsQuoteAssetsOnBalance = currentBalances.stream()
+                .map(balance -> balance.getAsset() + quoteAsset)
                 .toList();
         List<TickerPrice> currentPrices = marketInfo
                 .getLastTickersPrices(
@@ -151,11 +165,13 @@ public class BuyBigVolumeGrowth {
 
         currentPrices.stream().forEach(tickerPrice -> {
             Double currentPrice = Double.parseDouble(tickerPrice.getPrice());
-            if (currentPrice > openedPositionsLastPrices.get(tickerPrice.getSymbol())) { // update current price if it growth
+            if (currentPrice > openedPositionsLastPrices.get(tickerPrice.getSymbol())) { // update current price if it
+                                                                                         // growth
                 log.info("Price of " + tickerPrice.getSymbol() + " growth and now equals " + currentPrice);
                 marketData.putOpenedPositionToPriceMonitoring(tickerPrice.getSymbol(), currentPrice);
-            } else if (currentPrice < openedPositionsLastPrices.get(tickerPrice.getSymbol()) * 0.93) { // close position if
-                                                                                                  // price
+            } else if (currentPrice < openedPositionsLastPrices.get(tickerPrice.getSymbol()) * 0.93) { // close position
+                                                                                                       // if
+                // price
                 // decreased
                 positionsToClose.put(tickerPrice.getSymbol(),
                         accountManager.getFreeAssetBalance(tickerPrice.getSymbol().replace(quoteAsset, "")));
@@ -167,9 +183,6 @@ public class BuyBigVolumeGrowth {
 
         // is it correct to remove like that?
         openedPositionsLastPrices.keySet().removeAll(positionsToClose.keySet());
-        // for (Map.Entry<String, Double> entrySet : positionsToClose.entrySet()) {
-        //     openedPositionsCache.remove(entrySet.getKey());
-        // }
 
         // marketData.representClosingPositions(positionsToClose, "USDT");
     }
@@ -197,7 +210,8 @@ public class BuyBigVolumeGrowth {
             }
         });
 
-        log.info("!!! Prices of " + positionsToClose.size() + " pairs decreased, selling: " + positionsToClose.toString());
+        log.info("!!! Prices of " + positionsToClose.size() + " pairs decreased, selling: "
+                + positionsToClose.toString());
         marketData.representClosingPositions(positionsToClose, "USDT");
     }
 
