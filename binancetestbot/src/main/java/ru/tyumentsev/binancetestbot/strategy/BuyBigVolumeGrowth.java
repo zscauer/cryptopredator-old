@@ -10,13 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.binance.api.client.BinanceApiWebSocketClient;
-import com.binance.api.client.domain.OrderStatus;
 import com.binance.api.client.domain.account.AssetBalance;
-import com.binance.api.client.domain.account.NewOrderResponse;
 import com.binance.api.client.domain.market.Candlestick;
 import com.binance.api.client.domain.market.CandlestickInterval;
 import com.binance.api.client.domain.market.TickerPrice;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import ru.tyumentsev.binancetestbot.cache.MarketData;
@@ -35,29 +34,17 @@ public class BuyBigVolumeGrowth {
      */
 
     @Autowired
+    @Getter
     MarketInfo marketInfo;
     @Autowired
     MarketData marketData;
     @Autowired
     SpotTrading spotTrading;
     @Autowired
+    @Getter
     AccountManager accountManager;
     @Autowired
     BinanceApiWebSocketClient binanceApiWebSocketClient;
-
-    public void initializeMarketData() {
-        // fill cache of opened positions with last market price of each.
-        List<AssetBalance> accountAssetBalance = accountManager.getAccountBalances();
-        accountAssetBalance.stream()
-                .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
-                .forEach(balance -> {
-                    marketData.putOpenedPositionToPriceMonitoring(balance.getAsset() + "USDT",
-                            Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + "USDT").getPrice()));
-                });
-
-        log.info("Next pairs initialized from account manager to opened positions price monitoring: "
-                + marketData.getOpenedPositionsLastPrices());
-    }
 
     public void fillCheapPairs(String asset) {
         // get all pairs, that trades against USDT.
@@ -181,10 +168,7 @@ public class BuyBigVolumeGrowth {
         log.info("!!! Prices of " + positionsToClose.size() + " pairs decreased, selling: " + positionsToClose);
         spotTrading.closeAllPostitions(positionsToClose);
 
-        // is it correct to remove like that?
         openedPositionsLastPrices.keySet().removeAll(positionsToClose.keySet());
-
-        // marketData.representClosingPositions(positionsToClose, "USDT");
     }
 
     public void checkOpenedPositions() { // test method

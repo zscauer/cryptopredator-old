@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import ru.tyumentsev.binancetestbot.cache.MarketData;
 import ru.tyumentsev.binancetestbot.service.SpotTrading;
+import ru.tyumentsev.binancetestbot.strategy.BuyBigVolumeGrowth;
 
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -35,6 +36,7 @@ public class TestController {
     final BinanceApiRestClient restClient;
     final MarketData marketData;
     final SpotTrading spotTrading;
+    final BuyBigVolumeGrowth buyBigVolumeGrowth;
 
     Closeable openedWebSocket;
 
@@ -89,6 +91,7 @@ public class TestController {
 
     @DeleteMapping("/openedPositions")
     public void closeAllOpenedPositions() {
+        marketData.initializeOpenedPositionsFromMarket(buyBigVolumeGrowth.getMarketInfo(), buyBigVolumeGrowth.getAccountManager());
         Map<String, Double> positionsToClose = new HashMap<>();
 
         for (Map.Entry<String, Double> entrySet : marketData.getOpenedPositionsLastPrices().entrySet()) {

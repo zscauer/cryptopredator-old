@@ -15,16 +15,21 @@ import com.binance.api.client.domain.market.Candlestick;
 import com.binance.api.client.domain.market.TickerStatistics;
 
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+import ru.tyumentsev.binancetestbot.service.AccountManager;
+import ru.tyumentsev.binancetestbot.service.MarketInfo;
 
 @Repository
+@Log4j2
 public class MarketData {
     // key - quote asset, value - available pairs to this asset.
     Map<String, List<String>> availablePairs = new HashMap<>();
     // + "Buy fast growth" strategy
     Set<TickerStatistics> toBuy = new HashSet<>();
-    // monitoring last maximun price of opened positions. key - pair, value - last price.
+    // monitoring last maximun price of opened positions. key - pair, value - last
+    // price.
     @Getter
-    Map<String, Double> openedPositionsLastPrices = new HashMap<>();
+    Map<String, Double> openedPositionsLastPrices = new ConcurrentHashMap<>();
     // key - pair, value - price of closing.
     Map<String, Double> closedPositions = new HashMap<>();
     // - "Buy fast growth" strategy
@@ -45,6 +50,20 @@ public class MarketData {
                                                                        // API.
     final String QUERY_SYMBOLS_BEGIN = "[", DELIMETER = "\"", QUERY_SYMBOLS_END = "]"; // required format is
                                                                                        // "["BTCUSDT","BNBUSDT"]".
+
+    public void initializeOpenedPositionsFromMarket(MarketInfo marketInfo, AccountManager accountManager) {
+        openedPositionsLastPrices.clear();
+        // fill cache of opened positions with last market price of each.
+        accountManager.getAccountBalances().stream()
+                .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
+                .forEach(balance -> {
+                    putOpenedPositionToPriceMonitoring(balance.getAsset() + "USDT",
+                            Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + "USDT").getPrice()));
+                });
+
+        log.info("Next pairs initialized from account manager to opened positions price monitoring: "
+                + getOpenedPositionsLastPrices());
+    }
 
     public void addAvailablePairs(String asset, List<String> pairs) {
         availablePairs.put(asset.toUpperCase(), pairs);
@@ -138,7 +157,11 @@ public class MarketData {
         openedPositionsLastPrices.put(pair, price);
     }
 
-    public void removeClodesPositoinsFromPriceMonitoring(String pair) {
+    public void clearOpenedPositionsLastPrices() {
+        openedPositionsLastPrices.clear();
+    }
+
+    public void removeClosedPositoinFromPriceMonitoring(String pair) {
         openedPositionsLastPrices.remove(pair);
     }
 
@@ -149,8 +172,6 @@ public class MarketData {
                 cheapPairs.get(asset).add(entrySet.getKey());
             }
         });
-
-        // closedPositions.putAll(closedPairs);
     }
 
     public void addCandlesticksToCache(String ticker, List<Candlestick> sticks) {
@@ -163,13 +184,6 @@ public class MarketData {
 
     public void addCandlestickEventToMonitoring(String ticker, CandlestickEvent candlestickEvent) {
         cachedCandlestickEvents.put(ticker, candlestickEvent);
-        // if (cachedCandlesticks.get(ticker) == null) {
-        // LinkedList<CandlestickEvent> candlestickEventQueue = new LinkedList<>();
-        // candlestickEventQueue.addFirst(candlestickEvent);
-        // cachedCandlesticks.put(ticker, candlestickEventQueue);
-        // } else {
-        // cachedCandlesticks.get(ticker).add(1, candlestickEvent);
-        // }
     }
 
     public Map<String, CandlestickEvent> getCachedCandleStickEvents() {

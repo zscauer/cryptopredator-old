@@ -25,6 +25,6 @@ public class ApplicationInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) throws Exception {
         // TODO change to get assets tickers from config file.
         marketData.addAvailablePairs(USDT, marketInfo.getAvailableTradePairs(USDT));
-        buyBigVolumeGrowth.initializeMarketData();
+        marketData.initializeOpenedPositionsFromMarket(marketInfo, buyBigVolumeGrowth.getAccountManager());
     }
 }
