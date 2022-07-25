@@ -103,27 +103,30 @@ public class BuyBigVolumeGrowth {
                 }
             }
             pairsToBuy.clear();
-            
-            
-            // log.info("There is " + pairsToBuy.size() + " elements in test map to buy: " + pairsToBuy);
+
+            // log.info("There is " + pairsToBuy.size() + " elements in test map to buy: " +
+            // pairsToBuy);
             // // log.info("Buy pairs " + pairsToBuy);
             // for (Map.Entry<String, Double> entrySet : pairsToBuy.entrySet()) {
-            //     if (accountManager.getFreeAssetBalance("USDT") > 13) { // if account balance is
-            //                                                                                // enough
-            //         // NewOrderResponse response =
-            //         // spotTrading.placeMarketBuyOrder(entrySet.getKey(),
-            //         // 11 / entrySet.getValue());
-            //         // if (response.getStatus() == OrderStatus.FILLED) {
-            //         // marketData.putOpenedPositionToPriceMonitoring(entrySet.getKey(),
-            //         // Double.parseDouble(response.getPrice()));
-            //         // } else {
-            //         // System.out.println(response);
-            //         // }
-            //     } else {
-            //         log.info("!!! Not enough USDT balance to buy " + entrySet.getKey() + " for " + entrySet.getValue());
-            //         // marketData.putOpenedPosition(entrySet.getKey(), entrySet.getValue()); // put
-            //         // pair to monitoring it
-            //     }
+            // if (accountManager.getFreeAssetBalance("USDT") > 13) { // if account balance
+            // is
+            // // enough
+            // // NewOrderResponse response =
+            // // spotTrading.placeMarketBuyOrder(entrySet.getKey(),
+            // // 11 / entrySet.getValue());
+            // // if (response.getStatus() == OrderStatus.FILLED) {
+            // // marketData.putOpenedPositionToPriceMonitoring(entrySet.getKey(),
+            // // Double.parseDouble(response.getPrice()));
+            // // } else {
+            // // System.out.println(response);
+            // // }
+            // } else {
+            // log.info("!!! Not enough USDT balance to buy " + entrySet.getKey() + " for "
+            // + entrySet.getValue());
+            // // marketData.putOpenedPosition(entrySet.getKey(), entrySet.getValue()); //
+            // put
+            // // pair to monitoring it
+            // }
             // }
             // pairsToBuy.clear();
         } else {
@@ -152,14 +155,12 @@ public class BuyBigVolumeGrowth {
 
         currentPrices.stream().forEach(tickerPrice -> {
             Double currentPrice = Double.parseDouble(tickerPrice.getPrice());
-            if (currentPrice > openedPositionsLastPrices.get(tickerPrice.getSymbol())) { // update current price if it
-                                                                                         // growth
+            if (currentPrice > openedPositionsLastPrices.get(tickerPrice.getSymbol())) {
+                // update current price if it growth
                 log.info("Price of " + tickerPrice.getSymbol() + " growth and now equals " + currentPrice);
                 marketData.putOpenedPositionToPriceMonitoring(tickerPrice.getSymbol(), currentPrice);
-            } else if (currentPrice < openedPositionsLastPrices.get(tickerPrice.getSymbol()) * 0.93) { // close position
-                                                                                                       // if
-                // price
-                // decreased
+            } else if (currentPrice < openedPositionsLastPrices.get(tickerPrice.getSymbol()) * 0.93) {
+                // close position if price decreased
                 positionsToClose.put(tickerPrice.getSymbol(),
                         accountManager.getFreeAssetBalance(tickerPrice.getSymbol().replace(quoteAsset, "")));
             }
@@ -188,8 +189,8 @@ public class BuyBigVolumeGrowth {
             if (currentPrice > openedPositions.get(tickerPrice.getSymbol())) { // update current price if it growth
                 log.info("Price of " + tickerPrice.getSymbol() + " growth and now equals " + currentPrice);
                 marketData.putOpenedPositionToPriceMonitoring(tickerPrice.getSymbol(), currentPrice);
-            } else if (currentPrice < openedPositions.get(tickerPrice.getSymbol()) * 0.93) { // close position if price
-                                                                                             // decreased
+            } else if (currentPrice < openedPositions.get(tickerPrice.getSymbol()) * 0.93) {
+                // close position if price decreased
                 positionsToClose.put(tickerPrice.getSymbol(), currentPrice);
             }
         });
