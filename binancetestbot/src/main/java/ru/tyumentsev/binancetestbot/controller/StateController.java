@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequestMapping("/state")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
-public class TestController {
+public class StateController {
 
     final BinanceApiRestClient restClient;
     final MarketData marketData;

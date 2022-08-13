@@ -51,9 +51,9 @@ public class SpotTrading {
         // return restClient.newOrder(NewOrder.limitBuy(symbol, TimeInForce.GTC,
         // quantity, price));
         asyncRestClient.newOrder(NewOrder.limitBuy(symbol, TimeInForce.GTC, quantity, price), limitBuyResponse -> {
-            log.info("Async limit buy order placed, put result in opened positions cache: " + limitBuyResponse);
-            marketData.putOpenedPositionToPriceMonitoring(limitBuyResponse.getSymbol(),
-                    Double.parseDouble(limitBuyResponse.getPrice()));
+            log.info("Async limit buy order placed: " + limitBuyResponse);
+            // marketData.putOpenedPositionToPriceMonitoring(limitBuyResponse.getSymbol(),
+            //         Double.parseDouble(limitBuyResponse.getPrice()));
         });
     }
 
@@ -89,10 +89,10 @@ public class SpotTrading {
                     NewOrder.limitSell(symbol, TimeInForce.GTC, String.valueOf(quantity),
                             orderBookResponse.getAsks().get(0).getPrice()),
                     limitSellResponse -> {
-                        log.info("Async limit sell order placed, remove result from opened positions cache: "
+                        log.info("Async limit sell order placed: "
                                 + limitSellResponse);
 
-                        marketData.removeClosedPositoinFromPriceMonitoring(limitSellResponse.getSymbol());
+                        // marketData.removeClosedPositoinFromPriceMonitoring(limitSellResponse.getSymbol());
                     });
         });
 

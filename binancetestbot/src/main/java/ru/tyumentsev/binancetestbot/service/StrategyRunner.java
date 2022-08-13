@@ -67,7 +67,7 @@ public class StrategyRunner {
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.initialDelay}")
     private void buyBigVolumeGrowth_updateMonitoredCandles() {
         // log.info("Find big volume growth from strategy runner.");
-        buyBigVolumeGrowth.updateMonitoredCandles("USDT", CandlestickInterval.HALF_HOURLY, 2);
+        buyBigVolumeGrowth.updateMonitoredCandles("USDT", CandlestickInterval.FIFTEEN_MINUTES, 2);
 
         log.info("Monitored candles size is: " + marketData.getCachedCandles().size());
         // System.out.println(marketData.getMonitoredCandles());
@@ -91,5 +91,10 @@ public class StrategyRunner {
         buyBigVolumeGrowth.checkMarketPositions("USDT");
     }
 
+    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.keepAliveUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.keepAliveUserDataUpdateStream.initialDelay}")
+    private void buyBigVolumeGrowth_keepAliveUserDataUpdateStream() {
+        log.info("Sending signal to keep alive user data update stream.");
+        buyBigVolumeGrowth.getAccountManager().keepAliveUserDataUpdateStream();
+    }
     // ------------------------------- BuyBigVolumeGrowth strategy
 }

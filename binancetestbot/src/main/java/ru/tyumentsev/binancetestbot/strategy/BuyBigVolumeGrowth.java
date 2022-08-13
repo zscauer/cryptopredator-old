@@ -10,7 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.binance.api.client.BinanceApiWebSocketClient;
+import com.binance.api.client.domain.ExecutionType;
+import com.binance.api.client.domain.OrderSide;
 import com.binance.api.client.domain.account.AssetBalance;
+import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
+import com.binance.api.client.domain.event.UserDataUpdateEvent.UserDataUpdateEventType;
 import com.binance.api.client.domain.market.Candlestick;
 import com.binance.api.client.domain.market.CandlestickInterval;
 import com.binance.api.client.domain.market.TickerPrice;
@@ -103,32 +107,6 @@ public class BuyBigVolumeGrowth {
                 }
             }
             pairsToBuy.clear();
-
-            // log.info("There is " + pairsToBuy.size() + " elements in test map to buy: " +
-            // pairsToBuy);
-            // // log.info("Buy pairs " + pairsToBuy);
-            // for (Map.Entry<String, Double> entrySet : pairsToBuy.entrySet()) {
-            // if (accountManager.getFreeAssetBalance("USDT") > 13) { // if account balance
-            // is
-            // // enough
-            // // NewOrderResponse response =
-            // // spotTrading.placeMarketBuyOrder(entrySet.getKey(),
-            // // 11 / entrySet.getValue());
-            // // if (response.getStatus() == OrderStatus.FILLED) {
-            // // marketData.putOpenedPositionToPriceMonitoring(entrySet.getKey(),
-            // // Double.parseDouble(response.getPrice()));
-            // // } else {
-            // // System.out.println(response);
-            // // }
-            // } else {
-            // log.info("!!! Not enough USDT balance to buy " + entrySet.getKey() + " for "
-            // + entrySet.getValue());
-            // // marketData.putOpenedPosition(entrySet.getKey(), entrySet.getValue()); //
-            // put
-            // // pair to monitoring it
-            // }
-            // }
-            // pairsToBuy.clear();
         } else {
             // log.info("Nothing to buy");
         }
@@ -172,6 +150,26 @@ public class BuyBigVolumeGrowth {
         openedPositionsLastPrices.keySet().removeAll(positionsToClose.keySet());
     }
 
+    public void monitoringUserDataUpdateEvents() {
+        accountManager.listenUserDataUpdateEvents(callback -> {
+            if (callback.getEventType() == UserDataUpdateEventType.ORDER_TRADE_UPDATE
+                    && callback.getOrderTradeUpdateEvent().getExecutionType() == ExecutionType.TRADE) {
+                OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();
+                if (event.getSide() == OrderSide.BUY) {
+                    log.info("Order trade updated, put result in opened positions cache: " + event.getSymbol() + " "
+                            + event.getPrice());
+                    marketData.putOpenedPositionToPriceMonitoring(event.getSymbol(),
+                            Double.parseDouble(event.getPrice()));
+                } else {
+                    log.info("Order trade updated, remove result from opened positions cache: "
+                            + event.getSymbol() + " " + event.getPrice());
+                    marketData.removeClosedPositoinFromPriceMonitoring(event.getSymbol());
+                }
+            }
+        });
+    }
+
+    @Deprecated
     public void checkOpenedPositions() { // test method
         Map<String, Double> openedPositions = marketData.getOpenedPositionsLastPrices();
 

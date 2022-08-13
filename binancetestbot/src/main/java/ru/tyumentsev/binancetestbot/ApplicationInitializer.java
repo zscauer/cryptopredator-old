@@ -26,5 +26,7 @@ public class ApplicationInitializer implements ApplicationRunner {
         // TODO change to get assets tickers from config file.
         marketData.addAvailablePairs(USDT, marketInfo.getAvailableTradePairs(USDT));
         marketData.initializeOpenedPositionsFromMarket(marketInfo, buyBigVolumeGrowth.getAccountManager());
+        // needs to initialize listen key to keep alive user data web socket stream.
+        buyBigVolumeGrowth.getAccountManager().fillListenKey();
     }
 }
