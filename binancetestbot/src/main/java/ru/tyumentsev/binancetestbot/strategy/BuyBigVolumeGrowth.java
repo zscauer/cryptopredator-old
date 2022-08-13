@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.binance.api.client.BinanceApiWebSocketClient;
@@ -50,6 +51,11 @@ public class BuyBigVolumeGrowth {
     @Autowired
     BinanceApiWebSocketClient binanceApiWebSocketClient;
 
+    @Value("${strategy.buyBigVolumeGrowth.maximalPairPrice}")
+    int maximalPairPrice;
+    @Value("${strategy.buyBigVolumeGrowth.minimalAssetBalance}")
+    int minimalAssetBalance;
+
     public void fillCheapPairs(String asset) {
         // get all pairs, that trades against USDT.
         List<String> availablePairs = marketData.getAvailablePairs(asset);
@@ -57,7 +63,7 @@ public class BuyBigVolumeGrowth {
         List<String> filteredPairs = marketInfo
                 .getLastTickersPrices(
                         marketData.getAvailablePairsSymbolsFormatted(availablePairs, 0, availablePairs.size() - 1))
-                .stream().filter(tickerPrice -> Double.parseDouble(tickerPrice.getPrice()) < 1)
+                .stream().filter(tickerPrice -> Double.parseDouble(tickerPrice.getPrice()) < maximalPairPrice)
                 .map(TickerPrice::getSymbol).collect(Collectors.toCollection(ArrayList::new));
         log.info("Filtered " + filteredPairs.size() + " cheap tickers.");
 
@@ -96,12 +102,12 @@ public class BuyBigVolumeGrowth {
                         Double.parseDouble(entrySet.getValue().get(1).getClose()))); // add this pairs to buy.
     }
 
-    public void buyGrownAssets() {
+    public void buyGrownAssets(String asset) {
         Map<String, Double> pairsToBuy = marketData.getTestMapToBuy();
 
         if (pairsToBuy.size() > 0) {
             log.info("There is " + pairsToBuy.size() + " elements in test map to buy: " + pairsToBuy);
-            if (accountManager.getFreeAssetBalance("USDT") > 13 * pairsToBuy.size()) {
+            if (accountManager.getFreeAssetBalance(asset) > minimalAssetBalance * pairsToBuy.size()) {
                 for (Map.Entry<String, Double> entrySet : pairsToBuy.entrySet()) {
                     spotTrading.placeLimitBuyOrderAtLastMarketPrice(entrySet.getKey(), 11 / entrySet.getValue());
                 }
@@ -147,7 +153,7 @@ public class BuyBigVolumeGrowth {
         log.info("!!! Prices of " + positionsToClose.size() + " pairs decreased, selling: " + positionsToClose);
         spotTrading.closeAllPostitions(positionsToClose);
 
-        openedPositionsLastPrices.keySet().removeAll(positionsToClose.keySet());
+        // openedPositionsLastPrices.keySet().removeAll(positionsToClose.keySet());
     }
 
     public void monitoringUserDataUpdateEvents() {
@@ -156,14 +162,14 @@ public class BuyBigVolumeGrowth {
                     && callback.getOrderTradeUpdateEvent().getExecutionType() == ExecutionType.TRADE) {
                 OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();
                 if (event.getSide() == OrderSide.BUY) {
-                    log.info("Order trade updated, put result in opened positions cache: " + event.getSymbol() + " "
-                            + event.getPrice());
+                    log.info("Order trade updated, put result in opened positions cache: "
+                            + event.getSymbol() + " " + event.getPrice());
                     marketData.putOpenedPositionToPriceMonitoring(event.getSymbol(),
                             Double.parseDouble(event.getPrice()));
                 } else {
                     log.info("Order trade updated, remove result from opened positions cache: "
                             + event.getSymbol() + " " + event.getPrice());
-                    marketData.removeClosedPositoinFromPriceMonitoring(event.getSymbol());
+                    marketData.removeClosedPositionFromPriceMonitoring(event.getSymbol());
                 }
             }
         });

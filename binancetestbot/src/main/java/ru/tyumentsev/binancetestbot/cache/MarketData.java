@@ -161,7 +161,7 @@ public class MarketData {
         openedPositionsLastPrices.clear();
     }
 
-    public void removeClosedPositoinFromPriceMonitoring(String pair) {
+    public void removeClosedPositionFromPriceMonitoring(String pair) {
         openedPositionsLastPrices.remove(pair);
     }
 

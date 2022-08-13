@@ -41,7 +41,7 @@ public class SpotTrading {
                 marketBuyOrderCallback -> {
                     log.info("Async market sell order placed, remove result from opened positions cache: "
                             + marketBuyOrderCallback);
-                    marketData.removeClosedPositoinFromPriceMonitoring(marketBuyOrderCallback.getSymbol());
+                    marketData.removeClosedPositionFromPriceMonitoring(marketBuyOrderCallback.getSymbol());
                 });
         // return restClient.newOrder(NewOrder.marketBuy(symbol,
         // String.valueOf(Math.ceil(quantity))));
