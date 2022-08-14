@@ -38,12 +38,12 @@ public class MarketData {
     // stores candles, that have price < 1 USDT.
     Map<String, List<String>> cheapPairs = new HashMap<>();
     @Getter
-    Map<String, List<Candlestick>> cachedCandles = new HashMap<>(); // slow method
+    Map<String, List<Candlestick>> cachedCandles = new ConcurrentHashMap<>();
     // stores current and previous candlestick events for each pair to compare them.
     // first element - previous, last element - current.
     Map<String, CandlestickEvent> cachedCandlestickEvents = new ConcurrentHashMap<>();
     @Getter
-    Map<String, Double> testMapToBuy = new HashMap<>();
+    Map<String, Double> pairsToBuy = new HashMap<>();
     // - "Buy big volume changes" strategy
 
     final StringBuilder symbolsParameterBuilder = new StringBuilder(); // build query in format, that accepts by binance
@@ -149,7 +149,7 @@ public class MarketData {
                 .removeAll(pairs.stream().map(tickerStatistics -> tickerStatistics.getSymbol()).toList());
     }
 
-    public Set<TickerStatistics> getPairsToBuy() {
+    public Set<TickerStatistics> getTickersToBuy() {
         return toBuy;
     }
 
@@ -190,8 +190,9 @@ public class MarketData {
         return cachedCandlestickEvents;
     }
 
-    public void addPairToTestBuy(String symbol, Double price) {
-        testMapToBuy.put(symbol, price);
+    public void addPairToBuy(String symbol, Double price) {
+        log.info("Adding " +  symbol + " to buy map");
+        pairsToBuy.put(symbol, price);
     }
 
 }

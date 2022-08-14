@@ -64,11 +64,11 @@ public class BuyFastGrowth {
 
         marketData.loadPairsToBuy(accumulatedResponses); // pairs that growth.
 
-        return new ArrayList<>(marketData.getPairsToBuy());
+        return new ArrayList<>(marketData.getTickersToBuy());
     }
 
     public void makeOrdersForSelectedPairsToBuy() {
-        Set<TickerStatistics> pairsToBuy = marketData.getPairsToBuy();
+        Set<TickerStatistics> pairsToBuy = marketData.getTickersToBuy();
         // place all pairs in another collection like it was bought:
         for (TickerStatistics tickerStatistics : pairsToBuy) {
             log.info("Buy " + tickerStatistics.getSymbol() + " for " + tickerStatistics.getLastPrice());

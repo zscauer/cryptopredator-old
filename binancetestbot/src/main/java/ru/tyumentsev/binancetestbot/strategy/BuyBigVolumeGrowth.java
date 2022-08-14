@@ -1,5 +1,6 @@
 package ru.tyumentsev.binancetestbot.strategy;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,11 +56,13 @@ public class BuyBigVolumeGrowth {
     int maximalPairPrice;
     @Value("${strategy.buyBigVolumeGrowth.minimalAssetBalance}")
     int minimalAssetBalance;
+    @Value("${strategy.buyBigVolumeGrowth.baseOrderVolume}")
+    int baseOrderVolume;
 
     public void fillCheapPairs(String asset) {
         // get all pairs, that trades against USDT.
         List<String> availablePairs = marketData.getAvailablePairs(asset);
-        // filter available pairs to get cheaper then 1 USDT.
+        // filter available pairs to get cheaper then maximalPairPrice.
         List<String> filteredPairs = marketInfo
                 .getLastTickersPrices(
                         marketData.getAvailablePairsSymbolsFormatted(availablePairs, 0, availablePairs.size() - 1))
@@ -98,18 +101,19 @@ public class BuyBigVolumeGrowth {
                         && Double.parseDouble(entrySet.getValue().get(1).getClose()) > Double
                                 .parseDouble(entrySet.getValue().get(0).getClose()) * 1.03) // current price bigger then
                                                                                             // previous.
-                .forEach(entrySet -> marketData.addPairToTestBuy(entrySet.getKey(),
+                .forEach(entrySet -> marketData.addPairToBuy(entrySet.getKey(),
                         Double.parseDouble(entrySet.getValue().get(1).getClose()))); // add this pairs to buy.
     }
 
     public void buyGrownAssets(String asset) {
-        Map<String, Double> pairsToBuy = marketData.getTestMapToBuy();
+        Map<String, Double> pairsToBuy = marketData.getPairsToBuy();
 
         if (pairsToBuy.size() > 0) {
             log.info("There is " + pairsToBuy.size() + " elements in test map to buy: " + pairsToBuy);
             if (accountManager.getFreeAssetBalance(asset) > minimalAssetBalance * pairsToBuy.size()) {
                 for (Map.Entry<String, Double> entrySet : pairsToBuy.entrySet()) {
-                    spotTrading.placeLimitBuyOrderAtLastMarketPrice(entrySet.getKey(), 11 / entrySet.getValue());
+                    spotTrading.placeLimitBuyOrderAtLastMarketPrice(entrySet.getKey(),
+                            baseOrderVolume / entrySet.getValue());
                 }
             }
             pairsToBuy.clear();
@@ -156,8 +160,15 @@ public class BuyBigVolumeGrowth {
         // openedPositionsLastPrices.keySet().removeAll(positionsToClose.keySet());
     }
 
-    public void monitoringUserDataUpdateEvents() {
-        accountManager.listenUserDataUpdateEvents(callback -> {
+    /**
+     * Opens web socket stream of user data update events and monitors trade events.
+     * If it was "buy" event, than add pair from this event to monitoring,
+     * if it was "sell" event - removes from monitoring.
+     * 
+     * @return Closeable of web socket stream.
+     */
+    public Closeable monitoringUserDataUpdateEvents() {
+        return accountManager.listenUserDataUpdateEvents(callback -> {
             if (callback.getEventType() == UserDataUpdateEventType.ORDER_TRADE_UPDATE
                     && callback.getOrderTradeUpdateEvent().getExecutionType() == ExecutionType.TRADE) {
                 OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();

@@ -78,5 +78,10 @@
     "name": "strategy.buyBigVolumeGrowth.minimalAssetBalance",
     "type": "java.lang.Integer",
     "description": "A description for 'strategy.buyBigVolumeGrowth.minimalAssetBalance'"
+  },
+  {
+    "name": "strategy.buyBigVolumeGrowth.baseOrderVolume",
+    "type": "java.lang.Integer",
+    "description": "A description for 'strategy.buyBigVolumeGrowth.baseOrderVolume'"
   }
 ]}
