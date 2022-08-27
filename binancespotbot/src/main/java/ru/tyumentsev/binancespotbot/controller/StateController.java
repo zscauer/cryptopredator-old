@@ -54,6 +54,16 @@ public class StateController {
         }
     }
 
+    @GetMapping("/closeUserDataStream")
+    public Map<String, String> closeUserDataStream() {
+        try {
+            buyBigVolumeGrowth.getAccountManager().closeCurrentUserDataStream();
+            return Collections.singletonMap("response", "Command to close user data stream was successfully sent.");
+        } catch (Exception e) {
+            return Collections.singletonMap("response", e.getStackTrace().toString());
+        }
+    }
+
     @GetMapping("/accountBalance")
     public List<AssetBalance> accountBalance() {
         Account account = restClient.getAccount();

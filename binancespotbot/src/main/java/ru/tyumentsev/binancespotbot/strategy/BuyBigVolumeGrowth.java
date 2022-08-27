@@ -109,7 +109,7 @@ public class BuyBigVolumeGrowth {
         Map<String, Double> pairsToBuy = marketData.getPairsToBuy();
 
         if (pairsToBuy.size() > 0) {
-            log.info("There is " + pairsToBuy.size() + " elements in test map to buy: " + pairsToBuy);
+            // log.info("There is " + pairsToBuy.size() + " elements in test map to buy: " + pairsToBuy);
             if (accountManager.getFreeAssetBalance(asset) > minimalAssetBalance * pairsToBuy.size()) {
                 for (Map.Entry<String, Double> entrySet : pairsToBuy.entrySet()) {
                     spotTrading.placeLimitBuyOrderAtLastMarketPrice(entrySet.getKey(),
@@ -144,7 +144,10 @@ public class BuyBigVolumeGrowth {
         currentPrices.stream().forEach(tickerPrice -> {
             Double currentPrice = Double.parseDouble(tickerPrice.getPrice());
             String tickerSymbol = tickerPrice.getSymbol();
-            if (currentPrice > openedPositionsLastPrices.get(tickerSymbol)) {
+            if (openedPositionsLastPrices.get(tickerSymbol) == null) {
+                log.info("{} not found in opened positions last prices\n last prices contains: {}", tickerSymbol, openedPositionsLastPrices);
+            }
+            else if (currentPrice > openedPositionsLastPrices.get(tickerSymbol)) {
                 // update current price if it growth
                 log.info("Price of " + tickerSymbol + " growth and now equals " + currentPrice);
                 marketData.putOpenedPositionToPriceMonitoring(tickerSymbol, currentPrice);
@@ -155,7 +158,7 @@ public class BuyBigVolumeGrowth {
             }
         });
 
-        log.info("!!! Prices of " + positionsToClose.size() + " pairs decreased, selling: " + positionsToClose);
+        // log.info("!!! Prices of " + positionsToClose.size() + " pairs decreased, selling: " + positionsToClose);
         spotTrading.closeAllPostitions(positionsToClose);
 
         // openedPositionsLastPrices.keySet().removeAll(positionsToClose.keySet());
@@ -168,18 +171,18 @@ public class BuyBigVolumeGrowth {
      * 
      * @return Closeable of web socket stream.
      */
-    public Closeable monitoringUserDataUpdateEvents() {
+    public Closeable monitorUserDataUpdateEvents() {
         return accountManager.listenUserDataUpdateEvents(callback -> {
             if (callback.getEventType() == UserDataUpdateEventType.ORDER_TRADE_UPDATE
                     && callback.getOrderTradeUpdateEvent().getExecutionType() == ExecutionType.TRADE) {
                 OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();
                 if (event.getSide() == OrderSide.BUY) {
-                    log.info("Order trade updated, put result in opened positions cache: "
+                    log.info("Buy order trade updated, put result in opened positions cache: "
                             + event.getSymbol() + " " + event.getPrice());
                     marketData.putOpenedPositionToPriceMonitoring(event.getSymbol(),
                             Double.parseDouble(event.getPrice()));
                 } else {
-                    log.info("Order trade updated, remove result from opened positions cache: "
+                    log.info("Sell order trade updated, remove result from opened positions cache: "
                             + event.getSymbol() + " " + event.getPrice());
                     marketData.removeClosedPositionFromPriceMonitoring(event.getSymbol());
                 }

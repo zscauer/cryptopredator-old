@@ -13,7 +13,6 @@ import com.binance.api.client.domain.account.AssetBalance;
 import com.binance.api.client.domain.event.UserDataUpdateEvent;
 
 import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
 
@@ -27,11 +26,14 @@ public class AccountManager {
     @Autowired
     BinanceApiWebSocketClient webSocketClient;
 
-    @Getter
     String listenKey;
 
-    public void fillListenKey() {
+    public void startUserDataStreamAndSaveListenKey() {
         listenKey = restClient.startUserDataStream();
+    }
+
+    public void closeCurrentUserDataStream() {
+        restClient.closeUserDataStream(listenKey);
     }
 
     public Double getFreeAssetBalance(String asset) {
