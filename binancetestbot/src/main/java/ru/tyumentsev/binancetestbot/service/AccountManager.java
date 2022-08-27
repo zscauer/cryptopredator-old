@@ -15,9 +15,11 @@ import com.binance.api.client.domain.event.UserDataUpdateEvent;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.log4j.Log4j2;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Log4j2
 public class AccountManager {
     
     @Autowired
@@ -28,8 +30,8 @@ public class AccountManager {
     @Getter
     String listenKey;
 
-    public String fillListenKey() {
-        return restClient.startUserDataStream();
+    public void fillListenKey() {
+        listenKey = restClient.startUserDataStream();
     }
 
     public Double getFreeAssetBalance(String asset) {
@@ -45,6 +47,7 @@ public class AccountManager {
     }
 
     public void keepAliveUserDataUpdateStream() {
+        log.info("Sending listen key ({}) to keep alive user data stream.", listenKey);
         restClient.keepAliveUserDataStream(listenKey);
     }
 

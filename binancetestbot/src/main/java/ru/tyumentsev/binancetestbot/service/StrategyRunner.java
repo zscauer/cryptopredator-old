@@ -95,7 +95,7 @@ public class StrategyRunner {
 
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.keepAliveUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.keepAliveUserDataUpdateStream.initialDelay}")
     private void buyBigVolumeGrowth_keepAliveUserDataUpdateStream() {
-        log.info("Sending signal to keep alive user data update stream.");
+        // log.info("Sending signal to keep alive user data update stream.");
         buyBigVolumeGrowth.getAccountManager().keepAliveUserDataUpdateStream();
     }
     // ------------------------------- BuyBigVolumeGrowth strategy
