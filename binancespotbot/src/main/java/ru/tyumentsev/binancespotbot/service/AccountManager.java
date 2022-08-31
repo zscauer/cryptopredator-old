@@ -20,7 +20,7 @@ import lombok.extern.log4j.Log4j2;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Log4j2
 public class AccountManager {
-    
+
     @Autowired
     BinanceApiRestClient restClient;
     @Autowired
@@ -28,12 +28,28 @@ public class AccountManager {
 
     String listenKey;
 
-    public void startUserDataStreamAndSaveListenKey() {
+    public void initializeUserDataUpdateStream() {
+        if (listenKey == null || listenKey.isEmpty()) { // get current user stream listen key.
+            listenKey = restClient.startUserDataStream();
+        }
+
+        closeCurrentUserDataStream(); // needs to close previous stream if it's open.
+
         listenKey = restClient.startUserDataStream();
     }
 
     public void closeCurrentUserDataStream() {
+        log.info("Sending request to close user data stream with listen key {}", listenKey);
         restClient.closeUserDataStream(listenKey);
+    }
+
+    /**
+     * Keepalive a user data stream to prevent a time out.
+     * User data streams will close after 60 minutes.
+     * It's recommended to send a ping about every 30 minutes.
+     */
+    public void keepAliveUserDataUpdateStream() {
+        restClient.keepAliveUserDataStream(listenKey);
     }
 
     public Double getFreeAssetBalance(String asset) {
@@ -41,16 +57,11 @@ public class AccountManager {
     }
 
     public List<AssetBalance> getAccountBalances() {
-        return restClient.getAccount().getBalances().stream().filter(balance -> Double.parseDouble(balance.getFree()) > 0).toList();
+        return restClient.getAccount().getBalances().stream()
+                .filter(balance -> Double.parseDouble(balance.getFree()) > 0).toList();
     }
 
     public Closeable listenUserDataUpdateEvents(BinanceApiCallback<UserDataUpdateEvent> callback) {
         return webSocketClient.onUserDataUpdateEvent(listenKey, callback);
     }
-
-    public void keepAliveUserDataUpdateStream() {
-        log.info("Sending listen key ({}) to keep alive user data stream.", listenKey);
-        restClient.keepAliveUserDataStream(listenKey);
-    }
-
 }

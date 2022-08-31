@@ -60,16 +60,6 @@
     "description": "A description for 'strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.initialDelay'"
   },
   {
-    "name": "strategy.buyBigVolumeGrowth.keepAliveUserDataUpdateStream.fixed-delay",
-    "type": "java.lang.String",
-    "description": "A description for 'strategy.buyBigVolumeGrowth.keepAliveUserDataUpdateStream.fixed-delay'"
-  },
-  {
-    "name": "strategy.buyBigVolumeGrowth.keepAliveUserDataUpdateStream.initialDelay",
-    "type": "java.lang.String",
-    "description": "A description for 'strategy.buyBigVolumeGrowth.keepAliveUserDataUpdateStream.initialDelay'"
-  },
-  {
     "name": "strategy.buyBigVolumeGrowth.maximalPairPrice",
     "type": "java.lang.Integer",
     "description": "A description for 'strategy.buyBigVolumeGrowth.maximalPairPrice'"
@@ -83,5 +73,25 @@
     "name": "strategy.buyBigVolumeGrowth.baseOrderVolume",
     "type": "java.lang.Integer",
     "description": "A description for 'strategy.buyBigVolumeGrowth.baseOrderVolume'"
+  },
+  {
+    "name": "strategy.global.initializeUserDataUpdateStream.initialDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.global.initializeUserDataUpdateStream.initial-delay'"
+  },
+  {
+    "name": "strategy.global.initializeUserDataUpdateStream.fixedDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.global.initialize-alive-user-data-update-stream.fixedDelay'"
+  },
+  {
+    "name": "strategy.global.keepAliveUserDataUpdateStream.initialDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.global.keepAliveUserDataUpdateStream.initial-delay'"
+  },
+  {
+    "name": "strategy.global.keepAliveUserDataUpdateStream.fixedDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.global.keepAliveUserDataUpdateStream.fixedDelay'"
   }
 ]}

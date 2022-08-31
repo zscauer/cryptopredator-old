@@ -26,7 +26,7 @@ public class MarketData {
     Map<String, List<String>> availablePairs = new HashMap<>();
     // + "Buy fast growth" strategy
     Set<TickerStatistics> toBuy = new HashSet<>();
-    // monitoring last maximun price of opened positions. key - pair, value - last
+    // monitoring last maximum price of opened positions. key - pair, value - last
     // price.
     @Getter
     Map<String, Double> openedPositionsLastPrices = new ConcurrentHashMap<>();
@@ -61,8 +61,8 @@ public class MarketData {
                             Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + "USDT").getPrice()));
                 });
 
-        log.info("Next pairs initialized from account manager to opened positions price monitoring: "
-                + getOpenedPositionsLastPrices());
+        log.info("Next pairs initialized from account manager to opened positions price monitoring: {}",
+                getOpenedPositionsLastPrices());
     }
 
     public void addAvailablePairs(String asset, List<String> pairs) {
@@ -191,8 +191,6 @@ public class MarketData {
     }
 
     public void addPairToBuy(String symbol, Double price) {
-        // log.info("Adding " +  symbol + " to buy map");
         pairsToBuy.put(symbol, price);
     }
-
 }

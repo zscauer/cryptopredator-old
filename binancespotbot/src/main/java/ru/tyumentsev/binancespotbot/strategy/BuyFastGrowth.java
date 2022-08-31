@@ -71,7 +71,7 @@ public class BuyFastGrowth {
         Set<TickerStatistics> pairsToBuy = marketData.getTickersToBuy();
         // place all pairs in another collection like it was bought:
         for (TickerStatistics tickerStatistics : pairsToBuy) {
-            log.info("Buy " + tickerStatistics.getSymbol() + " for " + tickerStatistics.getLastPrice());
+            log.info("Buy {} at {}", tickerStatistics.getSymbol(), tickerStatistics.getLastPrice());
             marketData.putOpenedPositionToPriceMonitoring(tickerStatistics.getSymbol(),
                     Double.parseDouble(tickerStatistics.getLastPrice()));
         }
@@ -85,10 +85,10 @@ public class BuyFastGrowth {
         openedPositions.entrySet().stream().forEach(entrySet -> {
             Double lastPrice = Double.parseDouble(marketInfo.getLastTickerPrice(entrySet.getKey()).getPrice());
             if (lastPrice > entrySet.getValue() * 1.05) {
-                log.info("Price of " + entrySet.getKey() + " growth more then 5% and now equals " + lastPrice);
+                log.info("Price of {} growth more then 5% and now equals {}", entrySet.getKey(), lastPrice);
                 entrySet.setValue(lastPrice);
             } else if (lastPrice < entrySet.getValue() * 0.95) {
-                log.info("Price of " + entrySet.getKey() + " decreased more then 5% and now equals " + lastPrice);
+                log.info("Price of {} decreased more then 5% and now equals {}", entrySet.getKey(), lastPrice);
                 positionsToClose.put(entrySet.getKey(), lastPrice);
             }
         });

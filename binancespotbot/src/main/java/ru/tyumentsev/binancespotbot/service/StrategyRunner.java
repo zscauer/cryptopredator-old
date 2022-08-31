@@ -1,5 +1,8 @@
 package ru.tyumentsev.binancespotbot.service;
 
+import java.io.Closeable;
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -9,18 +12,17 @@ import com.binance.api.client.domain.market.CandlestickInterval;
 import lombok.extern.log4j.Log4j2;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
 import ru.tyumentsev.binancespotbot.strategy.BuyBigVolumeGrowth;
-import ru.tyumentsev.binancespotbot.strategy.BuyFastGrowth;
 
 @Service
 @Log4j2
 public class StrategyRunner {
 
     @Autowired
-    BuyFastGrowth buyFastGrowth;
-    @Autowired
-    BuyBigVolumeGrowth buyBigVolumeGrowth;
+    AccountManager accountManager;
     @Autowired
     MarketData marketData;
+    @Autowired
+    BuyBigVolumeGrowth buyBigVolumeGrowth;
 
     private final String USDT = "USDT";
 
@@ -92,10 +94,28 @@ public class StrategyRunner {
         buyBigVolumeGrowth.checkMarketPositions(USDT);
     }
 
-    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.keepAliveUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.keepAliveUserDataUpdateStream.initialDelay}")
+    @Scheduled(fixedDelayString = "${strategy.global.initializeUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.initializeUserDataUpdateStream.initialDelay}")
+    private void buyBigVolumeGrowth_initializeAliveUserDataUpdateStream() {
+        // User data stream are closing by binance after 24 hours of starting.
+        // log.info("Sending signal to initialize user data update stream.");
+        accountManager.initializeUserDataUpdateStream();
+        
+        Closeable userDataUpdateEventsListener = buyBigVolumeGrowth.getUserDataUpdateEventsListener();
+        if (!(userDataUpdateEventsListener == null)) {
+            try {
+                userDataUpdateEventsListener.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        buyBigVolumeGrowth.monitorUserDataUpdateEvents();
+    }
+
+    @Scheduled(fixedDelayString = "${strategy.global.keepAliveUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.keepAliveUserDataUpdateStream.initialDelay}")
     private void buyBigVolumeGrowth_keepAliveUserDataUpdateStream() {
         // log.info("Sending signal to keep alive user data update stream.");
-        buyBigVolumeGrowth.getAccountManager().keepAliveUserDataUpdateStream();
+        accountManager.keepAliveUserDataUpdateStream();
     }
     // ------------------------------- BuyBigVolumeGrowth strategy
 }
