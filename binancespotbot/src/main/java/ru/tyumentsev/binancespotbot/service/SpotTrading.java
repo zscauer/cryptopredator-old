@@ -22,35 +22,7 @@ public class SpotTrading {
     @Autowired
     MarketData marketData;
 
-    public void placeMarketBuyOrder(String symbol, Double quantity) {
-        // log.info("Placing market order to buy {} at {}", symbol, Math.ceil(quantity));
-        asyncRestClient.newOrder(NewOrder.marketBuy(symbol, String.valueOf(Math.ceil(quantity))),
-                marketBuyOrderCallback -> {
-                    log.info("Async market buy order placed, put result in opened positions cache: {}",
-                            marketBuyOrderCallback);
-                    marketData.putOpenedPositionToPriceMonitoring(marketBuyOrderCallback.getSymbol(),
-                            Double.parseDouble(marketBuyOrderCallback.getPrice()));
-                });
-    }
-
-    public void placeMarketSellOrder(String symbol, Double quantity) {
-        // log.info("Placing market order to sell {} at {}", symbol, Math.ceil(quantity));
-        asyncRestClient.newOrder(NewOrder.marketBuy(symbol, String.valueOf(Math.ceil(quantity))),
-                marketBuyOrderCallback -> {
-                    log.info("Async market sell order placed, remove result from opened positions cache {}",
-                            marketBuyOrderCallback);
-                    marketData.removeClosedPositionFromPriceMonitoring(marketBuyOrderCallback.getSymbol());
-                });
-    }
-
-    public void placeLimitBuyOrder(String symbol, String quantity, String price) {
-        asyncRestClient.newOrder(NewOrder.limitBuy(symbol, TimeInForce.GTC, quantity, price), limitBuyResponse -> {
-            // log.info("Async limit buy order placed: {}", limitBuyResponse);
-        });
-    }
-
     public void placeLimitBuyOrderAtLastMarketPrice(String symbol, Double quantity) {
-        // log.info("Placing limit order to buy at last order book price {} at {}", symbol, Math.ceil(quantity));
         asyncRestClient.getOrderBook(symbol, 1, orderBookResponse -> {
             placeLimitBuyOrder(symbol, String.valueOf(Math.ceil(quantity)),
                     orderBookResponse.getBids().get(0).getPrice());
@@ -58,16 +30,45 @@ public class SpotTrading {
     }
 
     public void placeLimitSellOrderAtLastMarketPrice(String symbol, Double quantity) {
-        // log.info("Placing limit order to sell at last order book price " + symbol + " " + quantity);
         asyncRestClient.getOrderBook(symbol, 1, orderBookResponse -> {
-            asyncRestClient.newOrder(
-                    NewOrder.limitSell(symbol, TimeInForce.GTC, String.valueOf(quantity),
-                            orderBookResponse.getAsks().get(0).getPrice()),
-                    limitSellResponse -> {
-                        log.info("Async limit sell order placed: {}",
-                                limitSellResponse);
-                    });
+            placeLimitSellOrder(symbol, String.valueOf(quantity),
+                    orderBookResponse.getAsks().get(0).getPrice());
+            // asyncRestClient.newOrder(
+            // NewOrder.limitSell(symbol, TimeInForce.GTC, String.valueOf(quantity),
+            // orderBookResponse.getAsks().get(0).getPrice()),
+            // limitSellResponse -> {
+            // log.info("Async limit sell order placed: {}",
+            // limitSellResponse);
+            // });
         });
+    }
+
+    public void placeLimitBuyOrder(String symbol, String quantity, String price) {
+        asyncRestClient.newOrder(NewOrder.limitBuy(symbol, TimeInForce.GTC, quantity, price), limitBuyResponse -> {
+            log.info("Async limit buy order placed: {}", limitBuyResponse);
+        });
+    }
+
+    public void placeLimitSellOrder(String symbol, String quantity, String price) {
+        asyncRestClient.newOrder(NewOrder.limitSell(symbol, TimeInForce.GTC, quantity, price), limitSellResponse -> {
+            log.info("Async limit sell order placed: {}", limitSellResponse);
+        });
+    }
+
+    public void placeMarketBuyOrder(String symbol, Double quantity) {
+        asyncRestClient.newOrder(NewOrder.marketBuy(symbol, String.valueOf(Math.ceil(quantity))),
+                marketBuyOrderCallback -> {
+                    log.info("Async market buy order placed: {}",
+                            marketBuyOrderCallback);
+                });
+    }
+
+    public void placeMarketSellOrder(String symbol, Double quantity) {
+        asyncRestClient.newOrder(NewOrder.marketSell(symbol, String.valueOf(quantity)),
+                marketSellOrderCallback -> {
+                    log.info("Async market sell order placed: {}",
+                            marketSellOrderCallback);
+                });
     }
 
     public void closeAllPostitions(Map<String, Double> positionsToClose) {
@@ -75,5 +76,4 @@ public class SpotTrading {
             placeLimitSellOrderAtLastMarketPrice(entrySet.getKey(), entrySet.getValue());
         }
     }
-
 }
