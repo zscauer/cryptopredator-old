@@ -1,0 +1,65 @@
+logging:
+    file:
+        name: ./logs/strategy_logs.log
+
+# spring:
+#     datasource:
+#         url: jdbc:postgresql://spb-dev-1c-02.partner.ru:5432/remember_the_pills
+#         driver-class-name: org.postgresql.Driver
+#         username: postgres
+#         password: pgAdmin
+#     jpa:
+#         database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+# binance:
+    # api:
+        # key: vL7FQt3iSdjIfpk2j1kqqURIpw4IHwNaAbxf4HfRtygStsz7Uub7BBJdbALZKcph
+        # secret: 04fNc9h7Y2nz55AY9FjhzggJIIrbVpdVdl9dDUX2l7Dhz9DJ1VeJSVzLObHMPntU
+
+applicationconfig:
+    useTestnet: false
+    useTestnetStreaming: false
+    apiKey: ZuSPcWIbfdE74GzIZ7BBZPm8jD6fMwij4fU2Hz7RN0kzGEc2P7ApG8NgEnvQD2do # Prod
+    # vL7FQt3iSdjIfpk2j1kqqURIpw4IHwNaAbxf4HfRtygStsz7Uub7BBJdbALZKcph # TestNet
+    # b52ffadd2d77c29eec1c87e43157dbfdb13ca4376100cefcafd968c6f6dd126f # Futures
+    secret: yPTYCA8x1IzqmptNkbECWHYJfRncp4r2nHWMaq8Lb5yBg9YS891KRPd90TXCS7oY # Prod
+    # 04fNc9h7Y2nz55AY9FjhzggJIIrbVpdVdl9dDUX2l7Dhz9DJ1VeJSVzLObHMPntU # TestNet
+    # 88fb13a0a1a713e34751f26217af9f8faeeb4bb537f1c008c97d2bc3a8f8d202 # Futures
+
+strategy:
+    # ------------------ global
+    global:
+        initializeUserDataUpdateStream:
+            initialDelay: 10_000 # 10 seconds
+            fixedDelay: 86_000_340 # 23 hours 59 minutes
+        keepAliveUserDataUpdateStream:
+            initialDelay: 1_800_000 # 30 minutes
+            fixedDelay: 1_800_000 # 30 minutes
+    # ------------------ buyFastGrowth 
+    buyFastGrowth:
+        collectPairsToBuy:
+            initialDelay: 10_000 # 10 seconds
+            fixedDelay: 3_600_000 # 1 hour
+        buyCollectedPairs:
+            initialDelay: 60_000 # 1 minute
+            fixedDelay: 3_600_000 # 1 hour
+        closeOpenedPositions:
+            initialDelay: 120_000 # 2 minutes
+            fixedDelay: 600_000 # 10 minutes
+    # ------------------ buyBigVolumeGrowth
+    buyBigVolumeGrowth:
+        maximalPairPrice: 1
+        minimalAssetBalance: 13
+        baseOrderVolume: 12
+        fillCheapPairs:
+            initialDelay: 15_000 # 15 seconds
+            fixedDelay: 36_000_000 # 10 hours
+        updateMonitoredCandleSticks:
+            initialDelay: 30_000 # 30 seconds
+            fixedDelay: 300_000 # 5 minutes
+        # buyGrownAssets:
+        #     initialDelay: 60_000 # 60 seconds
+        #     fixedDelay: 300_000 # 5 minutes
+        checkOpenedPositions:
+            initialDelay: 900_000 # 2 minutes
+            fixedDelay: 240_000 # 4 minutes

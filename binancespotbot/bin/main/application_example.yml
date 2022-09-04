@@ -1,0 +1,50 @@
+logging:
+    file:
+        name: ./logs/strategy_logs.log
+
+# spring:
+#     datasource:
+#         url: jdbc:postgresql://host:port/database
+#         driver-class-name: org.postgresql.Driver
+#         username: postgres
+#         password: pgAdmin
+#     jpa:
+#         database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+applicationconfig:
+    useTestnet: false
+    useTestnetStreaming: false
+    apiKey: # Binance API key
+    secret: # Binance secret key
+
+strategy:
+    buyFastGrowth:
+        collectPairsToBuy:
+            initialDelay: 10_000 # 10 seconds
+            fixedDelay: 3_600_000 # 1 hour
+        buyCollectedPairs:
+            initialDelay: 60_000 # 1 minute
+            fixedDelay: 3_600_000 # 1 hour
+        closeOpenedPositions:
+            initialDelay: 120_000 # 2 minutes
+            fixedDelay: 600_000 # 10 minutes
+    # -----------------------
+    buyBigVolumeGrowth:
+        maximalPairPrice: 1
+        minimalAssetBalance: 13
+        baseOrderVolume: 12
+        keepAliveUserDataUpdateStream:
+            initialDelay: 1_800_000 # 30 minutes
+            fixedDelay: 1_800_000 # 30 minutes            
+        fillCheapPairs:
+            initialDelay: 15_000 # 15 seconds
+            fixedDelay: 36_000_000 # 10 hours
+        updateMonitoredCandleSticks:
+            initialDelay: 30_000 # 30 seconds
+            fixedDelay: 300_000 # 5 minutes
+        # buyGrownAssets:
+        #     initialDelay: 60_000 # 60 seconds
+        #     fixedDelay: 300_000 # 5 minutes
+        checkOpenedPositions:
+            initialDelay: 900_000 # 2 minutes
+            fixedDelay: 240_000 # 4 minutes
