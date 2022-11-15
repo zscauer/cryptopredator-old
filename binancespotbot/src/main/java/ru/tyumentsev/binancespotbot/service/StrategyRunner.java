@@ -86,8 +86,7 @@ public class StrategyRunner {
 
     @Scheduled(fixedDelayString = "${strategy.global.initializeUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.initializeUserDataUpdateStream.initialDelay}")
     private void buyBigVolumeGrowth_initializeAliveUserDataUpdateStream() {
-        // User data stream are closing by binance after 24 hours of starting.
-        // log.info("Sending signal to initialize user data update stream.");
+        // User data stream are closing by binance after 24 hours of opening.
         accountManager.initializeUserDataUpdateStream();
 
         Closeable userDataUpdateEventsListener = buyBigVolumeGrowth.getUserDataUpdateEventsListener();
@@ -95,6 +94,7 @@ public class StrategyRunner {
             try {
                 userDataUpdateEventsListener.close();
             } catch (IOException e) {
+                log.error("Error while trying to close user data update events listener:\n{}.", e.getMessage());
                 e.printStackTrace();
             }
         }

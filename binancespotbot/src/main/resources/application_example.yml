@@ -44,7 +44,7 @@ strategy:
         baseOrderVolume: 12
         volumeGrowthFactor: 3
         priceGrowthFactor: 1.03
-        priceDecreaseFactor: 0.93
+        priceDecreaseFactor: 0.87
         fillCheapPairs:
             initialDelay: 15_000 # 15 seconds
             fixedDelay: 36_000_000 # 10 hours

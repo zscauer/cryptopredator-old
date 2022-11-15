@@ -8,7 +8,6 @@ public class BinancespotbotApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(BinancespotbotApplication.class, args);
-		System.out.println("runned");
 	}
 
 }

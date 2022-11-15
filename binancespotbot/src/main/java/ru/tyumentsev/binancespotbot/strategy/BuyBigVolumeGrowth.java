@@ -115,11 +115,23 @@ public class BuyBigVolumeGrowth {
                                     .parseDouble(entrySet.getValue().get(0).getVolume()) * volumeGrowthFactor
                             && Double.parseDouble(entrySet.getValue().get(1).getClose()) > Double
                                     .parseDouble(entrySet.getValue().get(0).getClose()) * priceGrowthFactor)
-                    .forEach(entrySet -> marketData.addPairToBuy(entrySet.getKey(),
-                            Double.parseDouble(entrySet.getValue().get(1).getClose()))); // add this pairs to buy.
+                    .forEach(entrySet -> addPairToBuy(entrySet.getKey(),
+                            Double.parseDouble(entrySet.getValue().get(1).getClose()), true));
         } catch (Exception e) {
             log.error("Error while trying to find grown assets:\n{}.", e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    public void addPairToBuy(String symbol, Double price, boolean matchTrend) {
+        if (matchTrend) {
+            List<Candlestick> candleSticks = marketInfo.getCandleSticks(symbol, CandlestickInterval.DAILY, 2);
+            if (pairHadTradesInThePast(candleSticks, 2)
+                    && price > Double.parseDouble(candleSticks.get(0).getClose()) * priceGrowthFactor) {
+                marketData.putPairToBuy(symbol, price);
+            }
+        } else {
+            marketData.putPairToBuy(symbol, price);
         }
     }
 
@@ -153,9 +165,14 @@ public class BuyBigVolumeGrowth {
         }
     }
 
-    public boolean pairHadTradesInThePast(String ticker, CandlestickInterval interval, Integer qtyDaysToAnalize) {
+    public boolean pairHadTradesInThePast(String ticker, CandlestickInterval interval, Integer qtyBarsToAnalize) {
         // pair should have history of trade for some days before.
-        return marketInfo.getCandleSticks(ticker, interval, qtyDaysToAnalize).size() == qtyDaysToAnalize;
+        return marketInfo.getCandleSticks(ticker, interval, qtyBarsToAnalize).size() == qtyBarsToAnalize;
+    }
+
+    public boolean pairHadTradesInThePast(List<Candlestick> candleSticks, Integer qtyBarsToAnalize) {
+        // pair should have history of trade for some days before.
+        return candleSticks.size() == qtyBarsToAnalize;
     }
 
     public void checkMarketPositions(String quoteAsset) {

@@ -196,7 +196,7 @@ public class MarketData {
         return cachedCandlestickEvents;
     }
 
-    public void addPairToBuy(String symbol, Double price) {
+    public void putPairToBuy(String symbol, Double price) {
         pairsToBuy.put(symbol, price);
     }
 }
