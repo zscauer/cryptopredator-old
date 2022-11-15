@@ -81,7 +81,7 @@ public class StateController {
 
     @GetMapping("/buyBigVolumeChange/getCheapPairsWithoutOpenedPositions")
     public List<String> getCheapPairsWithoutOpenedPositions(@RequestParam String asset) {
-        return marketData.getCheapPairsWithoutOpenedPositions(asset);
+        return marketData.getCheapPairsExcludeOpenedPositions(asset);
     }
 
     @GetMapping("/buyBigVolumeChange/getCachedCandleSticks")

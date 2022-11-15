@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +21,11 @@ import com.binance.api.client.domain.market.Candlestick;
 import com.binance.api.client.domain.market.CandlestickInterval;
 import com.binance.api.client.domain.market.TickerPrice;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.log4j.Log4j2;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
 import ru.tyumentsev.binancespotbot.service.AccountManager;
@@ -35,30 +38,39 @@ import ru.tyumentsev.binancespotbot.service.SpotTrading;
  */
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Log4j2
 public class BuyBigVolumeGrowth {
 
-    @Autowired
     @Getter
     MarketInfo marketInfo;
-    @Autowired
     MarketData marketData;
-    @Autowired
     SpotTrading spotTrading;
-    @Autowired
     @Getter
     AccountManager accountManager;
-    @Autowired
     BinanceApiWebSocketClient binanceApiWebSocketClient;
     @Getter
+    @NonFinal
     Closeable userDataUpdateEventsListener;
 
     @Value("${strategy.buyBigVolumeGrowth.maximalPairPrice}")
+    @NonFinal
     int maximalPairPrice;
     @Value("${strategy.buyBigVolumeGrowth.minimalAssetBalance}")
+    @NonFinal
     int minimalAssetBalance;
     @Value("${strategy.buyBigVolumeGrowth.baseOrderVolume}")
+    @NonFinal
     int baseOrderVolume;
+    @Value("${strategy.buyBigVolumeGrowth.volumeGrowthFactor}")
+    @NonFinal
+    int volumeGrowthFactor;
+    @Value("${strategy.buyBigVolumeGrowth.priceGrowthFactor}")
+    @NonFinal
+    double priceGrowthFactor;
+    @Value("${strategy.buyBigVolumeGrowth.priceDecreaseFactor}")
+    @NonFinal
+    double priceDecreaseFactor;
 
     public void fillCheapPairs(String asset) {
         // get all pairs, that trades against USDT.
@@ -76,7 +88,7 @@ public class BuyBigVolumeGrowth {
     }
 
     /**
-     * Add to cache information about last candles of all filtered pairs(exclude
+     * Add to cache information about last candles of all filtered pairs (exclude
      * opened positions).
      * 
      * @param asset
@@ -85,44 +97,68 @@ public class BuyBigVolumeGrowth {
      */
     public void updateMonitoredCandles(String asset, CandlestickInterval interval, Integer limit) {
         marketData.clearCandleSticksCache();
-        marketData.getCheapPairsWithoutOpenedPositions(asset).stream().forEach(ticker -> {
-            marketData.addCandlesticksToCache(ticker,
-                    marketInfo.getCandleSticks(ticker, interval, limit));
-        });
+        marketData.getCheapPairsExcludeOpenedPositions(asset).stream()
+                .forEach(ticker -> {
+                    marketData.addCandlesticksToCache(ticker,
+                            marketInfo.getCandleSticks(ticker, interval, limit));
+                });
     }
 
     // compare volumes in current and previous candles to find big volume growth.
-    public void compareCandlesVolumes() {
+    public void findGrownAssets() {
         Map<String, List<Candlestick>> cachedCandlesticks = marketData.getCachedCandles();
 
-        cachedCandlesticks.entrySet().stream()
-                .filter(entrySet -> Double.parseDouble(entrySet.getValue().get(1).getVolume()) > Double
-                        .parseDouble(entrySet.getValue().get(0).getVolume()) * 2.5 // current volume bigger then
-                                                                                   // previous.
-                        && Double.parseDouble(entrySet.getValue().get(1).getClose()) > Double
-                                .parseDouble(entrySet.getValue().get(0).getClose()) * 1.03) // current price bigger then
-                                                                                            // previous.
-                .forEach(entrySet -> marketData.addPairToBuy(entrySet.getKey(),
-                        Double.parseDouble(entrySet.getValue().get(1).getClose()))); // add this pairs to buy.
+        try {
+            cachedCandlesticks.entrySet().stream() // current volume & current price bigger then previous:
+                    .filter(entrySet -> Double
+                            .parseDouble(entrySet.getValue().get(1).getVolume()) > Double
+                                    .parseDouble(entrySet.getValue().get(0).getVolume()) * volumeGrowthFactor
+                            && Double.parseDouble(entrySet.getValue().get(1).getClose()) > Double
+                                    .parseDouble(entrySet.getValue().get(0).getClose()) * priceGrowthFactor)
+                    .forEach(entrySet -> marketData.addPairToBuy(entrySet.getKey(),
+                            Double.parseDouble(entrySet.getValue().get(1).getClose()))); // add this pairs to buy.
+        } catch (Exception e) {
+            log.error("Error while trying to find grown assets:\n{}.", e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public void buyGrownAssets(String asset) {
         Map<String, Double> pairsToBuy = marketData.getPairsToBuy();
+        // log.info("There is {} elements in test map to buy: {}", pairsToBuy.size(),
+        // pairsToBuy);
 
         if (pairsToBuy.size() > 0) {
-            // log.info("There is {} elements in test map to buy: {}", pairsToBuy.size(),
-            // pairsToBuy);
-            if (accountManager.getFreeAssetBalance(asset) > minimalAssetBalance * pairsToBuy.size()) {
-                for (Map.Entry<String, Double> entrySet : pairsToBuy.entrySet()) {
-                    spotTrading.placeLimitBuyOrderAtLastMarketPrice(entrySet.getKey(),
-                            baseOrderVolume / entrySet.getValue());
+            int availableOrdersCount = accountManager.getFreeAssetBalance(asset).intValue() / minimalAssetBalance;
+
+            for (Entry<String, Double> pairToBuy : pairsToBuy.entrySet()) {
+                if (availableOrdersCount > 0
+                        && pairHadTradesInThePast(pairToBuy.getKey(), CandlestickInterval.DAILY, 3)) {
+                    spotTrading.placeLimitBuyOrderAtLastMarketPrice(pairToBuy.getKey(),
+                            baseOrderVolume / pairToBuy.getValue());
+                    availableOrdersCount--;
+                } else {
+                    break;
                 }
             }
+
+            // if (accountManager.getFreeAssetBalance(asset) > minimalAssetBalance *
+            // pairsToBuy.size()) {
+            // for (Map.Entry<String, Double> entrySet : pairsToBuy.entrySet()) {
+            // spotTrading.placeLimitBuyOrderAtLastMarketPrice(entrySet.getKey(),
+            // baseOrderVolume / entrySet.getValue());
+            // }
+            // }
             pairsToBuy.clear();
         }
     }
 
-    public void checkMarketPositions(String quoteAsset) { // real deals
+    public boolean pairHadTradesInThePast(String ticker, CandlestickInterval interval, Integer qtyDaysToAnalize) {
+        // pair should have history of trade for some days before.
+        return marketInfo.getCandleSticks(ticker, interval, qtyDaysToAnalize).size() == qtyDaysToAnalize;
+    }
+
+    public void checkMarketPositions(String quoteAsset) {
         Map<String, Double> openedPositionsLastPrices = marketData.getOpenedPositionsLastPrices();
         List<AssetBalance> currentBalances = accountManager.getAccountBalances().stream()
                 .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB"))).toList();
@@ -133,25 +169,26 @@ public class BuyBigVolumeGrowth {
 
         Map<String, Double> positionsToClose = new HashMap<>();
 
-        List<String> pairsQuoteAssetsOnBalance = currentBalances.stream()
+        List<String> pairsQuoteAssetOnBalance = currentBalances.stream()
                 .map(balance -> balance.getAsset() + quoteAsset)
                 .toList();
         List<TickerPrice> currentPrices = marketInfo
                 .getLastTickersPrices(
-                        marketData.getAvailablePairsSymbolsFormatted(pairsQuoteAssetsOnBalance, 0,
-                                pairsQuoteAssetsOnBalance.size()));
+                        marketData.getAvailablePairsSymbolsFormatted(pairsQuoteAssetOnBalance, 0,
+                                pairsQuoteAssetOnBalance.size()));
 
         currentPrices.stream().forEach(tickerPrice -> {
             Double currentPrice = Double.parseDouble(tickerPrice.getPrice());
             String tickerSymbol = tickerPrice.getSymbol();
+
             if (openedPositionsLastPrices.get(tickerSymbol) == null) {
-                log.info("{} not found in opened positions last prices\n last prices contains: {}", tickerSymbol,
+                log.info("'{}' not found in opened positions last prices, last prices contains:\n{}", tickerSymbol,
                         openedPositionsLastPrices);
             } else if (currentPrice > openedPositionsLastPrices.get(tickerSymbol)) {
                 // update current price if it growth
                 // log.info("Price of {} growth and now equals {}", tickerSymbol, currentPrice);
                 marketData.putOpenedPositionToPriceMonitoring(tickerSymbol, currentPrice);
-            } else if (currentPrice < openedPositionsLastPrices.get(tickerSymbol) * 0.93) {
+            } else if (currentPrice < openedPositionsLastPrices.get(tickerSymbol) * priceDecreaseFactor) {
                 // close position if price decreased
                 positionsToClose.put(tickerSymbol,
                         accountManager.getFreeAssetBalance(tickerSymbol.replace(quoteAsset, "")));

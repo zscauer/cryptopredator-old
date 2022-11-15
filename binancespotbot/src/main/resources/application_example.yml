@@ -18,6 +18,15 @@ applicationconfig:
     secret: # Binance secret key
 
 strategy:
+    # ------------------ global
+    global:
+        initializeUserDataUpdateStream:
+            initialDelay: 10_000 # 10 seconds
+            fixedDelay: 86_000_340 # 23 hours 59 minutes
+        keepAliveUserDataUpdateStream:
+            initialDelay: 1_800_000 # 30 minutes
+            fixedDelay: 1_800_000 # 30 minutes
+    # ------------------ buyFastGrowth 
     buyFastGrowth:
         collectPairsToBuy:
             initialDelay: 10_000 # 10 seconds
@@ -28,18 +37,18 @@ strategy:
         closeOpenedPositions:
             initialDelay: 120_000 # 2 minutes
             fixedDelay: 600_000 # 10 minutes
-    # -----------------------
+    # ------------------ buyBigVolumeGrowth
     buyBigVolumeGrowth:
         maximalPairPrice: 1
         minimalAssetBalance: 13
         baseOrderVolume: 12
-        keepAliveUserDataUpdateStream:
-            initialDelay: 1_800_000 # 30 minutes
-            fixedDelay: 1_800_000 # 30 minutes            
+        volumeGrowthFactor: 3
+        priceGrowthFactor: 1.03
+        priceDecreaseFactor: 0.93
         fillCheapPairs:
             initialDelay: 15_000 # 15 seconds
             fixedDelay: 36_000_000 # 10 hours
-        updateMonitoredCandleSticks:
+        buySelectedGrownAssets:
             initialDelay: 30_000 # 30 seconds
             fixedDelay: 300_000 # 5 minutes
         # buyGrownAssets:

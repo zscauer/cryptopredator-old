@@ -50,14 +50,14 @@
     "description": "A description for 'strategy.buyBigVolumeGrowth.fill-cheap-pairs.fixedDelay'"
   },
   {
-    "name": "strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.fixed-delay",
+    "name": "strategy.buyBigVolumeGrowth.buySelectedGrownAssets.fixed-delay",
     "type": "java.lang.String",
-    "description": "A description for 'strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.fixed-delay'"
+    "description": "A description for 'strategy.buyBigVolumeGrowth.buySelectedGrownAssets.fixed-delay'"
   },
   {
-    "name": "strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.initialDelay",
+    "name": "strategy.buyBigVolumeGrowth.buySelectedGrownAssets.initialDelay",
     "type": "java.lang.String",
-    "description": "A description for 'strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.initialDelay'"
+    "description": "A description for 'strategy.buyBigVolumeGrowth.buySelectedGrownAssets.initialDelay'"
   },
   {
     "name": "strategy.buyBigVolumeGrowth.maximalPairPrice",
@@ -93,5 +93,20 @@
     "name": "strategy.global.keepAliveUserDataUpdateStream.fixedDelay",
     "type": "java.lang.String",
     "description": "A description for 'strategy.global.keepAliveUserDataUpdateStream.fixedDelay'"
+  },
+  {
+    "name": "strategy.buyBigVolumeGrowth.volumeGrowthFactor",
+    "type": "java.lang.Integer",
+    "description": "A description for 'strategy.buyBigVolumeGrowth.volumeGrowthFactor'"
+  },
+  {
+    "name": "strategy.buyBigVolumeGrowth.priceGrowthFactor",
+    "type": "java.lang.Double",
+    "description": "A description for 'strategy.buyBigVolumeGrowth.priceGrowthFactor'"
+  },
+  {
+    "name": "strategy.buyBigVolumeGrowth.priceDecreaseFactor",
+    "type": "java.lang.Double",
+    "description": "A description for 'strategy.buyBigVolumeGrowth.priceDecreaseFactor'"
   }
 ]}

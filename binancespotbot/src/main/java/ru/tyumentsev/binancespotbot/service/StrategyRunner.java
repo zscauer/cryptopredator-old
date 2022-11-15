@@ -3,28 +3,27 @@ package ru.tyumentsev.binancespotbot.service;
 import java.io.Closeable;
 import java.io.IOException;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.binance.api.client.domain.market.CandlestickInterval;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
-import ru.tyumentsev.binancespotbot.cache.MarketData;
 import ru.tyumentsev.binancespotbot.strategy.BuyBigVolumeGrowth;
 
 @Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Log4j2
 public class StrategyRunner {
 
-    @Autowired
     AccountManager accountManager;
-    @Autowired
-    MarketData marketData;
-    @Autowired
     BuyBigVolumeGrowth buyBigVolumeGrowth;
 
-    private final String USDT = "USDT";
+    String USDT = "USDT";
 
     // +++++++++++++++++++++++++++++++ BuyFastGrowth strategy
 
@@ -61,30 +60,21 @@ public class StrategyRunner {
     // ------------------------------- BuyFastGrowth strategy
 
     // +++++++++++++++++++++++++++++++ BuyBigVolumeGrowth strategy
-    
+
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.initialDelay}")
     private void buyBigVolumeGrowth_fillCheapPairs() {
         // log.info("Fill cheap pairs from strategy runner.");
         buyBigVolumeGrowth.fillCheapPairs(USDT);
     }
 
-    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.updateMonitoredCandleSticks.initialDelay}")
-    private void buyBigVolumeGrowth_updateMonitoredCandles() {
+    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.initialDelay}")
+    private void buyBigVolumeGrowth_buySelectedGrownAssets() {
         // log.info("Find big volume growth from strategy runner.");
         buyBigVolumeGrowth.updateMonitoredCandles(USDT, CandlestickInterval.FIFTEEN_MINUTES, 2);
 
-        // log.info("Monitored candles size is: " + marketData.getCachedCandles().size());
-        buyBigVolumeGrowth_CompareCandlesVolumes();
-        buyBigVolumeGrowth_buyGrownAssets();
-    }
-
-    private void buyBigVolumeGrowth_CompareCandlesVolumes() {
-        // log.info("Compare candles volumes from strategy runner.");
-        buyBigVolumeGrowth.compareCandlesVolumes();
-    }
-
-    private void buyBigVolumeGrowth_buyGrownAssets() {
-        // log.info("Buy grown assets from strategy runner.");
+        // log.info("Monitored candles size is: " +
+        // marketData.getCachedCandles().size());
+        buyBigVolumeGrowth.findGrownAssets();
         buyBigVolumeGrowth.buyGrownAssets(USDT);
     }
 
@@ -99,7 +89,7 @@ public class StrategyRunner {
         // User data stream are closing by binance after 24 hours of starting.
         // log.info("Sending signal to initialize user data update stream.");
         accountManager.initializeUserDataUpdateStream();
-        
+
         Closeable userDataUpdateEventsListener = buyBigVolumeGrowth.getUserDataUpdateEventsListener();
         if (!(userDataUpdateEventsListener == null)) {
             try {
@@ -108,7 +98,7 @@ public class StrategyRunner {
                 e.printStackTrace();
             }
         }
-        
+
         buyBigVolumeGrowth.monitorUserDataUpdateEvents();
     }
 

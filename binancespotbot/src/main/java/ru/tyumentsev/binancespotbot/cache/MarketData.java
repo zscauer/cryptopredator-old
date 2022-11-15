@@ -14,12 +14,17 @@ import com.binance.api.client.domain.event.CandlestickEvent;
 import com.binance.api.client.domain.market.Candlestick;
 import com.binance.api.client.domain.market.TickerStatistics;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
 import ru.tyumentsev.binancespotbot.service.AccountManager;
 import ru.tyumentsev.binancespotbot.service.MarketInfo;
 
 @Repository
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Log4j2
 public class MarketData {
     // key - quote asset, value - available pairs to this asset.
@@ -46,9 +51,9 @@ public class MarketData {
     Map<String, Double> pairsToBuy = new ConcurrentHashMap<>();
     // - "Buy big volume changes" strategy
 
-    final StringBuilder symbolsParameterBuilder = new StringBuilder(); // build query in format, that accepts by binance
+    StringBuilder symbolsParameterBuilder = new StringBuilder(); // build query in format, that accepts by binance
                                                                        // API.
-    final String QUERY_SYMBOLS_BEGIN = "[", DELIMETER = "\"", QUERY_SYMBOLS_END = "]"; // required format is
+    String QUERY_SYMBOLS_BEGIN = "[", DELIMETER = "\"", QUERY_SYMBOLS_END = "]"; // required format is
                                                                                        // "["BTCUSDT","BNBUSDT"]".
 
     public void initializeOpenedPositionsFromMarket(MarketInfo marketInfo, AccountManager accountManager) {
@@ -110,9 +115,10 @@ public class MarketData {
      * @param asset
      * @return list of cheap pairs, exclude pairs of opened positions.
      */
-    public List<String> getCheapPairsWithoutOpenedPositions(String asset) {
+    public List<String> getCheapPairsExcludeOpenedPositions(String asset) {
         List<String> pairs = cheapPairs.getOrDefault(asset, Collections.emptyList());
         pairs.removeAll(openedPositionsLastPrices.keySet());
+        
         return pairs;
     }
 
