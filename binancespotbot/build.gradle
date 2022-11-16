@@ -39,10 +39,11 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.7.1'
 }
 
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
+jar {
+    archivesBaseName = 'binancespotbot'
+    project.version = ''
 }
 
-tasks.jar {
-    archiveFileName.set("binancespotbot.jar")
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
 }
