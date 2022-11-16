@@ -1,6 +1,17 @@
 logging:
     file:
-        name: logs/strategy_logs.log
+        name: /tmp/hello-observability.log
+    pattern.file: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg traceID=%X{trace_id} %n"
+
+server:
+    tomcat:
+        accesslog:
+            enabled: true
+            rotate: false
+            suffix: ".log"
+            prefix: "access_log"
+            directory: "/tmp"
+            pattern: "common"
 
 # spring:
     # mvc:

@@ -68,7 +68,7 @@ public class StrategyRunner {
         buyBigVolumeGrowth.fillCheapPairs(USDT);
     }
 
-    @Timed("buySelectedGrownAssets")
+    // @Timed("buySelectedGrownAssets")
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.initialDelay}")
     public void buyBigVolumeGrowth_buySelectedGrownAssets() {
         // log.info("Find big volume growth from strategy runner.");
@@ -80,7 +80,7 @@ public class StrategyRunner {
         buyBigVolumeGrowth.buyGrownAssets(USDT);
     }
 
-    @Timed("checkOpenedPositions")
+    // @Timed("checkOpenedPositions")
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.checkOpenedPositions.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.checkOpenedPositions.initialDelay}")
     public void buyBigVolumeGrowth_checkOpenedPositions() {
         // log.info("Check opened positions from strategy runner.");

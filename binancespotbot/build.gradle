@@ -37,9 +37,14 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-actuator:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-aop:${springBootVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
     implementation 'org.projectlombok:lombok:1.18.24'
     implementation 'io.springfox:springfox-boot-starter:3.0.0'
     implementation 'io.micrometer:micrometer-registry-prometheus:1.10.0'
+    implementation 'io.prometheus:simpleclient_common:0.15.0'
+    implementation 'io.prometheus:simpleclient_servlet:0.15.0'
+    implementation 'io.prometheus:simpleclient_hotspot:0.15.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
     implementation 'com.binance.api:binance-api-client:1.0.1'
 }
 
