@@ -36,10 +36,11 @@ dependencies {
     runtimeOnly "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
     testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-actuator:${springBootVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-aop:${springBootVersion}"
     implementation 'org.projectlombok:lombok:1.18.24'
     implementation 'io.springfox:springfox-boot-starter:3.0.0'
-    implementation 'com.binance.api:binance-api-client:1.0.1'
     implementation 'io.micrometer:micrometer-registry-prometheus:1.10.0'
+    implementation 'com.binance.api:binance-api-client:1.0.1'
 }
 
 jar {

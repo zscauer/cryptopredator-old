@@ -12,7 +12,10 @@ logging:
 #         database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 management:
-    endpoints.web.exposure.include: "prometheus, health"
+    endpoints:
+        web:
+            exposure:
+                include: "prometheus, health"
     metrics:
         export:
             prometheus:
