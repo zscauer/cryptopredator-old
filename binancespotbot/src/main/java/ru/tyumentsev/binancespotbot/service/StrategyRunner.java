@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.binance.api.client.domain.market.CandlestickInterval;
 
+import io.micrometer.core.annotation.Timed;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -67,6 +68,7 @@ public class StrategyRunner {
         buyBigVolumeGrowth.fillCheapPairs(USDT);
     }
 
+    @Timed("buySelectedGrownAssets")
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.initialDelay}")
     private void buyBigVolumeGrowth_buySelectedGrownAssets() {
         // log.info("Find big volume growth from strategy runner.");
@@ -78,6 +80,7 @@ public class StrategyRunner {
         buyBigVolumeGrowth.buyGrownAssets(USDT);
     }
 
+    @Timed("checkOpenedPositions")
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.checkOpenedPositions.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.checkOpenedPositions.initialDelay}")
     private void buyBigVolumeGrowth_checkOpenedPositions() {
         // log.info("Check opened positions from strategy runner.");
