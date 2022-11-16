@@ -3,6 +3,9 @@ logging:
         name: logs/strategy_logs.log
 
 # spring:
+    # mvc:
+    #     pathmatch:
+    #         matching-strategy: ant-path-matcher
 #     datasource:
 #         url: jdbc:postgresql://spb-dev-1c-02.partner.ru:5432/remember_the_pills
 #         driver-class-name: org.postgresql.Driver
@@ -12,10 +15,13 @@ logging:
 #         database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 management:
+    endpoint:
+        health:
+            show-details: always
     endpoints:
         web:
             exposure:
-                include: "prometheus, health"
+                include: prometheus, health
     metrics:
         export:
             prometheus:
