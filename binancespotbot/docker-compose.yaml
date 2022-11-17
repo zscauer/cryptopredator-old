@@ -1,7 +1,11 @@
+# metrics configured by this article:
+# https://refactorfirst.com/spring-boot-prometheus-grafana
+
 services:
   
   binancespotbot:
     image: binancespotbot:latest
+    container_name: binancespotbot
     ports:
       - 8080:8080
 
@@ -16,13 +20,13 @@ services:
     command:
       '--config.file=/etc/prometheus.yaml'
 
-
   grafana:
     image: grafana/grafana
     network_mode: host
     container_name: grafana
     ports:
       - 3000:3000
+    # user: '104'
     volumes:
       - ./src/main/resources/metrics/grafana:/var/lib/grafana
     environment:
