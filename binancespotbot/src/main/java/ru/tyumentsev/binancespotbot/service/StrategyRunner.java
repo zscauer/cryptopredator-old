@@ -64,18 +64,14 @@ public class StrategyRunner {
 
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.initialDelay}")
     public void buyBigVolumeGrowth_fillCheapPairs() {
-        // log.info("Fill cheap pairs from strategy runner.");
         buyBigVolumeGrowth.fillCheapPairs(USDT);
     }
 
     // @Timed("buySelectedGrownAssets")
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.initialDelay}")
     public void buyBigVolumeGrowth_buySelectedGrownAssets() {
-        // log.info("Find big volume growth from strategy runner.");
         buyBigVolumeGrowth.updateMonitoredCandles(USDT, CandlestickInterval.FIFTEEN_MINUTES, 2);
 
-        // log.info("Monitored candles size is: " +
-        // marketData.getCachedCandles().size());
         buyBigVolumeGrowth.findGrownAssets();
         buyBigVolumeGrowth.buyGrownAssets(USDT);
     }
@@ -83,7 +79,6 @@ public class StrategyRunner {
     // @Timed("checkOpenedPositions")
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.checkOpenedPositions.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.checkOpenedPositions.initialDelay}")
     public void buyBigVolumeGrowth_checkOpenedPositions() {
-        // log.info("Check opened positions from strategy runner.");
         buyBigVolumeGrowth.checkMarketPositions(USDT);
     }
 
@@ -93,7 +88,7 @@ public class StrategyRunner {
         accountManager.initializeUserDataUpdateStream();
 
         Closeable userDataUpdateEventsListener = buyBigVolumeGrowth.getUserDataUpdateEventsListener();
-        if (!(userDataUpdateEventsListener == null)) {
+        if (userDataUpdateEventsListener != null) {
             try {
                 userDataUpdateEventsListener.close();
             } catch (IOException e) {
@@ -107,7 +102,6 @@ public class StrategyRunner {
 
     @Scheduled(fixedDelayString = "${strategy.global.keepAliveUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.keepAliveUserDataUpdateStream.initialDelay}")
     public void buyBigVolumeGrowth_keepAliveUserDataUpdateStream() {
-        // log.info("Sending signal to keep alive user data update stream.");
         accountManager.keepAliveUserDataUpdateStream();
     }
     // ------------------------------- BuyBigVolumeGrowth strategy

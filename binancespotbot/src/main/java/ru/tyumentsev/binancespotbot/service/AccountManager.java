@@ -49,6 +49,7 @@ public class AccountManager {
      * It's recommended to send a ping about every 30 minutes.
      */
     public void keepAliveUserDataUpdateStream() {
+        log.debug("Sending signal to keep alive user data update stream.");
         restClient.keepAliveUserDataStream(listenKey);
     }
 

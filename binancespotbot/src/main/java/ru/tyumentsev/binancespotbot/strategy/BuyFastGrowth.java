@@ -62,7 +62,7 @@ public class BuyFastGrowth {
             accumulatedResponses.addAll(getPartOfTickerStatistics(pairs, fromIndex, toIndex));
         }
 
-        marketData.loadPairsToBuy(accumulatedResponses); // pairs that growth.
+        marketData.loadPairsToBuy(accumulatedResponses, asset); // pairs that growth.
 
         return new ArrayList<>(marketData.getTickersToBuy());
     }
@@ -71,7 +71,7 @@ public class BuyFastGrowth {
         Set<TickerStatistics> pairsToBuy = marketData.getTickersToBuy();
         // place all pairs in another collection like it was bought:
         for (TickerStatistics tickerStatistics : pairsToBuy) {
-            log.info("Buy {} at {}", tickerStatistics.getSymbol(), tickerStatistics.getLastPrice());
+            log.info("Buy {} at {}.", tickerStatistics.getSymbol(), tickerStatistics.getLastPrice());
             marketData.putOpenedPositionToPriceMonitoring(tickerStatistics.getSymbol(),
                     Double.parseDouble(tickerStatistics.getLastPrice()));
         }

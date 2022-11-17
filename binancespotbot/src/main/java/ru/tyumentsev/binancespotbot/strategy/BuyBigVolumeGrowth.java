@@ -21,6 +21,7 @@ import com.binance.api.client.domain.market.Candlestick;
 import com.binance.api.client.domain.market.CandlestickInterval;
 import com.binance.api.client.domain.market.TickerPrice;
 
+import io.micrometer.core.annotation.Timed;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -95,6 +96,7 @@ public class BuyBigVolumeGrowth {
      * @param interval
      * @param limit
      */
+    @Timed("updateMonitoredCandles")
     public void updateMonitoredCandles(String asset, CandlestickInterval interval, Integer limit) {
         marketData.clearCandleSticksCache();
         marketData.getCheapPairsExcludeOpenedPositions(asset).stream()
@@ -102,9 +104,11 @@ public class BuyBigVolumeGrowth {
                     marketData.addCandlesticksToCache(ticker,
                             marketInfo.getCandleSticks(ticker, interval, limit));
                 });
+        log.debug("Cache of candle sticks updated and now contains {} pairs.", marketData.getCachedCandles().size());
     }
 
     // compare volumes in current and previous candles to find big volume growth.
+    @Timed("findGrownAssets")
     public void findGrownAssets() {
         Map<String, List<Candlestick>> cachedCandlesticks = marketData.getCachedCandles();
 
@@ -135,10 +139,10 @@ public class BuyBigVolumeGrowth {
         }
     }
 
+    @Timed("buyGrownAssets")
     public void buyGrownAssets(String asset) {
         Map<String, Double> pairsToBuy = marketData.getPairsToBuy();
-        // log.info("There is {} elements in test map to buy: {}", pairsToBuy.size(),
-        // pairsToBuy);
+        log.debug("There is {} pairs to buy: {}.", pairsToBuy.size(), pairsToBuy);
 
         if (pairsToBuy.size() > 0) {
             int availableOrdersCount = accountManager.getFreeAssetBalance(asset).intValue() / minimalAssetBalance;
@@ -170,17 +174,21 @@ public class BuyBigVolumeGrowth {
         return marketInfo.getCandleSticks(ticker, interval, qtyBarsToAnalize).size() == qtyBarsToAnalize;
     }
 
-    public boolean pairHadTradesInThePast(List<Candlestick> candleSticks, Integer qtyBarsToAnalize) {
+    public boolean pairHadTradesInThePast(List<Candlestick> candleSticks, int qtyBarsToAnalize) {
         // pair should have history of trade for some days before.
         return candleSticks.size() == qtyBarsToAnalize;
     }
 
+    @Timed("checkMarketPositions")
     public void checkMarketPositions(String quoteAsset) {
         Map<String, Double> openedPositionsLastPrices = marketData.getOpenedPositionsLastPrices();
+        log.debug("There is {} prices cached in openedPositionsLastPrices.", openedPositionsLastPrices.size());
+        
         List<AssetBalance> currentBalances = accountManager.getAccountBalances().stream()
                 .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB"))).toList();
 
         if (currentBalances.isEmpty()) {
+            log.debug("No available trading assets found on binance account.");
             return;
         }
 
@@ -202,11 +210,11 @@ public class BuyBigVolumeGrowth {
                 log.info("'{}' not found in opened positions last prices, last prices contains:\n{}", tickerSymbol,
                         openedPositionsLastPrices);
             } else if (currentPrice > openedPositionsLastPrices.get(tickerSymbol)) {
-                // update current price if it growth
-                // log.info("Price of {} growth and now equals {}", tickerSymbol, currentPrice);
+                // update current price if it growth.
+                log.debug("Price of {} growth and now equals {}", tickerSymbol, currentPrice);
                 marketData.putOpenedPositionToPriceMonitoring(tickerSymbol, currentPrice);
             } else if (currentPrice < openedPositionsLastPrices.get(tickerSymbol) * priceDecreaseFactor) {
-                // close position if price decreased
+                // close position if price decreased.
                 positionsToClose.put(tickerSymbol,
                         accountManager.getFreeAssetBalance(tickerSymbol.replace(quoteAsset, "")));
             }
@@ -230,11 +238,11 @@ public class BuyBigVolumeGrowth {
                         : Double.parseDouble(event.getPrice());
 
                 if (event.getSide() == OrderSide.BUY) {
-                    log.info("Buy order trade updated, put result in opened positions cache: {} at {}",
+                    log.info("Buy order trade updated, put result in opened positions cache: {} at {}.",
                             event.getSymbol(), dealPrice);
                     marketData.putOpenedPositionToPriceMonitoring(event.getSymbol(), dealPrice);
                 } else {
-                    log.info("Sell order trade updated, remove result from opened positions cache: {} at {}",
+                    log.info("Sell order trade updated, remove result from opened positions cache: {} at {}.",
                             event.getSymbol(), dealPrice);
                     marketData.removeClosedPositionFromPriceMonitoring(event.getSymbol());
                 }

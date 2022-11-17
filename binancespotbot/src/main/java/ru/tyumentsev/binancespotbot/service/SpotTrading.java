@@ -23,6 +23,7 @@ public class SpotTrading {
     MarketData marketData;
 
     public void placeLimitBuyOrderAtLastMarketPrice(String symbol, Double quantity) {
+        log.debug("Try to place limit buy order: {} for {}.", symbol, quantity);
         asyncRestClient.getOrderBook(symbol, 1, orderBookResponse -> {
             placeLimitBuyOrder(symbol, String.valueOf(Math.ceil(quantity)),
                     orderBookResponse.getBids().get(0).getPrice());
@@ -30,20 +31,15 @@ public class SpotTrading {
     }
 
     public void placeLimitSellOrderAtLastMarketPrice(String symbol, Double quantity) {
+        log.debug("Try to place limit sell order: {} for {}.", symbol, quantity);
         asyncRestClient.getOrderBook(symbol, 1, orderBookResponse -> {
             placeLimitSellOrder(symbol, String.valueOf(quantity),
                     orderBookResponse.getAsks().get(0).getPrice());
-            // asyncRestClient.newOrder(
-            // NewOrder.limitSell(symbol, TimeInForce.GTC, String.valueOf(quantity),
-            // orderBookResponse.getAsks().get(0).getPrice()),
-            // limitSellResponse -> {
-            // log.info("Async limit sell order placed: {}",
-            // limitSellResponse);
-            // });
         });
     }
 
     public void placeLimitBuyOrder(String symbol, String quantity, String price) {
+        log.info("Sending async request to place new limit order to buy {} {} at {}.", quantity, symbol, price);
         asyncRestClient.newOrder(NewOrder.limitBuy(symbol, TimeInForce.GTC, quantity, price), limitBuyResponse -> {
             log.info("Async limit buy order placed: {}", limitBuyResponse);
         });
@@ -72,6 +68,7 @@ public class SpotTrading {
     }
 
     public void closeAllPostitions(Map<String, Double> positionsToClose) {
+        log.debug("Start to go out from {} positions to close:\n{}", positionsToClose.size(), positionsToClose);
         for (Entry<String, Double> entrySet : positionsToClose.entrySet()) {
             placeLimitSellOrderAtLastMarketPrice(entrySet.getKey(), entrySet.getValue());
         }

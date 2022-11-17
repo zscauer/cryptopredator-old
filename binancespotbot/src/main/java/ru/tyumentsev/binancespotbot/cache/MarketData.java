@@ -29,14 +29,15 @@ import ru.tyumentsev.binancespotbot.service.MarketInfo;
 public class MarketData {
     // key - quote asset, value - available pairs to this asset.
     Map<String, List<String>> availablePairs = new HashMap<>();
-    // + "Buy fast growth" strategy
-    Set<TickerStatistics> toBuy = new HashSet<>();
     // monitoring last maximum price of opened positions. key - pair, value - last
     // price.
     @Getter
     Map<String, Double> openedPositionsLastPrices = new ConcurrentHashMap<>();
+    
+    // + "Buy fast growth" strategy
+    Set<TickerStatistics> toBuy = new HashSet<>();
     // key - pair, value - price of closing.
-    Map<String, Double> closedPositions = new HashMap<>();
+    // Map<String, Double> closedPositions = new HashMap<>();
     // - "Buy fast growth" strategy
 
     // + "Buy big volume changes"
@@ -145,13 +146,12 @@ public class MarketData {
         return sb.toString();
     }
 
-    // TODO change to get asset as a parameter.
-    public void loadPairsToBuy(List<TickerStatistics> pairs) {
+    public void loadPairsToBuy(List<TickerStatistics> pairs, String asset) {
         toBuy.clear();
         toBuy.addAll(pairs);
 
         // need to remove all added pairs from available pairs:
-        getAvailablePairs("USDT")
+        getAvailablePairs(asset)
                 .removeAll(pairs.stream().map(tickerStatistics -> tickerStatistics.getSymbol()).toList());
     }
 
@@ -186,6 +186,7 @@ public class MarketData {
 
     public void clearCandleSticksCache() {
         cachedCandles.clear();
+        log.debug("CandleStickCache cleared.");
     }
 
     public void addCandlestickEventToMonitoring(String ticker, CandlestickEvent candlestickEvent) {
@@ -197,6 +198,7 @@ public class MarketData {
     }
 
     public void putPairToBuy(String symbol, Double price) {
+        log.debug("Put {} into pairs to buy.", symbol);
         pairsToBuy.put(symbol, price);
     }
 }
