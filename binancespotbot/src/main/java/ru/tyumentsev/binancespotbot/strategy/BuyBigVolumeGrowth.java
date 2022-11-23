@@ -54,6 +54,9 @@ public class BuyBigVolumeGrowth {
     @NonFinal
     Closeable userDataUpdateEventsListener;
 
+    @Value("${strategy.buyBigVolumeGrowth.matchTrend}")
+    @NonFinal
+    boolean matchTrend;
     @Value("${strategy.buyBigVolumeGrowth.maximalPairPrice}")
     @NonFinal
     int maximalPairPrice;
@@ -120,18 +123,21 @@ public class BuyBigVolumeGrowth {
                             && Double.parseDouble(entrySet.getValue().get(1).getClose()) > Double
                                     .parseDouble(entrySet.getValue().get(0).getClose()) * priceGrowthFactor)
                     .forEach(entrySet -> addPairToBuy(entrySet.getKey(),
-                            Double.parseDouble(entrySet.getValue().get(1).getClose()), true));
+                            Double.parseDouble(entrySet.getValue().get(1).getClose())));
         } catch (Exception e) {
             log.error("Error while trying to find grown assets:\n{}.", e.getMessage());
             e.printStackTrace();
         }
     }
 
-    public void addPairToBuy(String symbol, Double price, boolean matchTrend) {
+    public void addPairToBuy(String symbol, Double price) {
         if (matchTrend) {
             List<Candlestick> candleSticks = marketInfo.getCandleSticks(symbol, CandlestickInterval.DAILY, 2);
             if (pairHadTradesInThePast(candleSticks, 2)
-                    && price > Double.parseDouble(candleSticks.get(0).getClose()) * priceGrowthFactor) {
+                    // change to use high price of previous day without growth factor
+                    // && price > Double.parseDouble(candleSticks.get(0).getClose()) *
+                    // priceGrowthFactor) {
+                    && price > Double.parseDouble(candleSticks.get(0).getHigh())) {
                 marketData.putPairToBuy(symbol, price);
             }
         } else {
@@ -157,14 +163,6 @@ public class BuyBigVolumeGrowth {
                     break;
                 }
             }
-
-            // if (accountManager.getFreeAssetBalance(asset) > minimalAssetBalance *
-            // pairsToBuy.size()) {
-            // for (Map.Entry<String, Double> entrySet : pairsToBuy.entrySet()) {
-            // spotTrading.placeLimitBuyOrderAtLastMarketPrice(entrySet.getKey(),
-            // baseOrderVolume / entrySet.getValue());
-            // }
-            // }
             pairsToBuy.clear();
         }
     }
@@ -183,7 +181,7 @@ public class BuyBigVolumeGrowth {
     public void checkMarketPositions(String quoteAsset) {
         Map<String, Double> openedPositionsLastPrices = marketData.getOpenedPositionsLastPrices();
         log.debug("There is {} prices cached in openedPositionsLastPrices.", openedPositionsLastPrices.size());
-        
+
         List<AssetBalance> currentBalances = accountManager.getAccountBalances().stream()
                 .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB"))).toList();
 
@@ -215,11 +213,29 @@ public class BuyBigVolumeGrowth {
                 marketData.putOpenedPositionToPriceMonitoring(tickerSymbol, currentPrice);
             } else if (currentPrice < openedPositionsLastPrices.get(tickerSymbol) * priceDecreaseFactor) {
                 // close position if price decreased.
-                positionsToClose.put(tickerSymbol,
-                        accountManager.getFreeAssetBalance(tickerSymbol.replace(quoteAsset, "")));
+                // change logic to close position by day downtrend only.
+                // positionsToClose.put(tickerSymbol,
+                // accountManager.getFreeAssetBalance(tickerSymbol.replace(quoteAsset, "")));
+                addPairToSell(tickerSymbol, quoteAsset, positionsToClose);
             }
         });
         spotTrading.closeAllPostitions(positionsToClose);
+    }
+
+    private void addPairToSell(String tickerSymbol, String quoteAsset, Map<String, Double> positionsToClose) {
+        if (matchTrend) {
+            List<Candlestick> candleSticks = marketInfo.getCandleSticks(tickerSymbol, CandlestickInterval.DAILY, 2);
+            if (pairHadTradesInThePast(candleSticks, 2)
+            // close price of previous day higher more then growth factor - there is downtrend.
+                    && Double.parseDouble(candleSticks.get(0).getClose()) > Double
+                            .parseDouble(candleSticks.get(1).getClose()) * priceGrowthFactor) {
+                positionsToClose.put(tickerSymbol,
+                        accountManager.getFreeAssetBalance(tickerSymbol.replace(quoteAsset, "")));
+            }
+        } else {
+            positionsToClose.put(tickerSymbol,
+                    accountManager.getFreeAssetBalance(tickerSymbol.replace(quoteAsset, "")));
+        }
     }
 
     /**

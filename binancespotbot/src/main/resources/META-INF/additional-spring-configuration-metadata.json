@@ -60,6 +60,11 @@
     "description": "A description for 'strategy.buyBigVolumeGrowth.buySelectedGrownAssets.initialDelay'"
   },
   {
+    "name": "strategy.buyBigVolumeGrowth.matchTrend",
+    "type": "java.lang.Boolean",
+    "description": "A description for 'strategy.buyBigVolumeGrowth.matchTrend'"
+  },
+  {
     "name": "strategy.buyBigVolumeGrowth.maximalPairPrice",
     "type": "java.lang.Integer",
     "description": "A description for 'strategy.buyBigVolumeGrowth.maximalPairPrice'"

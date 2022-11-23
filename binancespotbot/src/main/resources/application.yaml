@@ -1,7 +1,7 @@
-logging:
-    file:
-        name: /tmp/hello-observability.log
-    pattern.file: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg traceID=%X{trace_id} %n"
+# logging:
+#     file:
+#         name: /tmp/hello-observability.log
+#     pattern.file: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg traceID=%X{trace_id} %n"
 
 server:
     tomcat:
@@ -75,11 +75,12 @@ strategy:
             fixedDelay: 600_000 # 10 minutes
     # ------------------ buyBigVolumeGrowth
     buyBigVolumeGrowth:
+        matchTrend: true
         maximalPairPrice: 1
-        minimalAssetBalance: 13
-        baseOrderVolume: 12
+        minimalAssetBalance: 14
+        baseOrderVolume: 13
         volumeGrowthFactor: 3
-        priceGrowthFactor: 1.03
+        priceGrowthFactor: 1.04
         priceDecreaseFactor: 0.87
         fillCheapPairs:
             initialDelay: 15_000 # 15 seconds
