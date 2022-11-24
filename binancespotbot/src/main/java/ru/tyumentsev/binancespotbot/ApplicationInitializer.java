@@ -12,15 +12,15 @@ import ru.tyumentsev.binancespotbot.service.MarketInfo;
 import ru.tyumentsev.binancespotbot.strategy.BuyBigVolumeGrowth;
 
 @Component
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ApplicationInitializer implements ApplicationRunner {
 
     MarketData marketData;
     MarketInfo marketInfo;
     BuyBigVolumeGrowth buyBigVolumeGrowth;
 
-    final String USDT = "USDT";
+    String USDT = "USDT";
 
     @Override
     public void run(ApplicationArguments args) throws Exception {

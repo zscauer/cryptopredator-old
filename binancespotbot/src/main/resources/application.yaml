@@ -1,4 +1,6 @@
-# logging:
+logging:
+    level:
+        web: ${LOGGING_LEVEL_WEB}
 #     file:
 #         name: /tmp/hello-observability.log
 #     pattern.file: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg traceID=%X{trace_id} %n"
@@ -44,53 +46,50 @@ management:
                 "[http.server.requests]": true
 
 applicationconfig:
-    useTestnet: false
-    useTestnetStreaming: false
-    apiKey: CJtWApPMmzjV95qmVx0SkLWmssZUNP7NqLNuIOYqLQAKdcoBar08RKxtYpLlhdWn #SecondAPI
-    # vL7FQt3iSdjIfpk2j1kqqURIpw4IHwNaAbxf4HfRtygStsz7Uub7BBJdbALZKcph # TestNet
-    # b52ffadd2d77c29eec1c87e43157dbfdb13ca4376100cefcafd968c6f6dd126f # Futures
-    secret: N3mTuuby6a9PRanhZH7DcEgdbP9SULKQz9nSuRdrk5EYvuAFjMrLrylS6l1DbhTf #SecondAPI
-    # 04fNc9h7Y2nz55AY9FjhzggJIIrbVpdVdl9dDUX2l7Dhz9DJ1VeJSVzLObHMPntU # TestNet
-    # 88fb13a0a1a713e34751f26217af9f8faeeb4bb537f1c008c97d2bc3a8f8d202 # Futures
+    useTestnet: ${BINANCE_USE_TESTNET}
+    useTestnetStreaming: ${BINANCE_USE_TESTNET_STREAMING}
+    apiKey: ${BINANCE_API_KEY}
+    secret: ${BINANCE_SECRET_KEY}
 
 strategy:
     # ------------------ global
     global:
         initializeUserDataUpdateStream:
-            initialDelay: 10_000 # 10 seconds
-            fixedDelay: 86_000_340 # 23 hours 59 minutes
+            initialDelay: ${STRATEGY_GLOBAL_INITIALIZE_USERDATA_UPDATE_STREAM_INITIAL_DELAY}
+            fixedDelay: ${STRATEGY_GLOBAL_INITIALIZE_USERDATA_UPDATE_STREAM_FIXED_DELAY}
         keepAliveUserDataUpdateStream:
-            initialDelay: 1_800_000 # 30 minutes
-            fixedDelay: 1_800_000 # 30 minutes
+            initialDelay: ${STRATEGY_GLOBAL_KEEP_ALIVE_USERDATA_UPDATE_STREAM_INITIAL_DELAY}
+            fixedDelay: ${STRATEGY_GLOBAL_KEEP_ALIVE_USERDATA_UPDATE_STREAM_FIXED_DELAY}
     # ------------------ buyFastGrowth 
     buyFastGrowth:
         collectPairsToBuy:
-            initialDelay: 10_000 # 10 seconds
-            fixedDelay: 3_600_000 # 1 hour
+            initialDelay: ${STRATEGY_BUY_FAST_GROWTH_COLLECT_PAIRS_TO_BUY_INITIAL_DELAY}
+            fixedDelay: ${STRATEGY_BUY_FAST_GROWTH_COLLECT_PAIRS_TO_BUY_FIXED_DELAY}
         buyCollectedPairs:
-            initialDelay: 60_000 # 1 minute
-            fixedDelay: 3_600_000 # 1 hour
+            initialDelay: ${STRATEGY_BUY_FAST_GROWTH_BUY_COLLECTED_PAIRS_INITIAL_DELAY}
+            fixedDelay: ${STRATEGY_BUY_FAST_GROWTH_BUY_COLLECTED_PAIRS_FIXED_DELAY}
         closeOpenedPositions:
-            initialDelay: 120_000 # 2 minutes
-            fixedDelay: 600_000 # 10 minutes
+            initialDelay: ${STRATEGY_BUY_FAST_GROWTH_CLOSE_OPENED_POSITIONS_INITIAL_DELAY}
+            fixedDelay: ${STRATEGY_BUY_FAST_GROWTH_CLOSE_OPENED_POSITIONS_FIXED_DELAY}
     # ------------------ buyBigVolumeGrowth
     buyBigVolumeGrowth:
-        matchTrend: true
-        maximalPairPrice: 1
-        minimalAssetBalance: 14
-        baseOrderVolume: 13
-        volumeGrowthFactor: 3
-        priceGrowthFactor: 1.04
-        priceDecreaseFactor: 0.87
+        matchTrend: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_MATCH_TREND}
+        maximalPairPrice: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_MAXIMAL_PAIR_PRICE}
+        minimalAssetBalance: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_MINIMAL_ASSET_BALANCE}
+        baseOrderVolume: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BASE_ORDER_VOLUME}
+        volumeGrowthFactor: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_VOLUME_GROWTH_FACTOR}
+        priceGrowthFactor: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_PRICE_GROWTH_FACTOR}
+        priceDecreaseFactor: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_PRICE_DECREASE_FACTOR}
+        
         fillCheapPairs:
-            initialDelay: 15_000 # 15 seconds
-            fixedDelay: 36_000_000 # 10 hours
+            initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_FILL_CHEAP_PAIRS_INITIAL_DELAY}
+            fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_FILL_CHEAP_PAIRS_FIXED_DELAY}
         buySelectedGrownAssets:
-            initialDelay: 30_000 # 30 seconds
-            fixedDelay: 300_000 # 5 minutes
+            initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_SELECTED_GROWN_ASSETS_INITIAL_DELAY}
+            fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_SELECTED_GROWN_ASSETS_FIXED_DELAY}
         # buyGrownAssets:
-        #     initialDelay: 60_000 # 60 seconds
-        #     fixedDelay: 300_000 # 5 minutes
+        #     initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_GROWN_ASSETS_INITIAL_DELAY}
+        #     fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_GROWN_ASSETS_FIXED_DELAY}
         checkOpenedPositions:
-            initialDelay: 900_000 # 2 minutes
-            fixedDelay: 240_000 # 4 minutes
+            initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_CHECK_OPENED_POSITIONS_INITIAL_DELAY}
+            fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_CHECK_OPENED_POSITIONS_FIXED_DELAY}

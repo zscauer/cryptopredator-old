@@ -3,7 +3,6 @@ package ru.tyumentsev.binancespotbot.service;
 import java.io.Closeable;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.binance.api.client.BinanceApiCallback;
@@ -13,19 +12,21 @@ import com.binance.api.client.domain.account.AssetBalance;
 import com.binance.api.client.domain.event.UserDataUpdateEvent;
 
 import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.log4j.Log4j2;
 
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Log4j2
 public class AccountManager {
 
-    @Autowired
     BinanceApiRestClient restClient;
-    @Autowired
     BinanceApiWebSocketClient webSocketClient;
 
+    @NonFinal
     String listenKey;
 
     public void initializeUserDataUpdateStream() {
@@ -39,7 +40,7 @@ public class AccountManager {
     }
 
     public void closeCurrentUserDataStream() {
-        log.info("Sending request to close user data stream with listen key {}", listenKey);
+        log.debug("Sending request to close user data stream with listen key {}.", listenKey);
         restClient.closeUserDataStream(listenKey);
     }
 

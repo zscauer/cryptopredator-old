@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.binance.api.client.domain.market.TickerStatistics;
@@ -30,13 +29,11 @@ public class BuyFastGrowth {
      * and buy this coin if price changes more then 10% for the last 3 hours
      */
 
-    @Autowired
     MarketInfo marketInfo;
-    @Autowired
     MarketData marketData;
 
-    final String WINDOW_SIZE = "3h";
-    final int QUERY_SYMBOLS_PART_SIZE = 40;
+    String WINDOW_SIZE = "3h";
+    int QUERY_SYMBOLS_PART_SIZE = 40;
 
     public List<TickerStatistics> addPairsToBuy(String asset) {
         // get assets that paired to USDT.

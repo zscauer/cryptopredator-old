@@ -29,8 +29,7 @@ import ru.tyumentsev.binancespotbot.service.MarketInfo;
 public class MarketData {
     // key - quote asset, value - available pairs to this asset.
     Map<String, List<String>> availablePairs = new HashMap<>();
-    // monitoring last maximum price of opened positions. key - pair, value - last
-    // price.
+    // monitoring last maximum price of opened positions. key - pair, value - last price.
     @Getter
     Map<String, Double> openedPositionsLastPrices = new ConcurrentHashMap<>();
     
@@ -52,8 +51,7 @@ public class MarketData {
     Map<String, Double> pairsToBuy = new ConcurrentHashMap<>();
     // - "Buy big volume changes" strategy
 
-    StringBuilder symbolsParameterBuilder = new StringBuilder(); // build query in format, that accepts by binance
-                                                                       // API.
+    StringBuilder symbolsParameterBuilder = new StringBuilder(); // build query in format, that accepts by binance API.
     String QUERY_SYMBOLS_BEGIN = "[", DELIMETER = "\"", QUERY_SYMBOLS_END = "]"; // required format is
                                                                                        // "["BTCUSDT","BNBUSDT"]".
 

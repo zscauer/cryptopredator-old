@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.binance.api.client.BinanceApiRestClient;
@@ -21,23 +22,23 @@ import com.binance.api.client.domain.market.Candlestick;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
 import ru.tyumentsev.binancespotbot.service.SpotTrading;
 import ru.tyumentsev.binancespotbot.strategy.BuyBigVolumeGrowth;
 
-import org.springframework.web.bind.annotation.RequestParam;
-
 @RestController
 @RequestMapping("/state")
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class StateController {
 
-    final BinanceApiRestClient restClient;
-    final MarketData marketData;
-    final SpotTrading spotTrading;
-    final BuyBigVolumeGrowth buyBigVolumeGrowth;
+    BinanceApiRestClient restClient;
+    MarketData marketData;
+    SpotTrading spotTrading;
+    BuyBigVolumeGrowth buyBigVolumeGrowth;
 
+    @NonFinal
     Closeable openedWebSocket;
 
     @GetMapping("/closeWS")
