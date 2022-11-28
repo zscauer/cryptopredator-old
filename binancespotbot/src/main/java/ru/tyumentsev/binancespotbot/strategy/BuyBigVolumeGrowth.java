@@ -33,7 +33,7 @@ import ru.tyumentsev.binancespotbot.service.SpotTrading;
 
 /**
  * This strategy will get two last candlesticks for each quote USDT pair
- * and buy this coin if volume has grown more then 3x against last candle.
+ * and buy this asset if volume has grown more then priceGrowthFactor against previous candle.
  */
 @Service
 @RequiredArgsConstructor
@@ -64,6 +64,8 @@ public class BuyBigVolumeGrowth {
     double priceGrowthFactor;
     @Value("${strategy.buyBigVolumeGrowth.priceDecreaseFactor}")
     double priceDecreaseFactor;
+    @Value("${strategy.global.rocketFactor}")
+    double rocketFactor;
 
     private static Double parsedPrice(String priceToParse) {
         return Double.parseDouble(priceToParse);
@@ -110,10 +112,10 @@ public class BuyBigVolumeGrowth {
 
         try {
             cachedCandlesticks.entrySet().stream() // current volume & current price bigger then previous:
-                    .filter(entrySet -> parsedPrice(entrySet.getValue().get(1).getVolume()) > 
-                                parsedPrice(entrySet.getValue().get(0).getVolume()) * volumeGrowthFactor
-                            && parsedPrice(entrySet.getValue().get(1).getClose()) > 
-                                parsedPrice(entrySet.getValue().get(0).getClose()) * priceGrowthFactor)
+                    .filter(entrySet -> parsedPrice(entrySet.getValue().get(1)
+                            .getVolume()) > parsedPrice(entrySet.getValue().get(0).getVolume()) * volumeGrowthFactor
+                            && parsedPrice(entrySet.getValue().get(1).getClose()) > parsedPrice(
+                                    entrySet.getValue().get(0).getClose()) * priceGrowthFactor)
                     .forEach(entrySet -> addPairToBuy(entrySet.getKey(),
                             parsedPrice(entrySet.getValue().get(1).getClose())));
         } catch (Exception e) {
@@ -219,12 +221,19 @@ public class BuyBigVolumeGrowth {
     private void addPairToSell(String tickerSymbol, String quoteAsset, Map<String, Double> positionsToClose) {
         if (matchTrend) {
             List<Candlestick> candleSticks = marketInfo.getCandleSticks(tickerSymbol, CandlestickInterval.DAILY, 2);
-            if (pairHadTradesInThePast(candleSticks, 2)
-            // close price of previous day is higher that current more then growth factor - there is downtrend.
-                    && parsedPrice(candleSticks.get(0).getClose()) > 
-                        parsedPrice(candleSticks.get(1).getClose()) * priceGrowthFactor) {
-                positionsToClose.put(tickerSymbol,
-                        accountManager.getFreeAssetBalance(tickerSymbol.replace(quoteAsset, "")));
+            if (pairHadTradesInThePast(candleSticks, 2)) {
+                // current price higher then close price of previous day more then rocketFactor
+                // - there is rocket.
+                if (parsedPrice(candleSticks.get(1).getClose()) > parsedPrice(candleSticks.get(0).getClose())
+                        * rocketFactor) {
+                    positionsToClose.put(tickerSymbol,
+                            accountManager.getFreeAssetBalance(tickerSymbol.replace(quoteAsset, "")));
+                } else if (parsedPrice(candleSticks.get(0).getClose()) > parsedPrice(candleSticks.get(1).getClose())
+                        * priceGrowthFactor) { // close price of previous day is higher then current more then growth
+                                               // factor - there is downtrend.
+                    positionsToClose.put(tickerSymbol,
+                            accountManager.getFreeAssetBalance(tickerSymbol.replace(quoteAsset, "")));
+                }
             }
         } else {
             positionsToClose.put(tickerSymbol,

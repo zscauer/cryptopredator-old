@@ -52,8 +52,14 @@ applicationconfig:
     secret: ${BINANCE_SECRET_KEY}
 
 strategy:
+    # ------------------ monitoring
+    monitoring:
+        cancelExpiredOrders:
+            initialDelay: ${MONITORING_CANCEL_EXPIRED_ORDERS_INITIAL_DELAY}
+            fixedDelay: ${MONITORING_CANCEL_EXPIRED_ORDERS_FIXED_DELAY}
     # ------------------ global
     global:
+        rocketFactor: ${STRATEGY_GLOBAL_ROCKET_FACTOR}
         initializeUserDataUpdateStream:
             initialDelay: ${STRATEGY_GLOBAL_INITIALIZE_USERDATA_UPDATE_STREAM_INITIAL_DELAY}
             fixedDelay: ${STRATEGY_GLOBAL_INITIALIZE_USERDATA_UPDATE_STREAM_FIXED_DELAY}

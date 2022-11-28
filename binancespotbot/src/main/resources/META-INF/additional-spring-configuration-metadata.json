@@ -1,5 +1,40 @@
 {"properties": [
   {
+    "name": "strategy.monitoring.cancelExpiredOrders.initialDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.monitoring.cancel-expired-orders.initial-delay'"
+  },
+  {
+    "name": "strategy.monitoring.cancelExpiredOrders.fixedDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.monitoring.cancel-expired-orders.fixedDelay'"
+  },
+  {
+    "name": "strategy.global.initializeUserDataUpdateStream.initialDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.global.initializeUserDataUpdateStream.initial-delay'"
+  },
+  {
+    "name": "strategy.global.initializeUserDataUpdateStream.fixedDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.global.initialize-alive-user-data-update-stream.fixedDelay'"
+  },
+  {
+    "name": "strategy.global.keepAliveUserDataUpdateStream.initialDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.global.keepAliveUserDataUpdateStream.initial-delay'"
+  },
+  {
+    "name": "strategy.global.keepAliveUserDataUpdateStream.fixedDelay",
+    "type": "java.lang.String",
+    "description": "A description for 'strategy.global.keepAliveUserDataUpdateStream.fixedDelay'"
+  },
+  {
+    "name": "strategy.global.rocketFactor",
+    "type": "java.lang.Double",
+    "description": "A description for 'strategy.global.rocketFactor'"
+  },
+  {
     "name": "strategy.buy-fast-growth.collect-pairs-to-buy.initial-delay",
     "type": "java.lang.String",
     "description": "A description for 'strategy.buy-fast-growth.collect-pairs-to-buy.initial-delay'"
@@ -73,26 +108,6 @@
     "name": "strategy.buyBigVolumeGrowth.baseOrderVolume",
     "type": "java.lang.Integer",
     "description": "A description for 'strategy.buyBigVolumeGrowth.baseOrderVolume'"
-  },
-  {
-    "name": "strategy.global.initializeUserDataUpdateStream.initialDelay",
-    "type": "java.lang.String",
-    "description": "A description for 'strategy.global.initializeUserDataUpdateStream.initial-delay'"
-  },
-  {
-    "name": "strategy.global.initializeUserDataUpdateStream.fixedDelay",
-    "type": "java.lang.String",
-    "description": "A description for 'strategy.global.initialize-alive-user-data-update-stream.fixedDelay'"
-  },
-  {
-    "name": "strategy.global.keepAliveUserDataUpdateStream.initialDelay",
-    "type": "java.lang.String",
-    "description": "A description for 'strategy.global.keepAliveUserDataUpdateStream.initial-delay'"
-  },
-  {
-    "name": "strategy.global.keepAliveUserDataUpdateStream.fixedDelay",
-    "type": "java.lang.String",
-    "description": "A description for 'strategy.global.keepAliveUserDataUpdateStream.fixedDelay'"
   },
   {
     "name": "strategy.buyBigVolumeGrowth.volumeGrowthFactor",
