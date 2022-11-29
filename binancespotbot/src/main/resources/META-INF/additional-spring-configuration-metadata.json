@@ -1,5 +1,30 @@
 {"properties": [
   {
+    "name": "applicationconfig.testLaunch",
+    "type": "java.lang.Boolean",
+    "description": "A description for 'applicationconfig.testLaunch'"
+  },
+  {
+    "name": "applicationconfig.useTestnet",
+    "type": "java.lang.Boolean",
+    "description": "A description for 'applicationconfig.use-testnet'"
+  },
+  {
+    "name": "applicationconfig.useTestnetStreaming",
+    "type": "java.lang.Boolean",
+    "description": "A description for 'applicationconfig.useTestnetStreaming'"
+  },
+  {
+    "name": "applicationconfig.apiKey",
+    "type": "java.lang.String",
+    "description": "A description for 'applicationconfig.apiKey'"
+  },
+  {
+    "name": "applicationconfig.secret",
+    "type": "java.lang.String",
+    "description": "A description for 'applicationconfig.secret'"
+  },
+  {
     "name": "strategy.monitoring.cancelExpiredOrders.initialDelay",
     "type": "java.lang.String",
     "description": "A description for 'strategy.monitoring.cancel-expired-orders.initial-delay'"
@@ -123,26 +148,6 @@
     "name": "strategy.buyBigVolumeGrowth.priceDecreaseFactor",
     "type": "java.lang.Double",
     "description": "A description for 'strategy.buyBigVolumeGrowth.priceDecreaseFactor'"
-  },
-  {
-    "name": "applicationconfig.useTestnet",
-    "type": "java.lang.Boolean",
-    "description": "A description for 'applicationconfig.use-testnet'"
-  },
-  {
-    "name": "applicationconfig.useTestnetStreaming",
-    "type": "java.lang.Boolean",
-    "description": "A description for 'applicationconfig.useTestnetStreaming'"
-  },
-  {
-    "name": "applicationconfig.apiKey",
-    "type": "java.lang.String",
-    "description": "A description for 'applicationconfig.apiKey'"
-  },
-  {
-    "name": "applicationconfig.secret",
-    "type": "java.lang.String",
-    "description": "A description for 'applicationconfig.secret'"
   },
   {
     "name": "strategy.buyBigVolumeGrowth.matchTrend",

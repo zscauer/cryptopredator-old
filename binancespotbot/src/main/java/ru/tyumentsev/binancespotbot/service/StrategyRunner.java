@@ -3,6 +3,7 @@ package ru.tyumentsev.binancespotbot.service;
 import java.io.Closeable;
 import java.io.IOException;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -12,15 +13,20 @@ import io.micrometer.core.annotation.Timed;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.extern.log4j.Log4j2;
+import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.binancespotbot.strategy.BuyBigVolumeGrowth;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Log4j2
+@Slf4j
 public class StrategyRunner {
 
+    @NonFinal
+    @Value("${applicationconfig.testLaunch}")
+    boolean testLaunch;
+    
     AccountManager accountManager;
     BuyBigVolumeGrowth buyBigVolumeGrowth;
 
@@ -67,42 +73,50 @@ public class StrategyRunner {
         buyBigVolumeGrowth.fillCheapPairs(USDT);
     }
 
-    // @Timed("buySelectedGrownAssets")
+    @Timed("buySelectedGrownAssets")
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.initialDelay}")
     public void buyBigVolumeGrowth_buySelectedGrownAssets() {
-        buyBigVolumeGrowth.updateMonitoredCandles(USDT, CandlestickInterval.FIFTEEN_MINUTES, 2);
+        if (!testLaunch) {
+            buyBigVolumeGrowth.updateMonitoredCandles(USDT, CandlestickInterval.FIFTEEN_MINUTES, 2);
 
-        buyBigVolumeGrowth.findGrownAssets();
-        buyBigVolumeGrowth.buyGrownAssets(USDT);
+            buyBigVolumeGrowth.findGrownAssets();
+            buyBigVolumeGrowth.buyGrownAssets(USDT);
+        }
     }
 
-    // @Timed("checkOpenedPositions")
+    @Timed("checkOpenedPositions")
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.checkOpenedPositions.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.checkOpenedPositions.initialDelay}")
     public void buyBigVolumeGrowth_checkOpenedPositions() {
-        buyBigVolumeGrowth.checkMarketPositions(USDT);
+        if (!testLaunch) {
+            buyBigVolumeGrowth.checkMarketPositions(USDT);
+        }
     }
 
     @Scheduled(fixedDelayString = "${strategy.global.initializeUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.initializeUserDataUpdateStream.initialDelay}")
     public void buyBigVolumeGrowth_initializeAliveUserDataUpdateStream() {
-        // User data stream are closing by binance after 24 hours of opening.
-        accountManager.initializeUserDataUpdateStream();
+        if (!testLaunch) {
+            // User data stream are closing by binance after 24 hours of opening.
+            accountManager.initializeUserDataUpdateStream();
 
-        Closeable userDataUpdateEventsListener = buyBigVolumeGrowth.getUserDataUpdateEventsListener();
-        if (userDataUpdateEventsListener != null) {
-            try {
-                userDataUpdateEventsListener.close();
-            } catch (IOException e) {
-                log.error("Error while trying to close user data update events listener:\n{}.", e.getMessage());
-                e.printStackTrace();
+            Closeable userDataUpdateEventsListener = buyBigVolumeGrowth.getUserDataUpdateEventsListener();
+            if (userDataUpdateEventsListener != null) {
+                try {
+                    userDataUpdateEventsListener.close();
+                } catch (IOException e) {
+                    log.error("Error while trying to close user data update events listener:\n{}.", e.getMessage());
+                    e.printStackTrace();
+                }
             }
-        }
 
-        buyBigVolumeGrowth.monitorUserDataUpdateEvents();
+            buyBigVolumeGrowth.monitorUserDataUpdateEvents();
+        }
     }
 
     @Scheduled(fixedDelayString = "${strategy.global.keepAliveUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.keepAliveUserDataUpdateStream.initialDelay}")
     public void buyBigVolumeGrowth_keepAliveUserDataUpdateStream() {
-        accountManager.keepAliveUserDataUpdateStream();
+        if (!testLaunch) {
+            accountManager.keepAliveUserDataUpdateStream();
+        }
     }
     // ------------------------------- BuyBigVolumeGrowth strategy
 }

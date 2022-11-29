@@ -1,9 +1,16 @@
 logging:
     level:
+        root: ${LOGGING_LEVEL_ROOT}
         web: ${LOGGING_LEVEL_WEB}
-#     file:
-#         name: /tmp/hello-observability.log
-#     pattern.file: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg traceID=%X{trace_id} %n"
+    pattern:
+        console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
+        file: "%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}" # "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg %n"
+    file:
+        path: /tmp/logs
+    logback:
+        rollingpolicy:
+            file-name-pattern: "${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz"
+            max-history: 30
 
 server:
     tomcat:
@@ -12,10 +19,15 @@ server:
             rotate: false
             suffix: ".log"
             prefix: "access_log"
-            directory: "/tmp"
+            directory: "/tmp/logs"
             pattern: "common"
 
-# spring:
+spring:
+    main:
+        banner-mode: off
+    output:
+        ansi:
+            enabled: "ALWAYS"
     # mvc:
     #     pathmatch:
     #         matching-strategy: ant-path-matcher
@@ -46,6 +58,7 @@ management:
                 "[http.server.requests]": true
 
 applicationconfig:
+    testLaunch: ${TEST_LAUNCH}
     useTestnet: ${BINANCE_USE_TESTNET}
     useTestnetStreaming: ${BINANCE_USE_TESTNET_STREAMING}
     apiKey: ${BINANCE_API_KEY}
