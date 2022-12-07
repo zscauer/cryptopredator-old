@@ -16,6 +16,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.binancespotbot.strategy.BuyBigVolumeGrowth;
+import ru.tyumentsev.binancespotbot.strategy.BuyOrderBookTrend;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +30,7 @@ public class StrategyRunner {
     
     AccountManager accountManager;
     BuyBigVolumeGrowth buyBigVolumeGrowth;
+    BuyOrderBookTrend buyOrderBookTrend;
 
     String USDT = "USDT";
 
@@ -119,4 +121,16 @@ public class StrategyRunner {
         }
     }
     // ------------------------------- BuyBigVolumeGrowth strategy
+
+    // +++++++++++++++++++++++++++++++ BuyOrderBookTrend strategy
+
+    // @Scheduled(fixedDelay = 300000L, initialDelay = 20000L)
+    // public void buyOrderBookTrend() {
+    //   buyOrderBookTrend.testMethod1();
+        
+    // }
+
+
+    // ------------------------------- BuyOrderBookTrend strategy
+
 }

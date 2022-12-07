@@ -34,28 +34,28 @@ services:
       # "--web.enable-remote-write-receiver"
     ]
 
-  grafana:
-    image: grafana/grafana
-    network_mode: host
-    container_name: grafana
-    ports:
-      - 3000:3000
-    # user: '104'
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - ./src/main/resources/metrics/grafana:/var/lib/grafana
-      # # grafana.ini see: https://grafana.com/docs/grafana/latest/setup-grafana/configure-docker/#default-paths
-      # - ./src/main/resources/metrics/grafana.ini:/etc/grafana/grafana.ini
-      # # Pre-load the data sources
-      # - ./src/main/resources/metrics/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
-      # Pre-load the Hello Observability dashboard
-      - ./src/main/resources/metrics/dashboards:/etc/grafana/provisioning/dashboards
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_SERVER_DOMAIN=localhost
-      # - GF_FEATURE_TOGGLES_ENABLE=tempoSearch,tempoServiceGraph,tempoApmTable
+  # grafana:
+  #   image: grafana/grafana
+  #   network_mode: host
+  #   container_name: grafana
+  #   ports:
+  #     - 3000:3000
+  #   # user: '104'
+  #   volumes:
+  #     - /etc/timezone:/etc/timezone:ro
+  #     - /etc/localtime:/etc/localtime:ro
+  #     - ./src/main/resources/metrics/grafana:/var/lib/grafana
+  #     # # grafana.ini see: https://grafana.com/docs/grafana/latest/setup-grafana/configure-docker/#default-paths
+  #     # - ./src/main/resources/metrics/grafana.ini:/etc/grafana/grafana.ini
+  #     # # Pre-load the data sources
+  #     # - ./src/main/resources/metrics/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+  #     # Pre-load the Hello Observability dashboard
+  #     - ./src/main/resources/metrics/dashboards:/etc/grafana/provisioning/dashboards
+  #   environment:
+  #     - GF_SECURITY_ADMIN_USER=admin
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #     - GF_SERVER_DOMAIN=localhost
+  #     # - GF_FEATURE_TOGGLES_ENABLE=tempoSearch,tempoServiceGraph,tempoApmTable
 
   # loki:
   #   image: grafana/loki

@@ -112,3 +112,9 @@ strategy:
         checkOpenedPositions:
             initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_CHECK_OPENED_POSITIONS_INITIAL_DELAY}
             fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_CHECK_OPENED_POSITIONS_FIXED_DELAY}
+
+    # ------------------ buyBigVolumeGrowth
+    buyOrderBookTrend:
+        testMethod1:
+            initialDelay: 30_000
+            fixedDelay: 180_000

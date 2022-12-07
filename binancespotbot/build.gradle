@@ -25,7 +25,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.binance.api:binance-api-client:1.0.1'
+    implementation 'com.binance.api:binance-api-client:1.1.0'
     // implementation platform('org.springframework.boot:spring-boot-dependencies:2.7.1')
     implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-configuration-processor:${springBootVersion}"
