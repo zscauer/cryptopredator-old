@@ -86,6 +86,7 @@ public class GeneralMonitoring {
         List<String> pairsQuoteAssetOnBalance = currentBalances.stream()
                 .map(balance -> balance.getAsset() + quoteAsset)
                 .toList();
+        // TODO: define max price not by current, but by max price of candle?
         List<TickerPrice> currentPrices = marketInfo
                 .getLastTickersPrices(
                         marketData.combinePairsToRequestString(pairsQuoteAssetOnBalance));

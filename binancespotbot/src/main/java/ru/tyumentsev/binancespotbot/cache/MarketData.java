@@ -137,24 +137,36 @@ public class MarketData {
     }
 
     public void putOpenedPositionToPriceMonitoring(String pair, Double price, Double qty) {
-        var openedPosition = Optional.ofNullable(openedPositions.get(pair)).map(pos -> {
+        Optional.ofNullable(openedPositions.get(pair)).ifPresentOrElse(pos -> {
             var newQty = pos.qty() + qty;
             pos.avgPrice((pos.avgPrice() * pos.qty() + price * qty) / newQty);
             pos.qty(newQty);
-            return pos;
-        }).or(() -> Optional.of(OpenedPosition.of(pair))).map(pos -> {
+        }, () -> {
+            OpenedPosition pos = OpenedPosition.of(pair);
             pos.maxPrice(price);
             pos.avgPrice(price); // TODO: how to define avg at application initializing? connect db?
             pos.qty(qty);
-            return pos;
-        }).get();
+            log.info("{} not found it opened positions, adding new one - '{}'.", pair, pos);
+            openedPositions.put(pair, pos);
+        });
 
-        openedPositions.put(pair, openedPosition);
+//        var openedPosition = Optional.ofNullable(openedPositions.get(pair)).map(pos -> {
+//            var newQty = pos.qty() + qty;
+//            pos.avgPrice((pos.avgPrice() * pos.qty() + price * qty) / newQty);
+//            pos.qty(newQty);
+//            return pos;
+//        }).or(() -> Optional.of(OpenedPosition.of(pair))).map(pos -> {
+//            pos.maxPrice(price);
+//            pos.avgPrice(price); // TODO: how to define avg at application initializing? connect db?
+//            pos.qty(qty);
+//            return pos;
+//        }).get();
+//
+//        openedPositions.put(pair, openedPosition);
     }
 
     public void updateOpenedPositionMaxPrice(String pair, Double price) {
-        var openedPosition = openedPositions.getOrDefault(pair, OpenedPosition.of(pair));
-        openedPosition.maxPrice(price);
+        Optional.ofNullable(openedPositions.get(pair)).ifPresent(pos -> pos.maxPrice(price));
     }
 
     public void clearOpenedPositions() {
