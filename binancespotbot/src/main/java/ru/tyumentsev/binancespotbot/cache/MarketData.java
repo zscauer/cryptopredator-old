@@ -1,24 +1,20 @@
 package ru.tyumentsev.binancespotbot.cache;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Repository;
 
 import com.binance.api.client.domain.event.CandlestickEvent;
 import com.binance.api.client.domain.market.Candlestick;
-import com.binance.api.client.domain.market.TickerStatistics;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import ru.tyumentsev.binancespotbot.domain.Interest;
+import ru.tyumentsev.binancespotbot.domain.OpenedPosition;
 import ru.tyumentsev.binancespotbot.service.AccountManager;
 import ru.tyumentsev.binancespotbot.service.MarketInfo;
 
@@ -31,15 +27,9 @@ public class MarketData {
     Map<String, List<String>> availablePairs = new HashMap<>();
     // monitoring last maximum price of opened positions. key - pair, value - last price.
     @Getter
-    Map<String, Double> openedPositionsLastPrices = new ConcurrentHashMap<>();
-    
-    // + "Buy fast growth" strategy
-    Set<TickerStatistics> toBuy = new HashSet<>();
-    // key - pair, value - price of closing.
-    // Map<String, Double> closedPositions = new HashMap<>();
-    // - "Buy fast growth" strategy
+    Map<String, OpenedPosition> openedPositions = new ConcurrentHashMap<>();
 
-    // + "Buy big volume changes"
+    // + "Buy big volume growth"
     // stores candles, that have price < 1 USDT.
     Map<String, List<String>> cheapPairs = new ConcurrentHashMap<>();
     @Getter
@@ -49,27 +39,33 @@ public class MarketData {
     Map<String, CandlestickEvent> cachedCandlestickEvents = new ConcurrentHashMap<>();
     @Getter
     Map<String, Double> pairsToBuy = new ConcurrentHashMap<>();
-    // - "Buy big volume changes" strategy
+    // - "Buy big volume growth" strategy
+
+    // + "Buy order book trend"
+    @Getter
+    Map<String, Interest> openInterest = new ConcurrentHashMap<>();
+    // - "Buy order book trend"
 
     StringBuilder symbolsParameterBuilder = new StringBuilder(); // build query in format, that accepts by binance API.
     String QUERY_SYMBOLS_BEGIN = "[", DELIMETER = "\"", QUERY_SYMBOLS_END = "]"; // required format is
                                                                                        // "["BTCUSDT","BNBUSDT"]".
 
     public void initializeOpenedPositionsFromMarket(MarketInfo marketInfo, AccountManager accountManager) {
-        openedPositionsLastPrices.clear();
+        openedPositions.clear();
         // fill cache of opened positions with last market price of each.
         accountManager.getAccountBalances().stream()
                 .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
-                .forEach(balance -> {
-                    putOpenedPositionToPriceMonitoring(balance.getAsset() + "USDT",
-                            Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + "USDT").getPrice()));
-                });
+                .forEach(balance -> putOpenedPositionToPriceMonitoring(balance.getAsset() + "USDT",
+                        Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + "USDT").getPrice()),
+                        Double.parseDouble(balance.getFree())));
 
         log.info("Next pairs initialized from account manager to opened positions price monitoring: {}",
-                getOpenedPositionsLastPrices());
+                getOpenedPositions());
     }
 
     public void addAvailablePairs(String asset, List<String> pairs) {
+        // TODO: delete logpoint
+//        log.info("Adding pairs returned from 'getAvailableTradePairs()' to available pairs:\n{}", pairs);
         availablePairs.put(asset.toUpperCase(), pairs);
     }
 
@@ -81,19 +77,17 @@ public class MarketData {
     public String getAvailablePairsSymbols(String asset) {
         StringBuilder sb = new StringBuilder();
 
-        availablePairs.get(asset).stream().forEach(pair -> {
-            sb.append(pair.toLowerCase() + ",");
-        });
+        availablePairs.get(asset).forEach(pair -> sb.append(pair.toLowerCase()).append(","));
         sb.deleteCharAt(sb.length() - 1);
 
         return sb.toString();
     }
 
-    public String getAvailablePairsSymbolsFormatted(List<String> pairs, int fromIndex, int toIndex) {
+    public String combinePairsToRequestString(List<String> pairs) {
         symbolsParameterBuilder.delete(0, symbolsParameterBuilder.capacity());
         symbolsParameterBuilder.append(QUERY_SYMBOLS_BEGIN);
 
-        for (String pair : pairs.subList(fromIndex, toIndex)) {
+        for (var pair : pairs) {
             symbolsParameterBuilder.append(DELIMETER);
             symbolsParameterBuilder.append(pair);
             symbolsParameterBuilder.append(DELIMETER);
@@ -102,6 +96,8 @@ public class MarketData {
         symbolsParameterBuilder.deleteCharAt(symbolsParameterBuilder.length() - 1); // delete "," in last line.
         symbolsParameterBuilder.append(QUERY_SYMBOLS_END);
 
+        // TODO: delete logpoint
+//        log.info("Compared string is:\n{}", symbolsParameterBuilder.toString());
         return symbolsParameterBuilder.toString();
     }
 
@@ -116,7 +112,7 @@ public class MarketData {
      */
     public List<String> getCheapPairsExcludeOpenedPositions(String asset) {
         List<String> pairs = cheapPairs.getOrDefault(asset, Collections.emptyList());
-        pairs.removeAll(openedPositionsLastPrices.keySet());
+        pairs.removeAll(openedPositions.keySet());
         
         return pairs;
     }
@@ -125,9 +121,7 @@ public class MarketData {
     public String getCheapPairsSymbols(String asset) {
         StringBuilder sb = new StringBuilder();
 
-        cheapPairs.get(asset).stream().forEach(pair -> {
-            sb.append(pair.toLowerCase() + ",");
-        });
+        cheapPairs.get(asset).forEach(pair -> sb.append(pair.toLowerCase()).append(","));
         sb.deleteCharAt(sb.length() - 1);
 
         return sb.toString();
@@ -136,44 +130,46 @@ public class MarketData {
     public String getCheapPairsSymbols(List<String> asset) {
         StringBuilder sb = new StringBuilder();
 
-        asset.stream().forEach(pair -> {
-            sb.append(pair.toLowerCase() + ",");
-        });
+        asset.forEach(pair -> sb.append(pair.toLowerCase()).append(","));
         sb.deleteCharAt(sb.length() - 1);
 
         return sb.toString();
     }
 
-    public void loadPairsToBuy(List<TickerStatistics> pairs, String asset) {
-        toBuy.clear();
-        toBuy.addAll(pairs);
+    public void putOpenedPositionToPriceMonitoring(String pair, Double price, Double qty) {
+        var openedPosition = Optional.ofNullable(openedPositions.get(pair)).map(pos -> {
+            var newQty = pos.qty() + qty;
+            pos.avgPrice((pos.avgPrice() * pos.qty() + price * qty) / newQty);
+            pos.qty(newQty);
+            return pos;
+        }).or(() -> Optional.of(OpenedPosition.of(pair))).map(pos -> {
+            pos.maxPrice(price);
+            pos.avgPrice(price); // TODO: how to define avg at application initializing? connect db?
+            pos.qty(qty);
+            return pos;
+        }).get();
 
-        // need to remove all added pairs from available pairs:
-        getAvailablePairs(asset)
-                .removeAll(pairs.stream().map(tickerStatistics -> tickerStatistics.getSymbol()).toList());
+        openedPositions.put(pair, openedPosition);
     }
 
-    public Set<TickerStatistics> getTickersToBuy() {
-        return toBuy;
+    public void updateOpenedPositionMaxPrice(String pair, Double price) {
+        var openedPosition = openedPositions.getOrDefault(pair, OpenedPosition.of(pair));
+        openedPosition.maxPrice(price);
     }
 
-    public void putOpenedPositionToPriceMonitoring(String pair, Double price) {
-        openedPositionsLastPrices.put(pair, price);
-    }
-
-    public void clearOpenedPositionsLastPrices() {
-        openedPositionsLastPrices.clear();
+    public void clearOpenedPositions() {
+        openedPositions.clear();
     }
 
     public void removeClosedPositionFromPriceMonitoring(String pair) {
-        openedPositionsLastPrices.remove(pair);
+        openedPositions.remove(pair);
     }
 
     public void representClosingPositions(Map<String, Double> closedPairs, String asset) {
-        closedPairs.entrySet().stream().forEach(entrySet -> {
-            openedPositionsLastPrices.remove(entrySet.getKey());
-            if (entrySet.getValue() < 1) {
-                cheapPairs.get(asset).add(entrySet.getKey());
+        closedPairs.forEach((key, value) -> {
+            openedPositions.remove(key);
+            if (value < 1) {
+                cheapPairs.get(asset).add(key);
             }
         });
     }

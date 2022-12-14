@@ -33,6 +33,10 @@ public class MarketInfo {
                 .collect(Collectors.toList());
     }
 
+    public List<TickerStatistics> getTickers24HrPriceStatistics(String symbols) {
+        return restClient.getVariousTicker24HrPriceStatistics(symbols);
+    }
+
     public TickerStatistics getWindowPriceChange(String symbol, String windowSize) {
         return restClient.getWindowPriceChangeStatistics(symbol, windowSize);
     }
@@ -51,5 +55,15 @@ public class MarketInfo {
 
     public List<Candlestick> getCandleSticks(String symbol, CandlestickInterval interval, Integer limit) {
         return restClient.getCandlestickBars(symbol, interval, limit);
+    }
+
+    public boolean pairHadTradesInThePast(String ticker, CandlestickInterval interval, Integer qtyBarsToAnalize) {
+        // pair should have history of trade for some days before.
+        return getCandleSticks(ticker, interval, qtyBarsToAnalize).size() == qtyBarsToAnalize;
+    }
+
+    public boolean pairHadTradesInThePast(List<Candlestick> candleSticks, int qtyBarsToAnalize) {
+        // pair should have history of trade for some days before.
+        return candleSticks.size() == qtyBarsToAnalize;
     }
 }

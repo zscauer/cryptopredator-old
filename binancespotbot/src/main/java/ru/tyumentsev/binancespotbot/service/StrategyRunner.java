@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import ru.tyumentsev.binancespotbot.strategy.Buy24hPriceChange;
 import ru.tyumentsev.binancespotbot.strategy.BuyBigVolumeGrowth;
 import ru.tyumentsev.binancespotbot.strategy.BuyOrderBookTrend;
 
@@ -31,42 +32,9 @@ public class StrategyRunner {
     AccountManager accountManager;
     BuyBigVolumeGrowth buyBigVolumeGrowth;
     BuyOrderBookTrend buyOrderBookTrend;
+    Buy24hPriceChange buy24hPriceChange;
 
     String USDT = "USDT";
-
-    // +++++++++++++++++++++++++++++++ BuyFastGrowth strategy
-
-    // @Scheduled(fixedDelayString =
-    // "${strategy.buyFastGrowth.collectPairsToBuy.fixedDelay}", initialDelayString
-    // = "${strategy.buyFastGrowth.collectPairsToBuy.initialDelay}")
-    // private void buyFastGrowth_collectPairsToBuy() {
-    // System.out.println("Collecting pairs runs");
-    // log.info("Test logging info");
-    // log.info("Found next pairs to buy:");
-    // buyFastGrowth.addPairsToBuy("USDT").stream().forEach(element -> {
-    // log.info(element.getSymbol() + " changed to " +
-    // element.getPriceChangePercent() + "%");
-    // });
-    // }
-
-    // @Scheduled(fixedDelayString =
-    // "${strategy.buyFastGrowth.buyCollectedPairs.fixedDelay}", initialDelayString
-    // = "${strategy.buyFastGrowth.buyCollectedPairs.initialDelay}")
-    // private void buyFastGrowth_buyCollectedPairs() {
-    // log.info("Buying collected pairs runs");
-    // buyFastGrowth.makeOrdersForSelectedPairsToBuy();
-    // }
-
-    // @Scheduled(fixedDelayString =
-    // "${strategy.buyFastGrowth.closeOpenedPositions.fixedDelay}",
-    // initialDelayString =
-    // "${strategy.buyFastGrowth.closeOpenedPositions.initialDelay}")
-    // private void buyFastGrowth_closeOpenedPositions() {
-    // log.info("Closing opened positions runs");
-    // buyFastGrowth.closeOpenedPositions();
-    // }
-
-    // ------------------------------- BuyFastGrowth strategy
 
     // +++++++++++++++++++++++++++++++ BuyBigVolumeGrowth strategy
 
@@ -83,14 +51,6 @@ public class StrategyRunner {
 
             buyBigVolumeGrowth.findGrownAssets();
             buyBigVolumeGrowth.buyGrownAssets(USDT);
-        }
-    }
-
-    @Timed("checkOpenedPositions")
-    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.checkOpenedPositions.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.checkOpenedPositions.initialDelay}")
-    public void buyBigVolumeGrowth_checkOpenedPositions() {
-        if (!testLaunch) {
-            buyBigVolumeGrowth.checkMarketPositions(USDT);
         }
     }
 
@@ -124,13 +84,36 @@ public class StrategyRunner {
 
     // +++++++++++++++++++++++++++++++ BuyOrderBookTrend strategy
 
-    // @Scheduled(fixedDelay = 300000L, initialDelay = 20000L)
-    // public void buyOrderBookTrend() {
-    //   buyOrderBookTrend.testMethod1();
-        
-    // }
-
+//     @Scheduled(fixedDelay = 300000L, initialDelay = 20000L)
+//     public void buyOrderBookTrend_generateWebSocketStreams() {
+//       buyOrderBookTrend.generateWebSocketStreams();
+//     }
+//
+//    @Scheduled(fixedDelay = 180000L, initialDelay = 60000L)
+//    public void buyOrderBookTrend_analizeInterest() {
+//        buyOrderBookTrend.analizeInterest();
+//    }
 
     // ------------------------------- BuyOrderBookTrend strategy
+
+    // +++++++++++++++++++++++++++++++ Buy24hPriceChange strategy
+
+    // launch every 12h
+    //
+//    @Scheduled(fixedDelayString = "${strategy.buy24hPriceChange.fillCheapPairs.fixedDelay}", initialDelayString = "${strategy.buy24hPriceChange.fillCheapPairs.initialDelay}")
+//    public void buy24hPriceChange_fillCheapPairs() {
+//        buy24hPriceChange.fillCheapPairs(USDT);
+//    }
+
+//    @Scheduled(fixedDelayString = "${strategy.buy24hPriceChange.defineGrowingPairs.fixedDelay}", initialDelayString = "${strategy.buy24hPriceChange.defineGrowingPairs.initialDelay}")
+//    public void buy24hPriceChange_defineGrowingPairs() {
+//        buy24hPriceChange.defineGrowingPairs(USDT);
+////        buy24hPriceChange.fillWebSocketStreams();
+//    }
+
+
+
+    // ------------------------------- Buy24hPriceChange strategy
+
 
 }

@@ -7,7 +7,7 @@ services:
     image: binancespotbot
     container_name: binancespotbot
     env_file:
-      - .env
+      - binancespotbot_env.env
     ports:
       - 85:8080
     volumes:

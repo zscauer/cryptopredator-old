@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
+import ru.tyumentsev.binancespotbot.service.AccountManager;
 import ru.tyumentsev.binancespotbot.service.MarketInfo;
 import ru.tyumentsev.binancespotbot.strategy.BuyBigVolumeGrowth;
 
@@ -26,7 +27,7 @@ public class ApplicationInitializer implements ApplicationRunner {
     
     MarketData marketData;
     MarketInfo marketInfo;
-    BuyBigVolumeGrowth buyBigVolumeGrowth;
+    AccountManager accountManager;
 
     String USDT = "USDT";
 
@@ -37,7 +38,7 @@ public class ApplicationInitializer implements ApplicationRunner {
         }
         // TODO change to get assets tickers from config file.
         marketData.addAvailablePairs(USDT, marketInfo.getAvailableTradePairs(USDT));
-        marketData.initializeOpenedPositionsFromMarket(marketInfo, buyBigVolumeGrowth.getAccountManager());
+        marketData.initializeOpenedPositionsFromMarket(marketInfo, accountManager);
         log.info("Application initialization complete. Logger class is: '{}'.", log.getClass());
     }
 }

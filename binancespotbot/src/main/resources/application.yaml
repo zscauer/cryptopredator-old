@@ -67,11 +67,21 @@ applicationconfig:
 strategy:
     # ------------------ monitoring
     monitoring:
+        matchTrend: ${MONITORING_MATCH_TREND}
+        priceDecreaseFactor: ${MONITORING_PRICE_DECREASE_FACTOR}
+        priceGrowthFactor: ${MONITORING_PRICE_GROWTH_FACTOR}
+        averagingTriggerFactor: ${MONITORING_AVERAGING_TRIGGER_FACTOR}
+        checkOpenedPositions:
+            initialDelay: ${MONITORING_CHECK_OPENED_POSITIONS_INITIAL_DELAY}
+            fixedDelay: ${MONITORING_CHECK_OPENED_POSITIONS_FIXED_DELAY}
         cancelExpiredOrders:
             initialDelay: ${MONITORING_CANCEL_EXPIRED_ORDERS_INITIAL_DELAY}
             fixedDelay: ${MONITORING_CANCEL_EXPIRED_ORDERS_FIXED_DELAY}
+
     # ------------------ global
     global:
+        minimalAssetBalance: ${STRATEGY_GLOBAL_MINIMAL_ASSET_BALANCE}
+        baseOrderVolume: ${STRATEGY_GLOBAL_BASE_ORDER_VOLUME}
         rocketFactor: ${STRATEGY_GLOBAL_ROCKET_FACTOR}
         initializeUserDataUpdateStream:
             initialDelay: ${STRATEGY_GLOBAL_INITIALIZE_USERDATA_UPDATE_STREAM_INITIAL_DELAY}
@@ -79,27 +89,14 @@ strategy:
         keepAliveUserDataUpdateStream:
             initialDelay: ${STRATEGY_GLOBAL_KEEP_ALIVE_USERDATA_UPDATE_STREAM_INITIAL_DELAY}
             fixedDelay: ${STRATEGY_GLOBAL_KEEP_ALIVE_USERDATA_UPDATE_STREAM_FIXED_DELAY}
-    # ------------------ buyFastGrowth 
-    buyFastGrowth:
-        collectPairsToBuy:
-            initialDelay: ${STRATEGY_BUY_FAST_GROWTH_COLLECT_PAIRS_TO_BUY_INITIAL_DELAY}
-            fixedDelay: ${STRATEGY_BUY_FAST_GROWTH_COLLECT_PAIRS_TO_BUY_FIXED_DELAY}
-        buyCollectedPairs:
-            initialDelay: ${STRATEGY_BUY_FAST_GROWTH_BUY_COLLECTED_PAIRS_INITIAL_DELAY}
-            fixedDelay: ${STRATEGY_BUY_FAST_GROWTH_BUY_COLLECTED_PAIRS_FIXED_DELAY}
-        closeOpenedPositions:
-            initialDelay: ${STRATEGY_BUY_FAST_GROWTH_CLOSE_OPENED_POSITIONS_INITIAL_DELAY}
-            fixedDelay: ${STRATEGY_BUY_FAST_GROWTH_CLOSE_OPENED_POSITIONS_FIXED_DELAY}
+
     # ------------------ buyBigVolumeGrowth
     buyBigVolumeGrowth:
         matchTrend: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_MATCH_TREND}
         maximalPairPrice: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_MAXIMAL_PAIR_PRICE}
-        minimalAssetBalance: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_MINIMAL_ASSET_BALANCE}
-        baseOrderVolume: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BASE_ORDER_VOLUME}
         volumeGrowthFactor: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_VOLUME_GROWTH_FACTOR}
+
         priceGrowthFactor: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_PRICE_GROWTH_FACTOR}
-        priceDecreaseFactor: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_PRICE_DECREASE_FACTOR}
-        
         fillCheapPairs:
             initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_FILL_CHEAP_PAIRS_INITIAL_DELAY}
             fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_FILL_CHEAP_PAIRS_FIXED_DELAY}
@@ -109,12 +106,13 @@ strategy:
         # buyGrownAssets:
         #     initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_GROWN_ASSETS_INITIAL_DELAY}
         #     fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_GROWN_ASSETS_FIXED_DELAY}
-        checkOpenedPositions:
-            initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_CHECK_OPENED_POSITIONS_INITIAL_DELAY}
-            fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_CHECK_OPENED_POSITIONS_FIXED_DELAY}
 
-    # ------------------ buyBigVolumeGrowth
-    buyOrderBookTrend:
-        testMethod1:
-            initialDelay: 30_000
-            fixedDelay: 180_000
+    # ------------------ buy24hPriceChange
+    buy24hPriceChange:
+        percentOfGrowingFor24h: ${STRATEGY_BUY_24H_PRICE_CHANGE_PERCENT_OF_GROWING_FOR_24H}
+        fillCheapPairs:
+            initialDelay: ${STRATEGY_BUY_24H_PRICE_CHANGE_FILL_CHEAP_PAIRS_INITIAL_DELAY}
+            fixedDelay: ${STRATEGY_BUY_24H_PRICE_CHANGE_FILL_CHEAP_PAIRS_FIXED_DELAY}
+        defineGrowingPairs:
+            initialDelay: ${STRATEGY_BUY_24H_PRICE_CHANGE_DEFINE_GROWING_PAIRS_INITIAL_DELAY}
+            fixedDelay: ${STRATEGY_BUY_24H_PRICE_CHANGE_DEFINE_GROWING_PAIRS_FIXED_DELAY}

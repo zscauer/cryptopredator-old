@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
+import ru.tyumentsev.binancespotbot.domain.OpenedPosition;
 import ru.tyumentsev.binancespotbot.service.AccountManager;
 import ru.tyumentsev.binancespotbot.service.MarketInfo;
 import ru.tyumentsev.binancespotbot.service.SpotTrading;
@@ -39,7 +40,7 @@ import ru.tyumentsev.binancespotbot.service.SpotTrading;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
-public class BuyBigVolumeGrowth {
+public class BuyBigVolumeGrowth implements TradingStrategy {
 
     @Getter
     final MarketInfo marketInfo;
@@ -54,31 +55,24 @@ public class BuyBigVolumeGrowth {
     boolean matchTrend;
     @Value("${strategy.buyBigVolumeGrowth.maximalPairPrice}")
     int maximalPairPrice;
-    @Value("${strategy.buyBigVolumeGrowth.minimalAssetBalance}")
-    int minimalAssetBalance;
-    @Value("${strategy.buyBigVolumeGrowth.baseOrderVolume}")
-    int baseOrderVolume;
     @Value("${strategy.buyBigVolumeGrowth.volumeGrowthFactor}")
     int volumeGrowthFactor;
     @Value("${strategy.buyBigVolumeGrowth.priceGrowthFactor}")
     double priceGrowthFactor;
-    @Value("${strategy.buyBigVolumeGrowth.priceDecreaseFactor}")
-    double priceDecreaseFactor;
-    @Value("${strategy.global.rocketFactor}")
-    double rocketFactor;
 
-    private static Double parsedPrice(String priceToParse) {
-        return Double.parseDouble(priceToParse);
+    private static Double parsedDouble(String stringToParse) {
+        return Double.parseDouble(stringToParse);
     }
 
+    // TODO: replace method to common class.
     public void fillCheapPairs(String asset) {
         // get all pairs, that trades against USDT.
         List<String> availablePairs = marketData.getAvailablePairs(asset);
-        // filter available pairs to get cheaper then maximalPairPrice.
+        // filter available pairs to get cheaper than maximalPairPrice.
         List<String> filteredPairs = marketInfo
                 .getLastTickersPrices(
-                        marketData.getAvailablePairsSymbolsFormatted(availablePairs, 0, availablePairs.size() - 1))
-                .stream().filter(tickerPrice -> parsedPrice(tickerPrice.getPrice()) < maximalPairPrice)
+                        marketData.combinePairsToRequestString(availablePairs))
+                .stream().filter(tickerPrice -> parsedDouble(tickerPrice.getPrice()) < maximalPairPrice)
                 .map(TickerPrice::getSymbol).collect(Collectors.toCollection(ArrayList::new));
         log.info("Filtered {} cheap tickers.", filteredPairs.size());
 
@@ -89,7 +83,7 @@ public class BuyBigVolumeGrowth {
     /**
      * Add to cache information about last candles of all filtered pairs (exclude
      * opened positions).
-     * 
+     *
      * @param asset
      * @param interval
      * @param limit
@@ -97,11 +91,9 @@ public class BuyBigVolumeGrowth {
     @Timed("updateMonitoredCandles")
     public void updateMonitoredCandles(String asset, CandlestickInterval interval, Integer limit) {
         marketData.clearCandleSticksCache();
-        marketData.getCheapPairsExcludeOpenedPositions(asset).stream()
-                .forEach(ticker -> {
-                    marketData.addCandlesticksToCache(ticker,
-                            marketInfo.getCandleSticks(ticker, interval, limit));
-                });
+        marketData.getCheapPairsExcludeOpenedPositions(asset)
+                .forEach(ticker -> marketData.addCandlesticksToCache(ticker,
+                        marketInfo.getCandleSticks(ticker, interval, limit)));
         log.debug("Cache of candle sticks updated and now contains {} pairs.", marketData.getCachedCandles().size());
     }
 
@@ -111,13 +103,13 @@ public class BuyBigVolumeGrowth {
         Map<String, List<Candlestick>> cachedCandlesticks = marketData.getCachedCandles();
 
         try {
-            cachedCandlesticks.entrySet().stream() // current volume & current price bigger then previous:
-                    .filter(entrySet -> parsedPrice(entrySet.getValue().get(1)
-                            .getVolume()) > parsedPrice(entrySet.getValue().get(0).getVolume()) * volumeGrowthFactor
-                            && parsedPrice(entrySet.getValue().get(1).getClose()) > parsedPrice(
-                                    entrySet.getValue().get(0).getClose()) * priceGrowthFactor)
+            cachedCandlesticks.entrySet().stream() // current volume & current price bigger than previous:
+                    .filter(entrySet -> parsedDouble(entrySet.getValue().get(1)
+                            .getVolume()) > parsedDouble(entrySet.getValue().get(0).getVolume()) * volumeGrowthFactor
+                            && parsedDouble(entrySet.getValue().get(1).getClose()) > parsedDouble(
+                            entrySet.getValue().get(0).getClose()) * priceGrowthFactor)
                     .forEach(entrySet -> addPairToBuy(entrySet.getKey(),
-                            parsedPrice(entrySet.getValue().get(1).getClose())));
+                            parsedDouble(entrySet.getValue().get(1).getClose())));
         } catch (Exception e) {
             log.error("Error while trying to find grown assets:\n{}.", e.getMessage());
             e.printStackTrace();
@@ -127,8 +119,8 @@ public class BuyBigVolumeGrowth {
     public void addPairToBuy(String symbol, Double price) {
         if (matchTrend) {
             List<Candlestick> candleSticks = marketInfo.getCandleSticks(symbol, CandlestickInterval.DAILY, 2);
-            if (pairHadTradesInThePast(candleSticks, 2)
-                    && price > parsedPrice(candleSticks.get(0).getHigh())) {
+            if (marketInfo.pairHadTradesInThePast(candleSticks, 2)
+                    && price > parsedDouble(candleSticks.get(0).getHigh())) {
                 marketData.putPairToBuy(symbol, price);
             }
         } else {
@@ -137,113 +129,16 @@ public class BuyBigVolumeGrowth {
     }
 
     @Timed("buyGrownAssets")
-    public void buyGrownAssets(String asset) {
+    public void buyGrownAssets(String quoteAsset) {
         Map<String, Double> pairsToBuy = marketData.getPairsToBuy();
         log.debug("There is {} pairs to buy: {}.", pairsToBuy.size(), pairsToBuy);
 
-        if (pairsToBuy.size() > 0) {
-            int availableOrdersCount = accountManager.getFreeAssetBalance(asset).intValue() / minimalAssetBalance;
-            Map<String, Double> remainsPairs = new HashMap<>(); // collect pairs which can't be bought.
-
-            for (Entry<String, Double> pairToBuy : pairsToBuy.entrySet()) {
-                if (availableOrdersCount > 0
-                        && pairHadTradesInThePast(pairToBuy.getKey(), CandlestickInterval.DAILY, 3)) {
-                    spotTrading.placeLimitBuyOrderAtLastMarketPrice(pairToBuy.getKey(),
-                            baseOrderVolume / pairToBuy.getValue());
-                    availableOrdersCount--;
-                } else {
-                    remainsPairs.put(pairToBuy.getKey(), pairToBuy.getValue());
-                }
-            }
-
-            if (!remainsPairs.isEmpty()) {
-                log.info("NOT ENOUGH FREE BALANCE to buy next pairs: {}.", remainsPairs);
-                remainsPairs.clear();
-            }
-
-            pairsToBuy.clear();
-        }
-    }
-
-    public boolean pairHadTradesInThePast(String ticker, CandlestickInterval interval, Integer qtyBarsToAnalize) {
-        // pair should have history of trade for some days before.
-        return marketInfo.getCandleSticks(ticker, interval, qtyBarsToAnalize).size() == qtyBarsToAnalize;
-    }
-
-    public boolean pairHadTradesInThePast(List<Candlestick> candleSticks, int qtyBarsToAnalize) {
-        // pair should have history of trade for some days before.
-        return candleSticks.size() == qtyBarsToAnalize;
-    }
-
-    @Timed("checkMarketPositions")
-    public void checkMarketPositions(String quoteAsset) {
-        Map<String, Double> openedPositionsLastPrices = marketData.getOpenedPositionsLastPrices();
-        log.debug("There is {} prices cached in openedPositionsLastPrices.", openedPositionsLastPrices.size());
-
-        List<AssetBalance> currentBalances = accountManager.getAccountBalances().stream()
-                .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB"))).toList();
-
-        if (currentBalances.isEmpty()) {
-            log.debug("No available trading assets found on binance account.");
-            return;
-        }
-
-        Map<String, Double> positionsToClose = new HashMap<>();
-
-        List<String> pairsQuoteAssetOnBalance = currentBalances.stream()
-                .map(balance -> balance.getAsset() + quoteAsset)
-                .toList();
-        List<TickerPrice> currentPrices = marketInfo
-                .getLastTickersPrices(
-                        marketData.getAvailablePairsSymbolsFormatted(pairsQuoteAssetOnBalance, 0,
-                                pairsQuoteAssetOnBalance.size()));
-
-        currentPrices.stream().forEach(tickerPrice -> {
-            Double currentPrice = parsedPrice(tickerPrice.getPrice());
-            String tickerSymbol = tickerPrice.getSymbol();
-
-            if (openedPositionsLastPrices.get(tickerSymbol) == null) {
-                log.info("'{}' not found in opened positions last prices, last prices contains:\n{}", tickerSymbol,
-                        openedPositionsLastPrices);
-            } else if (currentPrice > openedPositionsLastPrices.get(tickerSymbol)) {
-                // update current price if it growth.
-                log.debug("PRICE of {} GROWTH and now equals {}.", tickerSymbol, currentPrice);
-                marketData.putOpenedPositionToPriceMonitoring(tickerSymbol, currentPrice);
-            } else if (currentPrice < openedPositionsLastPrices.get(tickerSymbol) * priceDecreaseFactor) {
-                // close position if price decreased.
-                log.debug("PRICE of {} DECREASED and now equals {}.", tickerSymbol, currentPrice);
-                addPairToSell(tickerSymbol, quoteAsset, positionsToClose);
-            }
-        });
-        spotTrading.closeAllPostitions(positionsToClose);
-    }
-
-    private void addPairToSell(String tickerSymbol, String quoteAsset, Map<String, Double> positionsToClose) {
-        if (matchTrend) {
-            List<Candlestick> candleSticks = marketInfo.getCandleSticks(tickerSymbol, CandlestickInterval.DAILY, 2);
-            if (pairHadTradesInThePast(candleSticks, 2)) {
-                // current price higher then close price of previous day more then rocketFactor
-                // - there is rocket.
-                if (parsedPrice(candleSticks.get(1).getClose()) > parsedPrice(candleSticks.get(0).getClose())
-                        * rocketFactor) {
-                    positionsToClose.put(tickerSymbol,
-                            accountManager.getFreeAssetBalance(tickerSymbol.replace(quoteAsset, "")));
-                } else if (parsedPrice(candleSticks.get(0).getClose()) > parsedPrice(candleSticks.get(1).getClose())
-                        * priceGrowthFactor) { // close price of previous day is higher then current more then growth
-                                               // factor - there is downtrend.
-                    positionsToClose.put(tickerSymbol,
-                            accountManager.getFreeAssetBalance(tickerSymbol.replace(quoteAsset, "")));
-                }
-            }
-        } else {
-            positionsToClose.put(tickerSymbol,
-                    accountManager.getFreeAssetBalance(tickerSymbol.replace(quoteAsset, "")));
-        }
+        spotTrading.buyAssets(pairsToBuy, quoteAsset, accountManager);
     }
 
     /**
      * Opens web socket stream of user data update events and monitors trade events.
-     * If it was "buy" event, than add pair from this event to monitoring,
+     * If it was "buy" event, then add pair from this event to monitoring,
      * if it was "sell" event - removes from monitoring.
      */
     public void monitorUserDataUpdateEvents() {
@@ -252,17 +147,17 @@ public class BuyBigVolumeGrowth {
                     && callback.getOrderTradeUpdateEvent().getExecutionType() == ExecutionType.TRADE) {
                 OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();
                 // if price == 0 most likely it was market order, use last market price.
-                Double dealPrice = parsedPrice(event.getPrice()) == 0
-                        ? parsedPrice(marketInfo.getLastTickerPrice(event.getSymbol()).getPrice())
-                        : parsedPrice(event.getPrice());
+                Double dealPrice = parsedDouble(event.getPrice()) == 0
+                        ? parsedDouble(marketInfo.getLastTickerPrice(event.getSymbol()).getPrice())
+                        : parsedDouble(event.getPrice());
 
                 if (event.getSide() == OrderSide.BUY) {
-                    log.debug("Buy order trade updated, put result in opened positions cache: {} at {}.",
-                            event.getSymbol(), dealPrice);
-                    marketData.putOpenedPositionToPriceMonitoring(event.getSymbol(), dealPrice);
+                    log.debug("Buy order trade updated, put result in opened positions cache: buy {} {} at {}.",
+                            event.getOriginalQuantity(), event.getSymbol(), dealPrice);
+                    marketData.putOpenedPositionToPriceMonitoring(event.getSymbol(), dealPrice, parsedDouble(event.getOriginalQuantity()));
                 } else {
-                    log.debug("Sell order trade updated, remove result from opened positions cache: {} at {}.",
-                            event.getSymbol(), dealPrice);
+                    log.debug("Sell order trade updated, remove result from opened positions cache: sell {} {} at {}.",
+                            event.getOriginalQuantity(), event.getSymbol(), dealPrice);
                     marketData.removeClosedPositionFromPriceMonitoring(event.getSymbol());
                 }
             }

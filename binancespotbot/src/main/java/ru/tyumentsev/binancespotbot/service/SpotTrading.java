@@ -1,8 +1,11 @@
 package ru.tyumentsev.binancespotbot.service;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.binance.api.client.domain.market.CandlestickInterval;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.binance.api.client.BinanceApiAsyncRestClient;
@@ -16,11 +19,42 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
 public class SpotTrading {
 
-    BinanceApiAsyncRestClient asyncRestClient;
+    final BinanceApiAsyncRestClient asyncRestClient;
+    final MarketInfo marketInfo;
+
+    @Value("${strategy.global.minimalAssetBalance}")
+    int minimalAssetBalance;
+    @Value("${strategy.global.baseOrderVolume}")
+    int baseOrderVolume;
+
+    public void buyAssets(Map<String, Double> pairsToBuy, final String quoteAsset, final AccountManager accountManager) {
+        if (pairsToBuy.size() > 0) {
+            int availableOrdersCount = accountManager.getFreeAssetBalance(quoteAsset).intValue() / minimalAssetBalance;
+            Map<String, Double> remainsPairs = new HashMap<>(); // collect pairs which can't be bought.
+
+            for (Entry<String, Double> pairToBuy : pairsToBuy.entrySet()) {
+                if (availableOrdersCount > 0
+                        && marketInfo.pairHadTradesInThePast(pairToBuy.getKey(), CandlestickInterval.DAILY, 3)) {
+                    placeLimitBuyOrderAtLastMarketPrice(pairToBuy.getKey(),
+                            baseOrderVolume / pairToBuy.getValue());
+                    availableOrdersCount--;
+                } else {
+                    remainsPairs.put(pairToBuy.getKey(), pairToBuy.getValue());
+                }
+            }
+
+            if (!remainsPairs.isEmpty()) {
+                log.info("NOT ENOUGH FREE BALANCE to buy next pairs: {}.", remainsPairs);
+                remainsPairs.clear();
+            }
+        }
+
+        pairsToBuy.clear();
+    }
 
     public void placeLimitBuyOrderAtLastMarketPrice(String symbol, Double quantity) {
         log.debug("Try to place LIMIT BUY order: {} for {}.", symbol, quantity);
@@ -67,7 +101,7 @@ public class SpotTrading {
                 });
     }
 
-    public void closeAllPostitions(Map<String, Double> positionsToClose) {
+    public void closePostitions(Map<String, Double> positionsToClose) {
         log.debug("Start to go out at last price from {} positions to close:\n{}", positionsToClose.size(), positionsToClose);
         for (Entry<String, Double> entrySet : positionsToClose.entrySet()) {
             placeLimitSellOrderAtLastMarketPrice(entrySet.getKey(), entrySet.getValue());

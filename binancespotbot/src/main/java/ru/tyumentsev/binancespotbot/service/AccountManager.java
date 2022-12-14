@@ -45,8 +45,8 @@ public class AccountManager {
     }
 
     /**
-     * Keepalive a user data stream to prevent a time out.
-     * User data streams will close after 60 minutes.
+     * Keepalive a user data stream to prevent a timeout.
+     * User data streams will close after 60 minutes by Binance.
      * It's recommended to send a ping about every 30 minutes.
      */
     public void keepAliveUserDataUpdateStream() {

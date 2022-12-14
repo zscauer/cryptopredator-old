@@ -32,6 +32,7 @@ public class ApplicationConfig {
     boolean useTestnet;
     boolean useTestnetStreaming;
 
+    // ++++++++++ Binance functionality
     @Bean(name = "binanceApiClientFactory")
     public BinanceApiClientFactory binanceApiClientFactory() {
         return BinanceApiClientFactory.newInstance(apiKey, secret, useTestnet, useTestnetStreaming);
@@ -54,6 +55,7 @@ public class ApplicationConfig {
     public BinanceApiWebSocketClient binanceApiWebSocketClient() {
         return binanceApiClientFactory().newWebSocketClient();
     }
+    // ---------- Binance functionality
 
     @Bean
 	public ServletRegistrationBean<MetricsServlet> metricsServlet() {

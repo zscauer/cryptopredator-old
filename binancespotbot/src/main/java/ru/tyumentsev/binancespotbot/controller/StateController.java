@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
+import ru.tyumentsev.binancespotbot.domain.OpenedPosition;
 import ru.tyumentsev.binancespotbot.service.SpotTrading;
 import ru.tyumentsev.binancespotbot.strategy.BuyBigVolumeGrowth;
 
@@ -91,13 +92,13 @@ public class StateController {
     }
 
     @GetMapping("/openedPositions")
-    public Map<String, Double> getOpenedPositions() {
-        return marketData.getOpenedPositionsLastPrices();
+    public Map<String, OpenedPosition> getOpenedPositions() {
+        return marketData.getOpenedPositions();
     }
 
     @DeleteMapping("/openedPositions/{pair}")
     public void deletePairFromOpenedPositionsCache(@PathVariable String pair) {
-        marketData.getOpenedPositionsLastPrices().remove(pair.toUpperCase());
+        marketData.getOpenedPositions().remove(pair.toUpperCase());
     }
 
     @DeleteMapping("/openedPositions")
@@ -105,11 +106,9 @@ public class StateController {
         marketData.initializeOpenedPositionsFromMarket(buyBigVolumeGrowth.getMarketInfo(), buyBigVolumeGrowth.getAccountManager());
         Map<String, Double> positionsToClose = new HashMap<>();
 
-        for (Map.Entry<String, Double> entrySet : marketData.getOpenedPositionsLastPrices().entrySet()) {
-            positionsToClose.put(entrySet.getKey(),
-                    Double.parseDouble(restClient.getAccount().getAssetBalance(entrySet.getKey().replace("USDT", "")).getFree()));
-        }
+        marketData.getOpenedPositions().forEach((key, value) -> positionsToClose.put(key,
+                Double.parseDouble(restClient.getAccount().getAssetBalance(key.replace("USDT", "")).getFree())));
 
-        spotTrading.closeAllPostitions(positionsToClose);
+        spotTrading.closePostitions(positionsToClose);
     }
 }
