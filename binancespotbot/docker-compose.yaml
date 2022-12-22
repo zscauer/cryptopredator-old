@@ -3,17 +3,17 @@
 
 services:
   
-  binancespotbot:
-    image: binancespotbot
-    container_name: binancespotbot
-    env_file:
-      - binancespotbot_env.env
-    ports:
-      - 85:8080
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - ./src/main/resources/metrics/logs:/tmp/logs
+#  binancespotbot:
+#    image: binancespotbot
+#    container_name: binancespotbot
+#    env_file:
+#      - binancespotbot_env.env
+#    ports:
+#      - 85:8080
+#    volumes:
+#      - /etc/timezone:/etc/timezone:ro
+#      - /etc/localtime:/etc/localtime:ro
+#      - ./src/main/resources/metrics/logs:/tmp/logs
 
   prometheus:
     image: prom/prometheus
@@ -35,12 +35,12 @@ services:
     ]
 
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana-oss
     network_mode: host
     container_name: grafana
     ports:
       - 3000:3000
-    user: '472'
+    user: "$UID:$GID"
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
@@ -55,6 +55,12 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SERVER_DOMAIN=localhost
+#      - GF_PATHS_CONFIG=/usr/share/grafana/grafana.ini
+#      - GF_PATHS_DATA=/usr/share/grafana
+#      - GF_PATHS_HOME=/usr/share/grafana
+#      - GF_PATHS_LOGS=/usr/share/grafana
+#      - GF_PATHS_PLUGINS=/usr/share/grafana/plugins
+#      - GF_PATHS_PROVISIONING=/usr/share/grafana/provisioning
        # - GF_FEATURE_TOGGLES_ENABLE=tempoSearch,tempoServiceGraph,tempoApmTable
 
   # loki:

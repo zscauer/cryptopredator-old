@@ -22,7 +22,7 @@ public class Averaging implements TradingStrategy {
     MarketData marketData;
 
     public void initializePriceChanges(){
-        Map<String, OpenedPosition> openedPositions = marketData.getOpenedPositions();
+        Map<String, OpenedPosition> openedPositions = marketData.getLongPositions();
     }
 
 }

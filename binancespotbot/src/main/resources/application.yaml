@@ -110,9 +110,16 @@ strategy:
     # ------------------ buy24hPriceChange
     buy24hPriceChange:
         percentOfGrowingFor24h: ${STRATEGY_BUY_24H_PRICE_CHANGE_PERCENT_OF_GROWING_FOR_24H}
-        fillCheapPairs:
-            initialDelay: ${STRATEGY_BUY_24H_PRICE_CHANGE_FILL_CHEAP_PAIRS_INITIAL_DELAY}
-            fixedDelay: ${STRATEGY_BUY_24H_PRICE_CHANGE_FILL_CHEAP_PAIRS_FIXED_DELAY}
+#        fillCheapPairs:
+#            initialDelay: ${STRATEGY_BUY_24H_PRICE_CHANGE_FILL_CHEAP_PAIRS_INITIAL_DELAY}
+#            fixedDelay: ${STRATEGY_BUY_24H_PRICE_CHANGE_FILL_CHEAP_PAIRS_FIXED_DELAY}
         defineGrowingPairs:
             initialDelay: ${STRATEGY_BUY_24H_PRICE_CHANGE_DEFINE_GROWING_PAIRS_INITIAL_DELAY}
             fixedDelay: ${STRATEGY_BUY_24H_PRICE_CHANGE_DEFINE_GROWING_PAIRS_FIXED_DELAY}
+
+    # ------------------ bearCub
+    bearCub:
+        percentOfGrowingFor24h: ${STRATEGY_BEAR_CUB_PERCENT_OF_GROWING_FOR_24H}
+        defineGrowingPairs:
+            initialDelay: ${STRATEGY_BEAR_CUB_DEFINE_GROWING_PAIRS_INITIAL_DELAY}
+            fixedDelay: ${STRATEGY_BEAR_CUB_DEFINE_GROWING_PAIRS_FIXED_DELAY}

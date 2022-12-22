@@ -2,10 +2,8 @@ package ru.tyumentsev.binancespotbot.strategy;
 
 import java.io.Closeable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import com.binance.api.client.domain.ExecutionType;
 import com.binance.api.client.domain.OrderSide;
-import com.binance.api.client.domain.account.AssetBalance;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.event.UserDataUpdateEvent.UserDataUpdateEventType;
 import com.binance.api.client.domain.market.Candlestick;
@@ -27,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
-import ru.tyumentsev.binancespotbot.domain.OpenedPosition;
 import ru.tyumentsev.binancespotbot.service.AccountManager;
 import ru.tyumentsev.binancespotbot.service.MarketInfo;
 import ru.tyumentsev.binancespotbot.service.SpotTrading;
@@ -154,11 +150,11 @@ public class BuyBigVolumeGrowth implements TradingStrategy {
                 if (event.getSide() == OrderSide.BUY) {
                     log.debug("Buy order trade updated, put result in opened positions cache: buy {} {} at {}.",
                             event.getOriginalQuantity(), event.getSymbol(), dealPrice);
-                    marketData.putOpenedPositionToPriceMonitoring(event.getSymbol(), dealPrice, parsedDouble(event.getOriginalQuantity()));
+                    marketData.putLongPositionToPriceMonitoring(event.getSymbol(), dealPrice, parsedDouble(event.getOriginalQuantity()));
                 } else {
                     log.debug("Sell order trade updated, remove result from opened positions cache: sell {} {} at {}.",
                             event.getOriginalQuantity(), event.getSymbol(), dealPrice);
-                    marketData.removeClosedPositionFromPriceMonitoring(event.getSymbol());
+                    marketData.removeLongPositionFromPriceMonitoring(event.getSymbol());
                 }
             }
         });

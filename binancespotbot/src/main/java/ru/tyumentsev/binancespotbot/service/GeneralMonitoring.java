@@ -70,7 +70,7 @@ public class GeneralMonitoring {
 
     @Timed("checkMarketPositions")
     public void checkMarketPositions(final String quoteAsset) {
-        Map<String, OpenedPosition> openedPositions = marketData.getOpenedPositions();
+        Map<String, OpenedPosition> openedPositions = marketData.getLongPositions();
         log.debug("There is {} prices cached in openedPositions.", openedPositions.size());
 
         List<AssetBalance> currentBalances = accountManager.getAccountBalances().stream()
@@ -104,7 +104,7 @@ public class GeneralMonitoring {
             }
             if (assetPrice > openedPosition.maxPrice()) {
                 // update current price if it's growth.
-                marketData.updateOpenedPositionMaxPrice(tickerSymbol, assetPrice);
+                marketData.updateOpenedPositionMaxPrice(tickerSymbol, assetPrice, marketData.getLongPositions());
             }
 
             if (assetPrice > openedPosition.avgPrice() * averagingTriggerFactor) {

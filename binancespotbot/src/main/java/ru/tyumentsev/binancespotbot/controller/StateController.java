@@ -39,22 +39,6 @@ public class StateController {
     SpotTrading spotTrading;
     BuyBigVolumeGrowth buyBigVolumeGrowth;
 
-    @NonFinal
-    Closeable openedWebSocket;
-
-    @GetMapping("/closeWS")
-    public Map<String, String> closeWebSocket() {
-        try {
-            if (openedWebSocket == null) {
-                return Collections.singletonMap("response", "WebSocket is null");
-            } else {
-                openedWebSocket.close();
-                return Collections.singletonMap("response", "Closing web socket " + openedWebSocket.toString());
-            }
-        } catch (IOException e) {
-            return Collections.singletonMap("response", e.getStackTrace().toString());
-        }
-    }
 
     @GetMapping("/closeUserDataStream")
     public Map<String, String> closeUserDataStream() {
@@ -91,22 +75,27 @@ public class StateController {
         return marketData.getCachedCandles();
     }
 
-    @GetMapping("/openedPositions")
-    public Map<String, OpenedPosition> getOpenedPositions() {
-        return marketData.getOpenedPositions();
+    @GetMapping("/openedPositions/long")
+    public Map<String, OpenedPosition> getOpenedLongPositions() {
+        return marketData.getLongPositions();
     }
 
-    @DeleteMapping("/openedPositions/{pair}")
-    public void deletePairFromOpenedPositionsCache(@PathVariable String pair) {
-        marketData.getOpenedPositions().remove(pair.toUpperCase());
+    @GetMapping("/openedPositions/short")
+    public Map<String, OpenedPosition> getOpenedShortPositions() {
+        return marketData.getShortPositions();
     }
 
-    @DeleteMapping("/openedPositions")
-    public void closeAllOpenedPositions() {
-        marketData.initializeOpenedPositionsFromMarket(buyBigVolumeGrowth.getMarketInfo(), buyBigVolumeGrowth.getAccountManager());
+    @DeleteMapping("/openedPositions/long/{pair}")
+    public void deletePairFromOpenedLongPositionsCache(@PathVariable String pair) {
+        marketData.getLongPositions().remove(pair.toUpperCase());
+    }
+
+    @DeleteMapping("/openedPositions/long")
+    public void closeAllOpenedLongPositions() {
+        marketData.initializeOpenedLongPositionsFromMarket(buyBigVolumeGrowth.getMarketInfo(), buyBigVolumeGrowth.getAccountManager());
         Map<String, Double> positionsToClose = new HashMap<>();
 
-        marketData.getOpenedPositions().forEach((key, value) -> positionsToClose.put(key,
+        marketData.getLongPositions().forEach((key, value) -> positionsToClose.put(key,
                 Double.parseDouble(restClient.getAccount().getAssetBalance(key.replace("USDT", "")).getFree())));
 
         spotTrading.closePostitions(positionsToClose);

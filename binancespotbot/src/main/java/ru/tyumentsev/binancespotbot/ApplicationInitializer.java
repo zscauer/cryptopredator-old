@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
 import ru.tyumentsev.binancespotbot.service.AccountManager;
 import ru.tyumentsev.binancespotbot.service.MarketInfo;
-import ru.tyumentsev.binancespotbot.strategy.BuyBigVolumeGrowth;
 
 @Component
 @RequiredArgsConstructor
@@ -38,7 +37,7 @@ public class ApplicationInitializer implements ApplicationRunner {
         }
         // TODO change to get assets tickers from config file.
         marketData.addAvailablePairs(USDT, marketInfo.getAvailableTradePairs(USDT));
-        marketData.initializeOpenedPositionsFromMarket(marketInfo, accountManager);
+        marketData.initializeOpenedLongPositionsFromMarket(marketInfo, accountManager);
         log.info("Application initialization complete. Logger class is: '{}'.", log.getClass());
     }
 }

@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'ru.tyumentsev.binancespotbot'
-version = '0.2.0'
+version = '0.2.1'
 description = 'binancespotbot'
 
 def springBootVersion = '2.7.6'

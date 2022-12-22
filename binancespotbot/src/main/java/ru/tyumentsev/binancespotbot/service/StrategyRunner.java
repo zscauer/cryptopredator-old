@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import ru.tyumentsev.binancespotbot.strategy.BearCub;
 import ru.tyumentsev.binancespotbot.strategy.Buy24hPriceChange;
 import ru.tyumentsev.binancespotbot.strategy.BuyBigVolumeGrowth;
 import ru.tyumentsev.binancespotbot.strategy.BuyOrderBookTrend;
@@ -33,6 +34,7 @@ public class StrategyRunner {
     BuyBigVolumeGrowth buyBigVolumeGrowth;
     BuyOrderBookTrend buyOrderBookTrend;
     Buy24hPriceChange buy24hPriceChange;
+    BearCub bearCub;
 
     String USDT = "USDT";
 
@@ -111,9 +113,12 @@ public class StrategyRunner {
 ////        buy24hPriceChange.fillWebSocketStreams();
 //    }
 
-
-
     // ------------------------------- Buy24hPriceChange strategy
 
+    @Scheduled(fixedDelayString = "${strategy.bearCub.defineGrowingPairs.fixedDelay}", initialDelayString = "${strategy.bearCub.defineGrowingPairs.initialDelay}")
+    public void bearCub_defineGrowingPairs() {
+        bearCub.defineGrowingPairs(USDT);
+        bearCub.openShortsForGrownPairs();
+    }
 
 }
