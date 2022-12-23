@@ -95,8 +95,8 @@ public class StateController {
         marketData.initializeOpenedLongPositionsFromMarket(buyBigVolumeGrowth.getMarketInfo(), buyBigVolumeGrowth.getAccountManager());
         Map<String, Double> positionsToClose = new HashMap<>();
 
-        marketData.getLongPositions().forEach((key, value) -> positionsToClose.put(key,
-                Double.parseDouble(restClient.getAccount().getAssetBalance(key.replace("USDT", "")).getFree())));
+        marketData.getLongPositions().forEach((pair, openedPosition) -> positionsToClose.put(pair,
+                Double.parseDouble(restClient.getAccount().getAssetBalance(pair.replace("USDT", "")).getFree())));
 
         spotTrading.closePostitions(positionsToClose);
     }

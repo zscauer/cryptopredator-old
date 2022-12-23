@@ -58,16 +58,17 @@ public class BearCub implements TradingStrategy {
 
     public void openShortsForGrownPairs() {
         grownPairs.forEach(pos -> {
-            marketData.putShortPositionToPriceMonitoring(pos.getSymbol(), parsedDouble(pos.getLastPrice()), 1D);
+            marketData.putShortPositionToPriceMonitoring(pos.getSymbol(),
+                    parsedDouble(pos.getLastPrice()), parsedDouble(pos.getPriceChangePercent()));
         });
         grownPairs.clear();
     }
 
     public void closeOpenedWebSocketStreams() {
-        webSocketStreams.forEach((key, value) -> {
+        webSocketStreams.forEach((pair, stream) -> {
             try {
-                value.close();
-                log.info("WebStream of '{}' closed.", key);
+                stream.close();
+                log.info("WebStream of '{}' closed.", pair);
             } catch (IOException e) {
                 log.error(e.getMessage());
             }

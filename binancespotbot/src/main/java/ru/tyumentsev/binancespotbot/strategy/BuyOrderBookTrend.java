@@ -70,7 +70,7 @@ public class BuyOrderBookTrend implements TradingStrategy {
 
     // взять очередь заявок, отсортировать по цене
     // сопоставить объемы лучших асков с лучишими бидами
-    // объем первых двух бидов должен превысить объем 10 асков
+    // объем первых двух бидов должен превысить объем 10 басков
     public void analizeInterest() {
         Map<String, Interest> openInterest = marketData.getOpenInterest();
         for (Map.Entry<String, Interest> entry : openInterest.entrySet()) {
@@ -96,14 +96,13 @@ public class BuyOrderBookTrend implements TradingStrategy {
                         bestBidsVolume, entry.getKey(), asksVolumeSummary);
             }
         }
-
     }
 
     public void closeOpenedWebSocketStreams() {
-        webSocketStreams.forEach((key, value) -> {
+        webSocketStreams.forEach((pair, stream) -> {
             try {
-                value.close();
-                log.info("WebStream of '{}' closed.", key);
+                stream.close();
+                log.info("WebStream of '{}' closed.", pair);
             } catch (IOException e) {
                 log.error(e.getMessage());
             }

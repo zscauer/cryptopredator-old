@@ -1,13 +1,14 @@
+.java-version
+metrics/logs/
+metrics/grafana/
+
+### Gradle ###
 HELP.md
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-
-src/main/resources/application.yaml
-logs/
-.java-version
 
 ### STS ###
 .apt_generated

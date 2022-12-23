@@ -2,6 +2,7 @@ package ru.tyumentsev.binancespotbot.cache;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
 
@@ -84,6 +85,9 @@ public class MarketData {
     }
 
     public String combinePairsToRequestString(List<String> pairs) {
+//        return pairs.stream()
+//                .collect(Collectors.joining(DELIMETER, QUERY_SYMBOLS_BEGIN, QUERY_SYMBOLS_END));
+
         symbolsParameterBuilder.delete(0, symbolsParameterBuilder.capacity());
         symbolsParameterBuilder.append(QUERY_SYMBOLS_BEGIN);
 
@@ -151,13 +155,19 @@ public class MarketData {
     }
 
     public void putShortPositionToPriceMonitoring(String pair, Double price, Double qty) {
+        // in test mode avgPrice - price in first time of signal
+        // qty - % of change in first time of signal
+        // maxPrice - price moving
         Optional.ofNullable(shortPositions.get(pair)).ifPresentOrElse(pos -> {
-            var newQty = pos.qty() + qty;
-            pos.avgPrice((pos.avgPrice() * pos.qty() + price * qty) / newQty);
-            pos.qty(newQty);
+//            var newQty = pos.qty() + qty;
+//            pos.avgPrice((pos.avgPrice() * pos.qty() + price * qty) / qty);
+            if (price > pos.maxPrice()) {
+                pos.maxPrice(price);
+            }
+            //pos.qty(qty);
         }, () -> {
             var pos = OpenedPosition.of(pair);
-            pos.maxPrice(price);
+//            pos.maxPrice(price);
             pos.avgPrice(price); // TODO: how to define avg at application initializing? connect db?
             pos.qty(qty);
             log.info("{} not found in opened short positions, adding new one - '{}'.", pair, pos);
