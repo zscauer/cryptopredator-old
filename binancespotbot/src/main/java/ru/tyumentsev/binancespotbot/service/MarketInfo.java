@@ -1,12 +1,17 @@
 package ru.tyumentsev.binancespotbot.service;
 
 import java.io.Closeable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import com.binance.api.client.BinanceApiCallback;
 import com.binance.api.client.BinanceApiWebSocketClient;
 import com.binance.api.client.domain.event.CandlestickEvent;
+import lombok.Getter;
 import org.springframework.stereotype.Service;
 
 import com.binance.api.client.BinanceApiRestClient;
@@ -28,6 +33,11 @@ public class MarketInfo {
 
     BinanceApiRestClient restClient;
     BinanceApiWebSocketClient binanceApiWebSocketClient;
+
+    /**
+     * Store flags, which indicates that order already placed.
+     */
+    Map<String, Boolean> processedOrders = new ConcurrentHashMap<>();
 
     public List<String> getAvailableTradePairs(final String quoteAsset) {
         return restClient.getExchangeInfo().getSymbols().stream()
@@ -72,8 +82,20 @@ public class MarketInfo {
         return candleSticks.size() == qtyBarsToAnalize;
     }
 
-    public Closeable openCandleStickEventStream(String asset, CandlestickInterval interval, BinanceApiCallback<CandlestickEvent> callback) {
+    public Closeable openCandleStickEventsStream(String asset, CandlestickInterval interval, BinanceApiCallback<CandlestickEvent> callback) {
         return binanceApiWebSocketClient.onCandlestickEvent(asset, interval, callback);
+    }
+
+    public boolean pairOrderIsProcessing(String symbol) {
+        return Optional.ofNullable(processedOrders.get(symbol)).orElse(false);
+    }
+
+    public void pairOrderPlaced(String symbol) {
+        processedOrders.put(symbol, true);
+    }
+
+    public void pairOrderFilled(String symbol) {
+        processedOrders.remove(symbol);
     }
 
 }

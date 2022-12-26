@@ -75,7 +75,7 @@ public class BuyBigVolumeGrowth implements TradingStrategy {
     @Override
     public void handleSelling(OrderTradeUpdateEvent sellEvent) {
         if (buyBigVolumeGrowthEnabled) {
-            candleStickEventsStreams.put(sellEvent.getSymbol(), marketInfo.openCandleStickEventStream(sellEvent.getSymbol().toLowerCase(), candlestickInterval,
+            candleStickEventsStreams.put(sellEvent.getSymbol(), marketInfo.openCandleStickEventsStream(sellEvent.getSymbol().toLowerCase(), candlestickInterval,
                 event -> {
                     marketData.addCandlestickEventToCache(sellEvent.getSymbol(), event);
 
@@ -112,7 +112,7 @@ public class BuyBigVolumeGrowth implements TradingStrategy {
 
         marketData.getCheapPairsExcludeOpenedPositions(asset)
             .forEach(ticker -> {
-                candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventStream(ticker.toLowerCase(), candlestickInterval,
+                candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
                     event -> {
                         marketData.addCandlestickEventToCache(ticker, event);
 
@@ -192,7 +192,7 @@ public class BuyBigVolumeGrowth implements TradingStrategy {
     @Timed("buyGrownAssets")
     public void buyGrownAssets(String quoteAsset) {
         var pairsToBuy = marketData.getPairsToBuy();
-        log.debug("There is {} pairs to buy: {}.", pairsToBuy.size(), pairsToBuy);
+        log.info("There is {} pairs to buy: {}.", pairsToBuy.size(), pairsToBuy);
 
         spotTrading.buyAssets(pairsToBuy, quoteAsset, accountManager);
     }

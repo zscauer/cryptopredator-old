@@ -128,12 +128,14 @@ public class GeneralMonitoring {
                         log.debug("Buy order trade updated, put result in opened positions cache: buy {} {} at {}.",
                                 event.getOriginalQuantity(), event.getSymbol(), dealPrice);
                         marketData.putLongPositionToPriceMonitoring(event.getSymbol(), dealPrice, parsedDouble(event.getOriginalQuantity()));
+                        marketInfo.pairOrderFilled(event.getSymbol());
                         tradingStrategies.values().forEach(strategy -> strategy.handleBuying(event));
                     }
                     case SELL -> {
                         log.debug("Sell order trade updated, remove result from opened positions cache: sell {} {} at {}.",
                                 event.getOriginalQuantity(), event.getSymbol(), dealPrice);
                         marketData.removeLongPositionFromPriceMonitoring(event.getSymbol());
+                        marketInfo.pairOrderFilled(event.getSymbol());
                         tradingStrategies.values().forEach(strategy -> strategy.handleSelling(event));
                     }
                 }
