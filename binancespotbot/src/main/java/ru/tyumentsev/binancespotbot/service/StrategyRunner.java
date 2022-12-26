@@ -51,20 +51,22 @@ public class StrategyRunner {
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.startCandlstickEventsCacheUpdating.initialDelay}")
     public void buyBigVolumeGrowth_startCandlstickEventsCacheUpdating() {
         if (buyBigVolumeGrowthEnabled) {
-             buyBigVolumeGrowth.startCandlstickEventsCacheUpdating(USDT, CandlestickInterval.THREE_MINUTES);
+             buyBigVolumeGrowth.startCandlstickEventsCacheUpdating(USDT, CandlestickInterval.FIFTEEN_MINUTES);
         }
     }
 
-    @Timed("buySelectedGrownAssets")
-    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.initialDelay}")
-    public void buyBigVolumeGrowth_buySelectedGrownAssets() {
-        if (buyBigVolumeGrowthEnabled && !testLaunch) {
-//            buyBigVolumeGrowth.updateMonitoredCandles(USDT, CandlestickInterval.FIFTEEN_MINUTES, 2);
-
-//            buyBigVolumeGrowth.findGrownAssets();
-            buyBigVolumeGrowth.buyGrownAssets(USDT);
-        }
-    }
+    // +++ buy fast testing
+//    @Timed("buySelectedGrownAssets")
+//    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.initialDelay}")
+//    public void buyBigVolumeGrowth_buySelectedGrownAssets() {
+//        if (buyBigVolumeGrowthEnabled && !testLaunch) {
+////            buyBigVolumeGrowth.updateMonitoredCandles(USDT, CandlestickInterval.FIFTEEN_MINUTES, 2);
+//
+////            buyBigVolumeGrowth.findGrownAssets();
+//            buyBigVolumeGrowth.buyGrownAssets(USDT);
+//        }
+//    }
+    // --- buy fast testing
 
 //    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.stopMonitorOpenedLongPositions.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.stopMonitorOpenedLongPositions.initialDelay}")
 //    public void buyBigVolumeGrowth_stopMonitorOpenedLongPositions() {

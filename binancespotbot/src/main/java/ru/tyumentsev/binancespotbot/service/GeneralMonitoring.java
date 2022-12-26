@@ -184,14 +184,15 @@ public class GeneralMonitoring {
 
             if (averagingEnabled && assetPrice > openedPosition.avgPrice() * averagingTriggerFactor) {
                 log.debug("PRICE of {} GROWTH more than avg and now equals {}.", tickerSymbol, assetPrice);
-                assetsToBuy.put(tickerSymbol, assetPrice);
+                spotTrading.placeOrderFast(tickerSymbol, assetPrice, quoteAsset, accountManager);
+//                assetsToBuy.put(tickerSymbol, assetPrice);
             } else if (assetPrice < openedPosition.maxPrice() * priceDecreaseFactor) {
                 // close position if price decreased.
                 log.debug("PRICE of {} DECREASED and now equals {}.", tickerSymbol, assetPrice);
                 addPairToSell(tickerSymbol, quoteAsset, positionsToClose);
             }
         }
-        spotTrading.buyAssets(assetsToBuy, quoteAsset, accountManager);
+//        spotTrading.buyAssets(assetsToBuy, quoteAsset, accountManager);
         spotTrading.closePostitions(positionsToClose);
     }
 

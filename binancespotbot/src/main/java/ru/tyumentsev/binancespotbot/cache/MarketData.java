@@ -181,7 +181,7 @@ public class MarketData {
             pos.maxPrice(price);
             pos.avgPrice(price); // TODO: how to define avg at application initializing? connect db?
             pos.qty(qty);
-            log.info("{} not found in opened long positions, adding new one - '{}'.", pair, pos);
+            log.debug("{} not found in opened long positions, adding new one - '{}'.", pair, pos);
             longPositions.put(pair, pos);
         });
     }

@@ -65,6 +65,7 @@ public class BuyBigVolumeGrowth implements TradingStrategy {
             Optional.ofNullable(candleStickEventsStreams.remove(event.getSymbol())).ifPresent(stream -> {
                 try {
                     stream.close();
+                    log.info("Candlestick event stream of '{}' closed after buy order execution.", event.getSymbol());
                 } catch (IOException e) {
                     log.error("Error while trying to close candlestick event stream of '{}':\n{}", event.getSymbol(), e.getMessage());
                 }
@@ -84,7 +85,8 @@ public class BuyBigVolumeGrowth implements TradingStrategy {
 
                     if (parsedDouble(currentEvent.getVolume()) > parsedDouble(previousEvent.getVolume()) * volumeGrowthFactor
                             && parsedDouble(currentEvent.getClose()) > parsedDouble(previousEvent.getClose()) * priceGrowthFactor) {
-                        addPairToBuy(sellEvent.getSymbol(), parsedDouble(currentEvent.getClose()));
+                        buyFast(sellEvent.getSymbol(), parsedDouble(currentEvent.getClose()), "USDT");
+//                        addPairToBuy(sellEvent.getSymbol(), parsedDouble(currentEvent.getClose()));
                     }
                 }));
         }
@@ -121,10 +123,17 @@ public class BuyBigVolumeGrowth implements TradingStrategy {
 
                         if (parsedDouble(currentEvent.getVolume()) > parsedDouble(previousEvent.getVolume()) * volumeGrowthFactor
                                 && parsedDouble(currentEvent.getClose()) > parsedDouble(previousEvent.getClose()) * priceGrowthFactor) {
-                            addPairToBuy(ticker, parsedDouble(currentEvent.getClose()));
+                            buyFast(ticker, parsedDouble(currentEvent.getClose()), asset);
+//                            addPairToBuy(ticker, parsedDouble(currentEvent.getClose()));
                         }
                     }));
             });
+    }
+
+    private void buyFast(String symbol, Double price, String quoteAsset) {
+        if (!marketInfo.pairOrderIsProcessing(symbol)) {
+            spotTrading.placeOrderFast(symbol, price, quoteAsset, accountManager);
+        }
     }
 
     /**
@@ -192,7 +201,7 @@ public class BuyBigVolumeGrowth implements TradingStrategy {
     @Timed("buyGrownAssets")
     public void buyGrownAssets(String quoteAsset) {
         var pairsToBuy = marketData.getPairsToBuy();
-        log.info("There is {} pairs to buy: {}.", pairsToBuy.size(), pairsToBuy);
+        log.debug("There is {} pairs to buy: {}.", pairsToBuy.size(), pairsToBuy);
 
         spotTrading.buyAssets(pairsToBuy, quoteAsset, accountManager);
     }
