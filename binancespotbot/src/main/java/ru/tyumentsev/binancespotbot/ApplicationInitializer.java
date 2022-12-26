@@ -38,6 +38,8 @@ public class ApplicationInitializer implements ApplicationRunner {
         // TODO change to get assets tickers from config file.
         marketData.addAvailablePairs(USDT, marketInfo.getAvailableTradePairs(USDT));
         marketData.initializeOpenedLongPositionsFromMarket(marketInfo, accountManager);
+        marketData.fillCheapPairs(USDT, marketInfo);
+        marketData.constructCandleStickEventsCache(USDT);
         log.info("Application initialization complete. Logger class is: '{}'.", log.getClass());
     }
 }

@@ -1,8 +1,12 @@
 package ru.tyumentsev.binancespotbot.service;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.binance.api.client.BinanceApiCallback;
+import com.binance.api.client.BinanceApiWebSocketClient;
+import com.binance.api.client.domain.event.CandlestickEvent;
 import org.springframework.stereotype.Service;
 
 import com.binance.api.client.BinanceApiRestClient;
@@ -23,6 +27,7 @@ import lombok.experimental.FieldDefaults;
 public class MarketInfo {
 
     BinanceApiRestClient restClient;
+    BinanceApiWebSocketClient binanceApiWebSocketClient;
 
     public List<String> getAvailableTradePairs(final String quoteAsset) {
         return restClient.getExchangeInfo().getSymbols().stream()
@@ -66,4 +71,9 @@ public class MarketInfo {
         // pair should have history of trade for some days before.
         return candleSticks.size() == qtyBarsToAnalize;
     }
+
+    public Closeable openCandleStickStream (String asset, CandlestickInterval interval, BinanceApiCallback<CandlestickEvent> callback) {
+        return binanceApiWebSocketClient.onCandlestickEvent(asset, interval, callback);
+    }
+
 }

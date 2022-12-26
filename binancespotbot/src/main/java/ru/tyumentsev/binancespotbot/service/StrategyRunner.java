@@ -26,10 +26,6 @@ import ru.tyumentsev.binancespotbot.strategy.BuyOrderBookTrend;
 @Slf4j
 public class StrategyRunner {
 
-    @NonFinal
-    @Value("${applicationconfig.testLaunch}")
-    boolean testLaunch;
-    
     AccountManager accountManager;
     BuyBigVolumeGrowth buyBigVolumeGrowth;
     BuyOrderBookTrend buyOrderBookTrend;
@@ -38,50 +34,46 @@ public class StrategyRunner {
 
     String USDT = "USDT";
 
+    @NonFinal
+    @Value("${applicationconfig.testLaunch}")
+    boolean testLaunch;
+    @NonFinal
+    @Value("${strategy.buyBigVolumeGrowth.enabled}")
+    boolean buyBigVolumeGrowthEnabled;
+
+
     // +++++++++++++++++++++++++++++++ BuyBigVolumeGrowth strategy
 
-    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.initialDelay}")
-    public void buyBigVolumeGrowth_fillCheapPairs() {
-        buyBigVolumeGrowth.fillCheapPairs(USDT);
+//    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.initialDelay}")
+//    public void buyBigVolumeGrowth_fillCheapPairs() {
+//        buyBigVolumeGrowth.fillCheapPairs(USDT);
+//    }
+
+    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.startCandlstickEventsCacheUpdating.initialDelay}")
+    public void buyBigVolumeGrowth_startCandlstickEventsCacheUpdating() {
+        if (buyBigVolumeGrowthEnabled) {
+             buyBigVolumeGrowth.startCandlstickEventsCacheUpdating(USDT, CandlestickInterval.THREE_MINUTES);
+        }
     }
 
     @Timed("buySelectedGrownAssets")
     @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.initialDelay}")
     public void buyBigVolumeGrowth_buySelectedGrownAssets() {
-        if (!testLaunch) {
-            buyBigVolumeGrowth.updateMonitoredCandles(USDT, CandlestickInterval.FIFTEEN_MINUTES, 2);
+        if (buyBigVolumeGrowthEnabled && !testLaunch) {
+//            buyBigVolumeGrowth.updateMonitoredCandles(USDT, CandlestickInterval.FIFTEEN_MINUTES, 2);
 
-            buyBigVolumeGrowth.findGrownAssets();
+//            buyBigVolumeGrowth.findGrownAssets();
             buyBigVolumeGrowth.buyGrownAssets(USDT);
         }
     }
 
-    @Scheduled(fixedDelayString = "${strategy.global.initializeUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.initializeUserDataUpdateStream.initialDelay}")
-    public void buyBigVolumeGrowth_initializeAliveUserDataUpdateStream() {
-        if (!testLaunch) {
-            // User data stream are closing by binance after 24 hours of opening.
-            accountManager.initializeUserDataUpdateStream();
-
-            Closeable userDataUpdateEventsListener = buyBigVolumeGrowth.getUserDataUpdateEventsListener();
-            if (userDataUpdateEventsListener != null) {
-                try {
-                    userDataUpdateEventsListener.close();
-                } catch (IOException e) {
-                    log.error("Error while trying to close user data update events listener:\n{}.", e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-
-            buyBigVolumeGrowth.monitorUserDataUpdateEvents();
+    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.stopMonitorOpenedLongPositions.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.stopMonitorOpenedLongPositions.initialDelay}")
+    public void buyBigVolumeGrowth_stopMonitorOpenedLongPositions() {
+        if (buyBigVolumeGrowthEnabled && !testLaunch) {
+            buyBigVolumeGrowth.stopMonitorOpenedLongPositions();
         }
     }
 
-    @Scheduled(fixedDelayString = "${strategy.global.keepAliveUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.keepAliveUserDataUpdateStream.initialDelay}")
-    public void buyBigVolumeGrowth_keepAliveUserDataUpdateStream() {
-        if (!testLaunch) {
-            accountManager.keepAliveUserDataUpdateStream();
-        }
-    }
     // ------------------------------- BuyBigVolumeGrowth strategy
 
     // +++++++++++++++++++++++++++++++ BuyOrderBookTrend strategy
@@ -115,10 +107,14 @@ public class StrategyRunner {
 
     // ------------------------------- Buy24hPriceChange strategy
 
-    @Scheduled(fixedDelayString = "${strategy.bearCub.defineGrowingPairs.fixedDelay}", initialDelayString = "${strategy.bearCub.defineGrowingPairs.initialDelay}")
-    public void bearCub_defineGrowingPairs() {
-        bearCub.defineGrowingPairs(USDT);
-        bearCub.openShortsForGrownPairs();
-    }
+    // +++++++++++++++++++++++++++++++ BearCub strategy
+
+//    @Scheduled(fixedDelayString = "${strategy.bearCub.defineGrowingPairs.fixedDelay}", initialDelayString = "${strategy.bearCub.defineGrowingPairs.initialDelay}")
+//    public void bearCub_defineGrowingPairs() {
+//        bearCub.defineGrowingPairs(USDT);
+//        bearCub.openShortsForGrownPairs();
+//    }
+
+    // ------------------------------- BearCub strategy
 
 }
