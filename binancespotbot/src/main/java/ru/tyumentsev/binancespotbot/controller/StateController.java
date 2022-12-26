@@ -1,12 +1,9 @@
 package ru.tyumentsev.binancespotbot.controller;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import com.binance.api.client.domain.event.CandlestickEvent;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,7 +19,6 @@ import com.binance.api.client.domain.market.Candlestick;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
 import ru.tyumentsev.binancespotbot.domain.OpenedPosition;
 import ru.tyumentsev.binancespotbot.service.SpotTrading;
@@ -73,6 +69,11 @@ public class StateController {
     @GetMapping("/buyBigVolumeChange/getCachedCandleSticks")
     public Map<String, List<Candlestick>> getCachedCandleSticks() {
         return marketData.getCachedCandles();
+    }
+
+    @GetMapping("/buyBigVolumeChange/getCachedCandleStickEvents")
+    public Map<String, Deque<CandlestickEvent>> getCachedCandleStickEvents() {
+        return marketData.getCachedCandleStickEvents();
     }
 
     @GetMapping("/openedPositions/long")

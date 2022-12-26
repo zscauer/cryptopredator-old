@@ -32,7 +32,7 @@ public class Buy24hPriceChange implements TradingStrategy {
     final MarketData marketData;
     final Map<String, Closeable> webSocketStreams;
 
-    @Value("${strategy.buyBigVolumeGrowth.maximalPairPrice}")
+    @Value("${strategy.global.maximalPairPrice}")
     int maximalPairPrice;
     @Value("${strategy.buy24hPriceChange.percentOfGrowingFor24h}")
     int percentOfGrowingFor24h;

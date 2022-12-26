@@ -4,6 +4,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import com.binance.api.client.domain.market.TickerPrice;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import com.binance.api.client.domain.event.CandlestickEvent;
@@ -39,7 +42,7 @@ public class MarketData {
     Map<String, List<Candlestick>> cachedCandles = new ConcurrentHashMap<>();
     // stores current and previous candlestick events for each pair to compare them.
     // first element - previous, last element - current.
-    Map<String, CandlestickEvent> cachedCandlestickEvents = new ConcurrentHashMap<>();
+    Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents = new ConcurrentHashMap<>();
     @Getter
     Map<String, Double> pairsToBuy = new ConcurrentHashMap<>();
     // - "Buy big volume growth" strategy
@@ -50,8 +53,37 @@ public class MarketData {
     // - "Buy order book trend"
 
     StringBuilder symbolsParameterBuilder = new StringBuilder(); // build query in format, that accepts by binance API.
-    String QUERY_SYMBOLS_BEGIN = "[", DELIMETER = "\"", QUERY_SYMBOLS_END = "]"; // required format is
-                                                                                       // "["BTCUSDT","BNBUSDT"]".
+    String QUERY_SYMBOLS_BEGIN = "[", DELIMETER = "\"", QUERY_SYMBOLS_END = "]"; // required format is "["BTCUSDT","BNBUSDT"]".
+
+    @NonFinal
+    @Value("${strategy.global.maximalPairPrice}")
+    int maximalPairPrice;
+    @NonFinal
+    @Value("${strategy.global.candlestickEventsCacheSize}")
+    int candlestickEventsCacheSize;
+
+    // TODO: replace method to common class.
+    public void fillCheapPairs(String asset, MarketInfo marketInfo) {
+        // get all pairs, that trades against USDT.
+        List<String> pairs = getAvailablePairs(asset);
+        // filter available pairs to get cheaper than maximalPairPrice.
+        List<String> filteredPairs = marketInfo
+                .getLastTickersPrices(
+                        combinePairsToRequestString(pairs))
+                .stream().filter(tickerPrice -> Double.parseDouble(tickerPrice.getPrice()) < maximalPairPrice)
+                .map(TickerPrice::getSymbol).collect(Collectors.toCollection(ArrayList::new));
+        log.info("Filtered {} cheap tickers.", filteredPairs.size());
+
+        // place filtered pairs to cache.
+        putCheapPairs(asset, filteredPairs);
+    }
+
+    public void constructCandleStickEventsCache(String asset) {
+        cheapPairs.get(asset).forEach(pair -> {
+            cachedCandlestickEvents.put(pair, new LinkedList<>());
+        });
+        log.debug("Cache of candle stick events constructed with {} elements.", cachedCandlestickEvents.size());
+    }
 
     public void initializeOpenedLongPositionsFromMarket(MarketInfo marketInfo, AccountManager accountManager) {
         longPositions.clear();
@@ -192,11 +224,21 @@ public class MarketData {
         log.debug("CandleStickCache cleared.");
     }
 
-    public void addCandlestickEventToMonitoring(String ticker, CandlestickEvent candlestickEvent) {
-        cachedCandlestickEvents.put(ticker, candlestickEvent);
+    public void addCandlestickEventToCache(String ticker, CandlestickEvent candlestickEvent) {
+        Deque<CandlestickEvent> eventsQueue = cachedCandlestickEvents.get(ticker);
+        Optional.ofNullable(eventsQueue.peekLast()).ifPresentOrElse(lastCachedEvent -> {
+            if (lastCachedEvent.getOpenTime().equals(candlestickEvent.getOpenTime())) { // refreshed candle event.
+                eventsQueue.remove(lastCachedEvent); // remove previous version of this event.
+            }
+            eventsQueue.addLast(candlestickEvent);
+        }, () -> eventsQueue.addLast(candlestickEvent));
+
+        if (eventsQueue.size() > candlestickEventsCacheSize) {
+            eventsQueue.removeFirst();
+        }
     }
 
-    public Map<String, CandlestickEvent> getCachedCandleStickEvents() {
+    public Map<String, Deque<CandlestickEvent>> getCachedCandleStickEvents() {
         return cachedCandlestickEvents;
     }
 

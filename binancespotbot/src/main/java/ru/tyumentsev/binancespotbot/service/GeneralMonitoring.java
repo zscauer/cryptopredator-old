@@ -1,10 +1,15 @@
 package ru.tyumentsev.binancespotbot.service;
 
+import com.binance.api.client.domain.ExecutionType;
+import com.binance.api.client.domain.OrderSide;
 import com.binance.api.client.domain.account.AssetBalance;
+import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
+import com.binance.api.client.domain.event.UserDataUpdateEvent;
 import com.binance.api.client.domain.market.Candlestick;
 import com.binance.api.client.domain.market.CandlestickInterval;
 import com.binance.api.client.domain.market.TickerPrice;
 import io.micrometer.core.annotation.Timed;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
 import ru.tyumentsev.binancespotbot.domain.OpenedPosition;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +40,9 @@ public class GeneralMonitoring {
     final MarketInfo marketInfo;
     final SpotTrading spotTrading;
 
+    @Getter
+    Closeable userDataUpdateEventsListener;
+
     final String USDT = "USDT";
 
     @Value("${applicationconfig.testLaunch}")
@@ -45,11 +55,38 @@ public class GeneralMonitoring {
     double priceDecreaseFactor;
     @Value("${strategy.monitoring.priceGrowthFactor}")
     double priceGrowthFactor;
+    @Value("${strategy.monitoring.averagingEnabled}")
+    boolean averagingEnabled;
     @Value("${strategy.monitoring.averagingTriggerFactor}")
     double averagingTriggerFactor;
 
     private static Double parsedDouble(String stringToParse) {
         return Double.parseDouble(stringToParse);
+    }
+
+    @Scheduled(fixedDelayString = "${strategy.global.initializeUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.initializeUserDataUpdateStream.initialDelay}")
+    public void generalMonitoring_initializeAliveUserDataUpdateStream() {
+        if (!testLaunch) {
+            // User data stream are closing by binance after 24 hours of opening.
+            accountManager.initializeUserDataUpdateStream();
+
+            if (userDataUpdateEventsListener != null) {
+                try {
+                    userDataUpdateEventsListener.close();
+                } catch (IOException e) {
+                    log.error("Error while trying to close user data update events listener:\n{}.", e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            monitorUserDataUpdateEvents();
+        }
+    }
+
+    @Scheduled(fixedDelayString = "${strategy.global.keepAliveUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.keepAliveUserDataUpdateStream.initialDelay}")
+    public void generalMonitoring_keepAliveUserDataUpdateStream() {
+        if (!testLaunch) {
+            accountManager.keepAliveUserDataUpdateStream();
+        }
     }
 
     /**
@@ -66,6 +103,37 @@ public class GeneralMonitoring {
         if (!testLaunch) {
             checkMarketPositions(USDT);
         }
+    }
+
+    /**
+     * Opens web socket stream of user data update events and monitors trade events.
+     * If it was "buy" event, then add pair from this event to monitoring,
+     * if it was "sell" event - removes from monitoring.
+     */
+    public void monitorUserDataUpdateEvents() {
+        userDataUpdateEventsListener = accountManager.listenUserDataUpdateEvents(callback -> {
+            if (callback.getEventType() == UserDataUpdateEvent.UserDataUpdateEventType.ORDER_TRADE_UPDATE
+                    && callback.getOrderTradeUpdateEvent().getExecutionType() == ExecutionType.TRADE) {
+                OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();
+                // if price == 0 most likely it was market order, use last market price.
+                Double dealPrice = parsedDouble(event.getPrice()) == 0
+                        ? parsedDouble(marketInfo.getLastTickerPrice(event.getSymbol()).getPrice())
+                        : parsedDouble(event.getPrice());
+
+                switch (event.getSide()) {
+                    case BUY -> {
+                        log.debug("Buy order trade updated, put result in opened positions cache: buy {} {} at {}.",
+                                event.getOriginalQuantity(), event.getSymbol(), dealPrice);
+                        marketData.putLongPositionToPriceMonitoring(event.getSymbol(), dealPrice, parsedDouble(event.getOriginalQuantity()));
+                    }
+                    case SELL -> {
+                        log.debug("Sell order trade updated, remove result from opened positions cache: sell {} {} at {}.",
+                                event.getOriginalQuantity(), event.getSymbol(), dealPrice);
+                        marketData.removeLongPositionFromPriceMonitoring(event.getSymbol());
+                    }
+                }
+            }
+        });
     }
 
     @Timed("checkMarketPositions")
@@ -107,7 +175,7 @@ public class GeneralMonitoring {
                 marketData.updateOpenedPositionMaxPrice(tickerSymbol, assetPrice, marketData.getLongPositions());
             }
 
-            if (assetPrice > openedPosition.avgPrice() * averagingTriggerFactor) {
+            if (averagingEnabled && assetPrice > openedPosition.avgPrice() * averagingTriggerFactor) {
                 log.debug("PRICE of {} GROWTH more than avg and now equals {}.", tickerSymbol, assetPrice);
                 assetsToBuy.put(tickerSymbol, assetPrice);
             } else if (assetPrice < openedPosition.maxPrice() * priceDecreaseFactor) {

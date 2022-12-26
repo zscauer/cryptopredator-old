@@ -70,6 +70,7 @@ strategy:
         matchTrend: ${MONITORING_MATCH_TREND}
         priceDecreaseFactor: ${MONITORING_PRICE_DECREASE_FACTOR}
         priceGrowthFactor: ${MONITORING_PRICE_GROWTH_FACTOR}
+        averagingEnabled: ${MONITORING_AVERAGING_ENABLED}
         averagingTriggerFactor: ${MONITORING_AVERAGING_TRIGGER_FACTOR}
         checkOpenedPositions:
             initialDelay: ${MONITORING_CHECK_OPENED_POSITIONS_INITIAL_DELAY}
@@ -80,9 +81,11 @@ strategy:
 
     # ------------------ global
     global:
+        maximalPairPrice: ${STRATEGY_GLOBAL_MAXIMAL_PAIR_PRICE}
         minimalAssetBalance: ${STRATEGY_GLOBAL_MINIMAL_ASSET_BALANCE}
         baseOrderVolume: ${STRATEGY_GLOBAL_BASE_ORDER_VOLUME}
         rocketFactor: ${STRATEGY_GLOBAL_ROCKET_FACTOR}
+        candlestickEventsCacheSize: ${STRATEGY_GLOBAL_CANDLESTICK_EVENTS_CACHE_SIZE}
         initializeUserDataUpdateStream:
             initialDelay: ${STRATEGY_GLOBAL_INITIALIZE_USERDATA_UPDATE_STREAM_INITIAL_DELAY}
             fixedDelay: ${STRATEGY_GLOBAL_INITIALIZE_USERDATA_UPDATE_STREAM_FIXED_DELAY}
@@ -92,20 +95,25 @@ strategy:
 
     # ------------------ buyBigVolumeGrowth
     buyBigVolumeGrowth:
+        enabled: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_ENABLED}
         matchTrend: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_MATCH_TREND}
-        maximalPairPrice: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_MAXIMAL_PAIR_PRICE}
         volumeGrowthFactor: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_VOLUME_GROWTH_FACTOR}
-
         priceGrowthFactor: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_PRICE_GROWTH_FACTOR}
-        fillCheapPairs:
-            initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_FILL_CHEAP_PAIRS_INITIAL_DELAY}
-            fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_FILL_CHEAP_PAIRS_FIXED_DELAY}
+#        fillCheapPairs:
+#            initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_FILL_CHEAP_PAIRS_INITIAL_DELAY}
+#            fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_FILL_CHEAP_PAIRS_FIXED_DELAY}
         buySelectedGrownAssets:
             initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_SELECTED_GROWN_ASSETS_INITIAL_DELAY}
             fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_SELECTED_GROWN_ASSETS_FIXED_DELAY}
         # buyGrownAssets:
         #     initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_GROWN_ASSETS_INITIAL_DELAY}
         #     fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_GROWN_ASSETS_FIXED_DELAY}
+        startCandlstickEventsCacheUpdating:
+            initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_START_CANDLESTICKEVENTS_CACHE_UPDATING_INITIAL_DELAY}
+            fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_START_CANDLESTICKEVENTS_CACHE_UPDATING_FIXED_DELAY}
+        stopMonitorOpenedLongPositions:
+            initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_STOP_MONITOR_OPENED_LONG_POSITIONS_INITIAL_DELAY}
+            fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_STOP_MONITOR_OPENED_LONG_POSITIONS_FIXED_DELAY}
 
     # ------------------ buy24hPriceChange
     buy24hPriceChange:
