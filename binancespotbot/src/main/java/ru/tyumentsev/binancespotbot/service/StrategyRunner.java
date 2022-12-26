@@ -2,7 +2,9 @@ package ru.tyumentsev.binancespotbot.service;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -15,10 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import ru.tyumentsev.binancespotbot.strategy.BearCub;
-import ru.tyumentsev.binancespotbot.strategy.Buy24hPriceChange;
-import ru.tyumentsev.binancespotbot.strategy.BuyBigVolumeGrowth;
-import ru.tyumentsev.binancespotbot.strategy.BuyOrderBookTrend;
+import ru.tyumentsev.binancespotbot.strategy.*;
 
 @Service
 @RequiredArgsConstructor
@@ -67,12 +66,12 @@ public class StrategyRunner {
         }
     }
 
-    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.stopMonitorOpenedLongPositions.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.stopMonitorOpenedLongPositions.initialDelay}")
-    public void buyBigVolumeGrowth_stopMonitorOpenedLongPositions() {
-        if (buyBigVolumeGrowthEnabled && !testLaunch) {
-            buyBigVolumeGrowth.stopMonitorOpenedLongPositions();
-        }
-    }
+//    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.stopMonitorOpenedLongPositions.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.stopMonitorOpenedLongPositions.initialDelay}")
+//    public void buyBigVolumeGrowth_stopMonitorOpenedLongPositions() {
+//        if (buyBigVolumeGrowthEnabled && !testLaunch) {
+//            buyBigVolumeGrowth.stopMonitorOpenedLongPositions();
+//        }
+//    }
 
     // ------------------------------- BuyBigVolumeGrowth strategy
 

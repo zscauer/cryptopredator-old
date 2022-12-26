@@ -20,6 +20,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
 import ru.tyumentsev.binancespotbot.domain.OpenedPosition;
+import ru.tyumentsev.binancespotbot.strategy.TradingStrategy;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -39,6 +40,8 @@ public class GeneralMonitoring {
     final MarketData marketData;
     final MarketInfo marketInfo;
     final SpotTrading spotTrading;
+
+    final Map<String, TradingStrategy> tradingStrategies;
 
     @Getter
     Closeable userDataUpdateEventsListener;
@@ -125,11 +128,13 @@ public class GeneralMonitoring {
                         log.debug("Buy order trade updated, put result in opened positions cache: buy {} {} at {}.",
                                 event.getOriginalQuantity(), event.getSymbol(), dealPrice);
                         marketData.putLongPositionToPriceMonitoring(event.getSymbol(), dealPrice, parsedDouble(event.getOriginalQuantity()));
+                        tradingStrategies.values().forEach(strategy -> strategy.handleBuying(event));
                     }
                     case SELL -> {
                         log.debug("Sell order trade updated, remove result from opened positions cache: sell {} {} at {}.",
                                 event.getOriginalQuantity(), event.getSymbol(), dealPrice);
                         marketData.removeLongPositionFromPriceMonitoring(event.getSymbol());
+                        tradingStrategies.values().forEach(strategy -> strategy.handleSelling(event));
                     }
                 }
             }

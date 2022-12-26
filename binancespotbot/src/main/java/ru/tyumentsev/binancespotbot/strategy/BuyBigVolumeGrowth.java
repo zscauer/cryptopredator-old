@@ -9,10 +9,7 @@ import com.binance.api.client.domain.event.CandlestickEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.binance.api.client.domain.ExecutionType;
-import com.binance.api.client.domain.OrderSide;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
-import com.binance.api.client.domain.event.UserDataUpdateEvent.UserDataUpdateEventType;
 import com.binance.api.client.domain.market.Candlestick;
 import com.binance.api.client.domain.market.CandlestickInterval;
 
@@ -47,10 +44,12 @@ public class BuyBigVolumeGrowth implements TradingStrategy {
     final AccountManager accountManager;
 
     final Map<String, Closeable> candleStickEventsStreams = new ConcurrentHashMap<>();
+    CandlestickInterval candlestickInterval;
 
+    @Value("${strategy.buyBigVolumeGrowth.enabled}")
+    boolean buyBigVolumeGrowthEnabled;
     @Value("${strategy.buyBigVolumeGrowth.matchTrend}")
     boolean matchTrend;
-
     @Value("${strategy.buyBigVolumeGrowth.volumeGrowthFactor}")
     int volumeGrowthFactor;
     @Value("${strategy.buyBigVolumeGrowth.priceGrowthFactor}")
@@ -60,6 +59,36 @@ public class BuyBigVolumeGrowth implements TradingStrategy {
         return Double.parseDouble(stringToParse);
     }
 
+    @Override
+    public void handleBuying(OrderTradeUpdateEvent event) {
+        if (buyBigVolumeGrowthEnabled) {
+            Optional.ofNullable(candleStickEventsStreams.remove(event.getSymbol())).ifPresent(stream -> {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    log.error("Error while trying to close candlestick event stream of '{}':\n{}", event.getSymbol(), e.getMessage());
+                }
+            });
+        }
+    }
+
+    @Override
+    public void handleSelling(OrderTradeUpdateEvent sellEvent) {
+        if (buyBigVolumeGrowthEnabled) {
+            candleStickEventsStreams.put(sellEvent.getSymbol(), marketInfo.openCandleStickEventStream(sellEvent.getSymbol().toLowerCase(), candlestickInterval,
+                event -> {
+                    marketData.addCandlestickEventToCache(sellEvent.getSymbol(), event);
+
+                    var currentEvent = marketData.getCachedCandleStickEvents().get(sellEvent.getSymbol()).getLast();
+                    var previousEvent = marketData.getCachedCandleStickEvents().get(sellEvent.getSymbol()).getFirst();
+
+                    if (parsedDouble(currentEvent.getVolume()) > parsedDouble(previousEvent.getVolume()) * volumeGrowthFactor
+                            && parsedDouble(currentEvent.getClose()) > parsedDouble(previousEvent.getClose()) * priceGrowthFactor) {
+                        addPairToBuy(sellEvent.getSymbol(), parsedDouble(currentEvent.getClose()));
+                    }
+                }));
+        }
+    }
 //    /**
 //     * Add to cache information about last candles of all filtered pairs (exclude
 //     * opened positions).
@@ -78,11 +107,12 @@ public class BuyBigVolumeGrowth implements TradingStrategy {
 //    }
 
     public void startCandlstickEventsCacheUpdating(String asset, CandlestickInterval interval) {
+        candlestickInterval = interval;
         closeOpenedWebSocketStreams();
 
         marketData.getCheapPairsExcludeOpenedPositions(asset)
             .forEach(ticker -> {
-                candleStickEventsStreams.put(ticker, marketInfo.openCandleStickStream(ticker.toLowerCase(), interval,
+                candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventStream(ticker.toLowerCase(), candlestickInterval,
                     event -> {
                         marketData.addCandlestickEventToCache(ticker, event);
 

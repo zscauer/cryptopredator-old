@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
 
+import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.market.OrderBookEntry;
 import lombok.NonNull;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,16 @@ public class BuyOrderBookTrend implements TradingStrategy {
 
     private static Double parsedDouble(String stringToParse) {
         return Double.parseDouble(stringToParse);
+    }
+
+    @Override
+    public void handleBuying(OrderTradeUpdateEvent event) {
+
+    }
+
+    @Override
+    public void handleSelling(OrderTradeUpdateEvent event) {
+
     }
 
     public void generateWebSocketStreams() {

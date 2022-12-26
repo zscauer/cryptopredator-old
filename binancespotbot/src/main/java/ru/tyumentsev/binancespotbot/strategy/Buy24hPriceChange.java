@@ -1,6 +1,7 @@
 package ru.tyumentsev.binancespotbot.strategy;
 
 import com.binance.api.client.BinanceApiWebSocketClient;
+import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.market.TickerPrice;
 import com.binance.api.client.domain.market.TickerStatistics;
 import lombok.AccessLevel;
@@ -41,6 +42,16 @@ public class Buy24hPriceChange implements TradingStrategy {
 
     private static Double parsedDouble(String stringToParse) {
         return Double.parseDouble(stringToParse);
+    }
+
+    @Override
+    public void handleBuying(OrderTradeUpdateEvent event) {
+
+    }
+
+    @Override
+    public void handleSelling(OrderTradeUpdateEvent event) {
+
     }
 
     public void defineGrowingPairs(String asset) {

@@ -1,5 +1,6 @@
 package ru.tyumentsev.binancespotbot.strategy;
 
+import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -12,4 +13,13 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ThreeInARow implements TradingStrategy {
 
+    @Override
+    public void handleBuying(OrderTradeUpdateEvent event) {
+
+    }
+
+    @Override
+    public void handleSelling(OrderTradeUpdateEvent event) {
+
+    }
 }

@@ -72,7 +72,7 @@ public class MarketInfo {
         return candleSticks.size() == qtyBarsToAnalize;
     }
 
-    public Closeable openCandleStickStream (String asset, CandlestickInterval interval, BinanceApiCallback<CandlestickEvent> callback) {
+    public Closeable openCandleStickEventStream(String asset, CandlestickInterval interval, BinanceApiCallback<CandlestickEvent> callback) {
         return binanceApiWebSocketClient.onCandlestickEvent(asset, interval, callback);
     }
 
