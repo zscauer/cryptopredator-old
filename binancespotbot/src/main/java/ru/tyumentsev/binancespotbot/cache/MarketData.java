@@ -61,6 +61,9 @@ public class MarketData {
     @NonFinal
     @Value("${strategy.global.candlestickEventsCacheSize}")
     int candlestickEventsCacheSize;
+    @NonFinal
+    @Value("${strategy.global.tradingAsset}")
+    String tradingAsset;
 
     // TODO: replace method to common class.
     public void fillCheapPairs(String asset, MarketInfo marketInfo) {
@@ -91,8 +94,8 @@ public class MarketData {
         accountManager.refreshAccountBalances()
                 .getAccountBalances().stream()
                 .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
-                .forEach(balance -> putLongPositionToPriceMonitoring(balance.getAsset() + "USDT",
-                        Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + "USDT").getPrice()),
+                .forEach(balance -> putLongPositionToPriceMonitoring(balance.getAsset() + tradingAsset,
+                        Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + tradingAsset).getPrice()),
                         Double.parseDouble(balance.getFree())));
 
         log.info("{} pair(s) initialized from account manager to opened long positions price monitoring: {}",
@@ -107,15 +110,15 @@ public class MarketData {
         return availablePairs.getOrDefault(asset.toUpperCase(), Collections.emptyList());
     }
 
-    // return string, that formatted to websocket stream requires.
-    public String getAvailablePairsSymbols(String asset) {
-        StringBuilder sb = new StringBuilder();
-
-        availablePairs.get(asset).forEach(pair -> sb.append(pair.toLowerCase()).append(","));
-        sb.deleteCharAt(sb.length() - 1);
-
-        return sb.toString();
-    }
+//    // return string, that formatted to websocket stream requires.
+//    public String getAvailablePairsSymbols(String asset) {
+//        StringBuilder sb = new StringBuilder();
+//
+//        availablePairs.get(asset).forEach(pair -> sb.append(pair.toLowerCase()).append(","));
+//        sb.deleteCharAt(sb.length() - 1);
+//
+//        return sb.toString();
+//    }
 
     public String combinePairsToRequestString(List<String> pairs) {
 //        return pairs.stream()
@@ -153,24 +156,24 @@ public class MarketData {
         return pairs;
     }
 
-    // return string, that formatted to websocket stream requires.
-    public String getCheapPairsSymbols(String asset) {
-        StringBuilder sb = new StringBuilder();
+//    // return string, that formatted to websocket stream requires.
+//    public String getCheapPairsSymbols(String asset) {
+//        StringBuilder sb = new StringBuilder();
+//
+//        cheapPairs.get(asset).forEach(pair -> sb.append(pair.toLowerCase()).append(","));
+//        sb.deleteCharAt(sb.length() - 1);
+//
+//        return sb.toString();
+//    }
 
-        cheapPairs.get(asset).forEach(pair -> sb.append(pair.toLowerCase()).append(","));
-        sb.deleteCharAt(sb.length() - 1);
-
-        return sb.toString();
-    }
-
-    public String getCheapPairsSymbols(List<String> asset) {
-        StringBuilder sb = new StringBuilder();
-
-        asset.forEach(pair -> sb.append(pair.toLowerCase()).append(","));
-        sb.deleteCharAt(sb.length() - 1);
-
-        return sb.toString();
-    }
+//    public String getCheapPairsSymbols(List<String> asset) {
+//        StringBuilder sb = new StringBuilder();
+//
+//        asset.forEach(pair -> sb.append(pair.toLowerCase()).append(","));
+//        sb.deleteCharAt(sb.length() - 1);
+//
+//        return sb.toString();
+//    }
 
     public void putLongPositionToPriceMonitoring(String pair, Double price, Double qty) {
         Optional.ofNullable(longPositions.get(pair)).ifPresentOrElse(pos -> {
@@ -216,14 +219,14 @@ public class MarketData {
         longPositions.remove(pair);
     }
 
-    public void addCandlesticksToCache(String ticker, List<Candlestick> sticks) {
-        cachedCandles.put(ticker, sticks);
-    }
+//    public void addCandlesticksToCache(String ticker, List<Candlestick> sticks) {
+//        cachedCandles.put(ticker, sticks);
+//    }
 
-    public void clearCandleSticksCache() {
-        cachedCandles.clear();
-        log.debug("CandleStickCache cleared.");
-    }
+//    public void clearCandleSticksCache() {
+//        cachedCandles.clear();
+//        log.debug("CandleStickCache cleared.");
+//    }
 
     public void addCandlestickEventToCache(String ticker, CandlestickEvent candlestickEvent) {
         Deque<CandlestickEvent> eventsQueue = cachedCandlestickEvents.get(ticker);

@@ -52,13 +52,13 @@ public class MarketInfo {
         return restClient.getVariousTicker24HrPriceStatistics(symbols);
     }
 
-    public TickerStatistics getWindowPriceChange(String symbol, String windowSize) {
-        return restClient.getWindowPriceChangeStatistics(symbol, windowSize);
-    }
+//    public TickerStatistics getWindowPriceChange(String symbol, String windowSize) {
+//        return restClient.getWindowPriceChangeStatistics(symbol, windowSize);
+//    }
 
-    public List<TickerStatistics> getAllWindowPriceChange(String symbols, String windowSize) {
-        return restClient.getAllWindowPriceChangeStatistics(symbols, windowSize);
-    }
+//    public List<TickerStatistics> getAllWindowPriceChange(String symbols, String windowSize) {
+//        return restClient.getAllWindowPriceChangeStatistics(symbols, windowSize);
+//    }
 
     public TickerPrice getLastTickerPrice(String symbol) {
         return restClient.getPrice(symbol);

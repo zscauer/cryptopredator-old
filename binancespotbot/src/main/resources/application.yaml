@@ -68,10 +68,7 @@ strategy:
     # ------------------ monitoring
     monitoring:
         matchTrend: ${MONITORING_MATCH_TREND}
-        priceDecreaseFactor: ${MONITORING_PRICE_DECREASE_FACTOR}
         priceGrowthFactor: ${MONITORING_PRICE_GROWTH_FACTOR}
-        averagingEnabled: ${MONITORING_AVERAGING_ENABLED}
-        averagingTriggerFactor: ${MONITORING_AVERAGING_TRIGGER_FACTOR}
         checkOpenedPositions:
             initialDelay: ${MONITORING_CHECK_OPENED_POSITIONS_INITIAL_DELAY}
             fixedDelay: ${MONITORING_CHECK_OPENED_POSITIONS_FIXED_DELAY}
@@ -81,6 +78,7 @@ strategy:
 
     # ------------------ global
     global:
+        tradingAsset: ${STRATEGY_GLOBAL_TRADING_ASSET}
         maximalPairPrice: ${STRATEGY_GLOBAL_MAXIMAL_PAIR_PRICE}
         minimalAssetBalance: ${STRATEGY_GLOBAL_MINIMAL_ASSET_BALANCE}
         baseOrderVolume: ${STRATEGY_GLOBAL_BASE_ORDER_VOLUME}
@@ -93,27 +91,31 @@ strategy:
             initialDelay: ${STRATEGY_GLOBAL_KEEP_ALIVE_USERDATA_UPDATE_STREAM_INITIAL_DELAY}
             fixedDelay: ${STRATEGY_GLOBAL_KEEP_ALIVE_USERDATA_UPDATE_STREAM_FIXED_DELAY}
 
-    # ------------------ buyBigVolumeGrowth
-    buyBigVolumeGrowth:
-        enabled: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_ENABLED}
-        matchTrend: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_MATCH_TREND}
-        volumeGrowthFactor: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_VOLUME_GROWTH_FACTOR}
-        priceGrowthFactor: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_PRICE_GROWTH_FACTOR}
+    # ------------------ volumeCatcher
+    volumeCatcher:
+        enabled: ${VOLUME_CATCHER_ENABLED}
+        matchTrend: ${VOLUME_CATCHER_MATCH_TREND}
+        volumeGrowthFactor: ${VOLUME_CATCHER_VOLUME_GROWTH_FACTOR}
+        priceGrowthFactor: ${VOLUME_CATCHER_PRICE_GROWTH_FACTOR}
+        priceDecreaseFactor: ${VOLUME_CATCHER_PRICE_DECREASE_FACTOR}
+        averagingEnabled: ${VOLUME_CATCHER_AVERAGING_ENABLED}
+        averagingTriggerFactor: ${VOLUME_CATCHER_AVERAGING_TRIGGER_FACTOR}
+
 #        fillCheapPairs:
-#            initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_FILL_CHEAP_PAIRS_INITIAL_DELAY}
-#            fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_FILL_CHEAP_PAIRS_FIXED_DELAY}
-        buySelectedGrownAssets:
-            initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_SELECTED_GROWN_ASSETS_INITIAL_DELAY}
-            fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_SELECTED_GROWN_ASSETS_FIXED_DELAY}
+#            initialDelay: ${VOLUME_CATCHER_FILL_CHEAP_PAIRS_INITIAL_DELAY}
+#            fixedDelay: ${VOLUME_CATCHER_FILL_CHEAP_PAIRS_FIXED_DELAY}
+#        buySelectedGrownAssets:
+#            initialDelay: ${VOLUME_CATCHER_BUY_SELECTED_GROWN_ASSETS_INITIAL_DELAY}
+#            fixedDelay: ${VOLUME_CATCHER_BUY_SELECTED_GROWN_ASSETS_FIXED_DELAY}
         # buyGrownAssets:
-        #     initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_GROWN_ASSETS_INITIAL_DELAY}
-        #     fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_BUY_GROWN_ASSETS_FIXED_DELAY}
+        #     initialDelay: ${VOLUME_CATCHER_BUY_GROWN_ASSETS_INITIAL_DELAY}
+        #     fixedDelay: ${VOLUME_CATCHER_BUY_GROWN_ASSETS_FIXED_DELAY}
         startCandlstickEventsCacheUpdating:
-            initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_START_CANDLESTICKEVENTS_CACHE_UPDATING_INITIAL_DELAY}
-            fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_START_CANDLESTICKEVENTS_CACHE_UPDATING_FIXED_DELAY}
-        stopMonitorOpenedLongPositions:
-            initialDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_STOP_MONITOR_OPENED_LONG_POSITIONS_INITIAL_DELAY}
-            fixedDelay: ${STRATEGY_BUY_BIG_VOLUME_GROWTH_STOP_MONITOR_OPENED_LONG_POSITIONS_FIXED_DELAY}
+            initialDelay: ${VOLUME_CATCHER_START_CANDLESTICKEVENTS_CACHE_UPDATING_INITIAL_DELAY}
+            fixedDelay: ${VOLUME_CATCHER_START_CANDLESTICKEVENTS_CACHE_UPDATING_FIXED_DELAY}
+#        stopMonitorOpenedLongPositions:
+#            initialDelay: ${VOLUME_CATCHER_STOP_MONITOR_OPENED_LONG_POSITIONS_INITIAL_DELAY}
+#            fixedDelay: ${VOLUME_CATCHER_STOP_MONITOR_OPENED_LONG_POSITIONS_FIXED_DELAY}
 
     # ------------------ buy24hPriceChange
     buy24hPriceChange:

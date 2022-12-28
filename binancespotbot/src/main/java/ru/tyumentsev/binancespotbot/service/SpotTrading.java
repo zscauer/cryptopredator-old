@@ -121,9 +121,5 @@ public class SpotTrading {
     public void closePostitions(Map<String, Double> positionsToClose) {
         log.debug("Start to go out at last price from {} positions to close:\n{}", positionsToClose.size(), positionsToClose);
         positionsToClose.forEach(this::placeLimitSellOrderAtLastMarketPrice);
-        // TODO: remove old code
-//        for (Entry<String, Double> entrySet : positionsToClose.entrySet()) {
-//            placeLimitSellOrderAtLastMarketPrice(entrySet.getKey(), entrySet.getValue());
-//        }
     }
 }
