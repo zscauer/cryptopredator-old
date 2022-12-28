@@ -96,16 +96,16 @@ public class GeneralMonitoring {
      */
     @Scheduled(fixedDelayString = "${strategy.monitoring.cancelExpiredOrders.fixedDelay}", initialDelayString = "${strategy.monitoring.cancelExpiredOrders.initialDelay}")
     public void generalMonitoring_cancelExpiredOrders() {
-        // TODO: find way to get info about active orders
+        //TODO: find way to get info about active orders
     }
 
-    @Timed("checkOpenedPositions")
-    @Scheduled(fixedDelayString = "${strategy.monitoring.checkOpenedPositions.fixedDelay}", initialDelayString = "${strategy.monitoring.checkOpenedPositions.initialDelay}")
-    public void generalMonitoring_checkOpenedPositions() {
-        if (!testLaunch) {
-            checkMarketPositions(USDT);
-        }
-    }
+//    @Timed("checkOpenedPositions")
+//    @Scheduled(fixedDelayString = "${strategy.monitoring.checkOpenedPositions.fixedDelay}", initialDelayString = "${strategy.monitoring.checkOpenedPositions.initialDelay}")
+//    public void generalMonitoring_checkOpenedPositions() {
+//        if (!testLaunch) {
+//            checkMarketPositions(USDT);
+//        }
+//    }
 
     /**
      * Opens web socket stream of user data update events and monitors trade events.
@@ -185,7 +185,7 @@ public class GeneralMonitoring {
 
             if (averagingEnabled && assetPrice > openedPosition.avgPrice() * averagingTriggerFactor) {
                 log.debug("PRICE of {} GROWTH more than avg and now equals {}.", tickerSymbol, assetPrice);
-                spotTrading.placeOrderFast(tickerSymbol, assetPrice, quoteAsset, accountManager);
+                spotTrading.placeBuyOrderFast(tickerSymbol, assetPrice, quoteAsset, accountManager);
 //                assetsToBuy.put(tickerSymbol, assetPrice);
             } else if (assetPrice < openedPosition.maxPrice() * priceDecreaseFactor) {
                 // close position if price decreased.

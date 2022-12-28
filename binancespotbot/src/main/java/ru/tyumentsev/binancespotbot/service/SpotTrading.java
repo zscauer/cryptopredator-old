@@ -3,7 +3,6 @@ package ru.tyumentsev.binancespotbot.service;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 
 import com.binance.api.client.domain.market.CandlestickInterval;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,7 +56,7 @@ public class SpotTrading {
         pairsToBuy.clear();
     }
 
-    public void placeOrderFast(String symbol, Double price, String quoteAsset, AccountManager accountManager) {
+    public void placeBuyOrderFast(String symbol, Double price, String quoteAsset, AccountManager accountManager) {
         int availableOrdersCount = accountManager.getFreeAssetBalance(quoteAsset).intValue() / minimalAssetBalance;
         if (availableOrdersCount > 1) {
             marketInfo.pairOrderPlaced(symbol);
@@ -65,6 +64,11 @@ public class SpotTrading {
         } else {
             log.info("NOT enough balance to buy {}.", symbol);
         }
+    }
+
+    public void placeSellOrderFast(String symbol, Double qty) {
+        marketInfo.pairOrderPlaced(symbol);
+        placeLimitSellOrderAtLastMarketPrice(symbol, qty);
     }
 
     public void placeLimitBuyOrderAtLastMarketPrice(String symbol, Double quantity) {
