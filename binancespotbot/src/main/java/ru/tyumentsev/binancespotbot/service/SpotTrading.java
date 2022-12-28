@@ -3,7 +3,6 @@ package ru.tyumentsev.binancespotbot.service;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 
 import com.binance.api.client.domain.market.CandlestickInterval;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,69 +56,74 @@ public class SpotTrading {
         pairsToBuy.clear();
     }
 
-    public void placeLimitBuyOrderAtLastMarketPrice(String symbol, Double quantity) {
-        if (!marketInfo.pairOrderIsProcessing(symbol)) {
-            log.debug("Try to place LIMIT BUY order: {} for {}.", symbol, quantity);
-            asyncRestClient.getOrderBook(symbol, 1, orderBookResponse -> {
-                placeLimitBuyOrder(symbol, String.valueOf(Math.ceil(quantity)),
-                        orderBookResponse.getBids().get(0).getPrice());
-            });
+    public void placeBuyOrderFast(String symbol, Double price, String quoteAsset, AccountManager accountManager) {
+        int availableOrdersCount = accountManager.getFreeAssetBalance(quoteAsset).intValue() / minimalAssetBalance;
+        if (availableOrdersCount > 1) {
+            marketInfo.pairOrderPlaced(symbol);
+            placeLimitBuyOrderAtLastMarketPrice(symbol, baseOrderVolume / price);
+        } else {
+            log.info("NOT enough balance to buy {}.", symbol);
         }
+    }
+
+    public void placeSellOrderFast(String symbol, Double qty) {
+        marketInfo.pairOrderPlaced(symbol);
+        placeLimitSellOrderAtLastMarketPrice(symbol, qty);
+    }
+
+    public void placeLimitBuyOrderAtLastMarketPrice(String symbol, Double quantity) {
+        log.debug("Try to place LIMIT BUY order: {} for {}.", symbol, quantity);
+        asyncRestClient.getOrderBook(symbol, 1, orderBookResponse -> {
+            placeLimitBuyOrder(symbol, String.valueOf(Math.ceil(quantity)),
+                    orderBookResponse.getBids().get(0).getPrice());
+        });
     }
 
     public void placeLimitSellOrderAtLastMarketPrice(String symbol, Double quantity) {
-        if (!marketInfo.pairOrderIsProcessing(symbol)) {
-            log.debug("Try to place LIMIT SELL order: {} for {}.", symbol, quantity);
-            asyncRestClient.getOrderBook(symbol, 1, orderBookResponse -> {
-                placeLimitSellOrder(symbol, String.valueOf(quantity),
-                        orderBookResponse.getAsks().get(0).getPrice());
-            });
-        }
+        log.debug("Try to place LIMIT SELL order: {} for {}.", symbol, quantity);
+        asyncRestClient.getOrderBook(symbol, 1, orderBookResponse -> {
+            placeLimitSellOrder(symbol, String.valueOf(quantity),
+                    orderBookResponse.getAsks().get(0).getPrice());
+        });
     }
 
     public void placeLimitBuyOrder(String symbol, String quantity, String price) {
-        if (!marketInfo.pairOrderIsProcessing(symbol)) {
-            log.debug("Sending async request to place new limit order to buy {} {} at {}.", quantity, symbol, price);
-            asyncRestClient.newOrder(NewOrder.limitBuy(symbol, TimeInForce.GTC, quantity, price), limitBuyResponse -> {
-                marketInfo.pairOrderPlaced(symbol);
-                log.info("Async LIMIT BUY order placed: {}", limitBuyResponse);
-            });
-        }
+        log.debug("Sending async request to place new limit order to buy {} {} at {}.", quantity, symbol, price);
+        asyncRestClient.newOrder(NewOrder.limitBuy(symbol, TimeInForce.GTC, quantity, price), limitBuyResponse -> {
+            marketInfo.pairOrderPlaced(symbol);
+            log.info("Async LIMIT BUY order placed: {}", limitBuyResponse);
+        });
     }
 
     public void placeLimitSellOrder(String symbol, String quantity, String price) {
-        if (!marketInfo.pairOrderIsProcessing(symbol)) {
-            asyncRestClient.newOrder(NewOrder.limitSell(symbol, TimeInForce.GTC, quantity, price), limitSellResponse -> {
-                marketInfo.pairOrderPlaced(symbol);
-                log.info("Async LIMIT SELL order placed: {}", limitSellResponse);
-            });
-        }
+        asyncRestClient.newOrder(NewOrder.limitSell(symbol, TimeInForce.GTC, quantity, price), limitSellResponse -> {
+            marketInfo.pairOrderPlaced(symbol);
+            log.info("Async LIMIT SELL order placed: {}", limitSellResponse);
+        });
     }
 
     public void placeMarketBuyOrder(String symbol, Double quantity) {
-        if (!marketInfo.pairOrderIsProcessing(symbol)) {
-            asyncRestClient.newOrder(NewOrder.marketBuy(symbol, String.valueOf(Math.ceil(quantity))),
-                marketBuyOrderCallback -> {
-                    log.info("Async MARKET BUY order placed: {}",
-                            marketBuyOrderCallback);
-                });
-        }
+        asyncRestClient.newOrder(NewOrder.marketBuy(symbol, String.valueOf(Math.ceil(quantity))),
+            marketBuyOrderCallback -> {
+                log.info("Async MARKET BUY order placed: {}",
+                        marketBuyOrderCallback);
+            });
     }
 
     public void placeMarketSellOrder(String symbol, Double quantity) {
-        if (!marketInfo.pairOrderIsProcessing(symbol)) {
-            asyncRestClient.newOrder(NewOrder.marketSell(symbol, String.valueOf(quantity)),
-                marketSellOrderCallback -> {
-                    log.info("Async MARKET SELL order placed: {}",
-                            marketSellOrderCallback);
-                });
-        }
+        asyncRestClient.newOrder(NewOrder.marketSell(symbol, String.valueOf(quantity)),
+            marketSellOrderCallback -> {
+                log.info("Async MARKET SELL order placed: {}",
+                        marketSellOrderCallback);
+            });
     }
 
     public void closePostitions(Map<String, Double> positionsToClose) {
         log.debug("Start to go out at last price from {} positions to close:\n{}", positionsToClose.size(), positionsToClose);
-        for (Entry<String, Double> entrySet : positionsToClose.entrySet()) {
-            placeLimitSellOrderAtLastMarketPrice(entrySet.getKey(), entrySet.getValue());
-        }
+        positionsToClose.forEach(this::placeLimitSellOrderAtLastMarketPrice);
+        // TODO: remove old code
+//        for (Entry<String, Double> entrySet : positionsToClose.entrySet()) {
+//            placeLimitSellOrderAtLastMarketPrice(entrySet.getKey(), entrySet.getValue());
+//        }
     }
 }

@@ -1,7 +1,6 @@
 package ru.tyumentsev.binancespotbot.service;
 
 import com.binance.api.client.domain.ExecutionType;
-import com.binance.api.client.domain.OrderSide;
 import com.binance.api.client.domain.account.AssetBalance;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.event.UserDataUpdateEvent;
@@ -97,16 +96,16 @@ public class GeneralMonitoring {
      */
     @Scheduled(fixedDelayString = "${strategy.monitoring.cancelExpiredOrders.fixedDelay}", initialDelayString = "${strategy.monitoring.cancelExpiredOrders.initialDelay}")
     public void generalMonitoring_cancelExpiredOrders() {
-        // TODO: find way to get info about active orders
+        //TODO: find way to get info about active orders
     }
 
-    @Timed("checkOpenedPositions")
-    @Scheduled(fixedDelayString = "${strategy.monitoring.checkOpenedPositions.fixedDelay}", initialDelayString = "${strategy.monitoring.checkOpenedPositions.initialDelay}")
-    public void generalMonitoring_checkOpenedPositions() {
-        if (!testLaunch) {
-            checkMarketPositions(USDT);
-        }
-    }
+//    @Timed("checkOpenedPositions")
+//    @Scheduled(fixedDelayString = "${strategy.monitoring.checkOpenedPositions.fixedDelay}", initialDelayString = "${strategy.monitoring.checkOpenedPositions.initialDelay}")
+//    public void generalMonitoring_checkOpenedPositions() {
+//        if (!testLaunch) {
+//            checkMarketPositions(USDT);
+//        }
+//    }
 
     /**
      * Opens web socket stream of user data update events and monitors trade events.
@@ -139,6 +138,8 @@ public class GeneralMonitoring {
                         tradingStrategies.values().forEach(strategy -> strategy.handleSelling(event));
                     }
                 }
+
+                accountManager.refreshAccountBalances();
             }
         });
     }
@@ -179,19 +180,20 @@ public class GeneralMonitoring {
             }
             if (assetPrice > openedPosition.maxPrice()) {
                 // update current price if it's growth.
-                marketData.updateOpenedPositionMaxPrice(tickerSymbol, assetPrice, marketData.getLongPositions());
+                marketData.updateOpenedPosition(tickerSymbol, assetPrice, marketData.getLongPositions());
             }
 
             if (averagingEnabled && assetPrice > openedPosition.avgPrice() * averagingTriggerFactor) {
                 log.debug("PRICE of {} GROWTH more than avg and now equals {}.", tickerSymbol, assetPrice);
-                assetsToBuy.put(tickerSymbol, assetPrice);
+                spotTrading.placeBuyOrderFast(tickerSymbol, assetPrice, quoteAsset, accountManager);
+//                assetsToBuy.put(tickerSymbol, assetPrice);
             } else if (assetPrice < openedPosition.maxPrice() * priceDecreaseFactor) {
                 // close position if price decreased.
                 log.debug("PRICE of {} DECREASED and now equals {}.", tickerSymbol, assetPrice);
                 addPairToSell(tickerSymbol, quoteAsset, positionsToClose);
             }
         }
-        spotTrading.buyAssets(assetsToBuy, quoteAsset, accountManager);
+//        spotTrading.buyAssets(assetsToBuy, quoteAsset, accountManager);
         spotTrading.closePostitions(positionsToClose);
     }
 

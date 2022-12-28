@@ -27,6 +27,9 @@ public class AccountManager {
     BinanceApiWebSocketClient webSocketClient;
 
     @NonFinal
+    List<AssetBalance> currentBalances;
+
+    @NonFinal
     String listenKey;
 
     public void initializeUserDataUpdateStream() {
@@ -58,9 +61,14 @@ public class AccountManager {
         return Double.parseDouble(restClient.getAccount().getAssetBalance(asset).getFree());
     }
 
-    public List<AssetBalance> getAccountBalances() {
-        return restClient.getAccount().getBalances().stream()
+    public AccountManager refreshAccountBalances() {
+        currentBalances = restClient.getAccount().getBalances().stream()
                 .filter(balance -> Double.parseDouble(balance.getFree()) > 0).toList();
+        return this;
+    }
+
+    public List<AssetBalance> getAccountBalances() {
+        return currentBalances;
     }
 
     public Closeable listenUserDataUpdateEvents(BinanceApiCallback<UserDataUpdateEvent> callback) {
