@@ -28,7 +28,7 @@ import javax.annotation.PreDestroy;
 
 /**
  * This strategy will get two last candlesticks for each quote USDT pair
- * and buy this asset if volume has grown more then priceGrowthFactor against previous candle.
+ * and buy this asset if volume has grown more than priceGrowthFactor against previous candle.
  */
 @Service
 @RequiredArgsConstructor
@@ -64,8 +64,8 @@ public class BuyBigVolumeGrowth implements TradingStrategy {
         if (buyBigVolumeGrowthEnabled) {
             Optional.ofNullable(candleStickEventsStreams.remove(event.getSymbol())).ifPresent(stream -> {
                 try {
+                    marketData.removeCandlestickEventsCacheForPair(event.getSymbol());
                     stream.close();
-                    log.info("Candlestick event stream of '{}' closed after buy order execution.", event.getSymbol());
                 } catch (IOException e) {
                     log.error("Error while trying to close candlestick event stream of '{}':\n{}", event.getSymbol(), e.getMessage());
                 }

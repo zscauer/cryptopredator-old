@@ -1,7 +1,6 @@
 package ru.tyumentsev.binancespotbot.service;
 
 import com.binance.api.client.domain.ExecutionType;
-import com.binance.api.client.domain.OrderSide;
 import com.binance.api.client.domain.account.AssetBalance;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.event.UserDataUpdateEvent;
@@ -139,6 +138,8 @@ public class GeneralMonitoring {
                         tradingStrategies.values().forEach(strategy -> strategy.handleSelling(event));
                     }
                 }
+
+                accountManager.refreshAccountBalances();
             }
         });
     }
@@ -179,7 +180,7 @@ public class GeneralMonitoring {
             }
             if (assetPrice > openedPosition.maxPrice()) {
                 // update current price if it's growth.
-                marketData.updateOpenedPositionMaxPrice(tickerSymbol, assetPrice, marketData.getLongPositions());
+                marketData.updateOpenedPosition(tickerSymbol, assetPrice, marketData.getLongPositions());
             }
 
             if (averagingEnabled && assetPrice > openedPosition.avgPrice() * averagingTriggerFactor) {

@@ -88,7 +88,8 @@ public class MarketData {
     public void initializeOpenedLongPositionsFromMarket(MarketInfo marketInfo, AccountManager accountManager) {
         longPositions.clear();
         // fill cache of opened positions with last market price of each.
-        accountManager.getAccountBalances().stream()
+        accountManager.refreshAccountBalances()
+                .getAccountBalances().stream()
                 .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
                 .forEach(balance -> putLongPositionToPriceMonitoring(balance.getAsset() + "USDT",
                         Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + "USDT").getPrice()),
@@ -207,7 +208,7 @@ public class MarketData {
         });
     }
 
-    public void updateOpenedPositionMaxPrice(String pair, Double price, Map<String, OpenedPosition> openedPositions) {
+    public void updateOpenedPosition(String pair, Double price, Map<String, OpenedPosition> openedPositions) {
         Optional.ofNullable(openedPositions.get(pair)).ifPresent(pos -> pos.maxPrice(price));
     }
 
@@ -236,6 +237,10 @@ public class MarketData {
         if (eventsQueue.size() > candlestickEventsCacheSize) {
             eventsQueue.removeFirst();
         }
+    }
+
+    public void removeCandlestickEventsCacheForPair(String ticker) {
+        cachedCandlestickEvents.get(ticker).clear();
     }
 
     public Map<String, Deque<CandlestickEvent>> getCachedCandleStickEvents() {
