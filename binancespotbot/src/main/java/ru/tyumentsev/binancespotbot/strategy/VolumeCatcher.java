@@ -120,8 +120,8 @@ public class VolumeCatcher implements TradingStrategy {
         return event -> {
             marketData.addCandlestickEventToCache(ticker, event);
 
-            var currentEvent = marketData.getCachedCandleStickEvents().get(ticker).getLast();
-            var previousEvent = marketData.getCachedCandleStickEvents().get(ticker).getFirst();
+            var currentEvent = marketData.getCachedCandlestickEvents().get(ticker).getLast();
+            var previousEvent = marketData.getCachedCandlestickEvents().get(ticker).getFirst();
 
             if (parsedDouble(currentEvent.getVolume()) > parsedDouble(previousEvent.getVolume()) * volumeGrowthFactor
                     && parsedDouble(currentEvent.getClose()) > parsedDouble(previousEvent.getClose()) * priceGrowthFactor) {
@@ -144,7 +144,6 @@ public class VolumeCatcher implements TradingStrategy {
 
             Optional.ofNullable(marketData.getLongPositions().get(ticker)).ifPresent(openedPosition -> {
                 var assetPrice = parsedDouble(event.getClose());
-//                var candleHighPrice = parsedDouble(event.getHigh());
 
                 if (assetPrice > openedPosition.maxPrice()) { // update current price if it's growth.
                     marketData.updateOpenedPosition(ticker, assetPrice, marketData.getLongPositions());
@@ -189,76 +188,6 @@ public class VolumeCatcher implements TradingStrategy {
             spotTrading.placeSellOrderFast(symbol, qty);
 //        }
     }
-
-//    /**
-//     * Get current opened long positions from account and close their streams of monitoring candle stick events.
-//     */
-//    public void stopMonitorOpenedLongPositions() {
-//        marketData.getLongPositions().keySet().forEach(pair -> {
-//            Optional.ofNullable(candleStickEventsStreams.remove(pair)).ifPresent(stream -> {
-//                try {
-//                    stream.close();
-//                } catch (IOException e) {
-//                    log.error("Error while trying to close candlestick event stream of '{}':\n{}", pair, e.getMessage());
-//                }
-//            });
-//        });
-//    }
-
-//    // compare volumes in current and previous candles to find big volume growth.
-//    @Timed("findGrownAssets")
-//    public void findGrownAssets() {
-//        Map<String, List<Candlestick>> cachedCandlesticks = marketData.getCachedCandles();
-//        Map<String, Deque<CandlestickEvent>> cachedCandleStickEvents = marketData.getCachedCandleStickEvents();
-//
-//        try {
-//            cachedCandlesticks.entrySet().stream() // current volume & current price bigger than previous:
-//                    .filter(entrySet -> parsedDouble(entrySet.getValue().get(1)
-//                            .getVolume()) > parsedDouble(entrySet.getValue().get(0).getVolume()) * volumeGrowthFactor
-//                            && parsedDouble(entrySet.getValue().get(1).getClose()) > parsedDouble(
-//                            entrySet.getValue().get(0).getClose()) * priceGrowthFactor)
-//                    .forEach(entrySet -> addPairToBuy(entrySet.getKey(),
-//                            parsedDouble(entrySet.getValue().get(1).getClose())));
-//        } catch (Exception e) {
-//            log.error("Error while trying to find grown assets:\n{}.", e.getMessage());
-//            e.printStackTrace();
-//        }
-
-//        Map<String, List<Candlestick>> cachedCandlesticks = marketData.getCachedCandles();
-//
-//        try {
-//            cachedCandlesticks.entrySet().stream() // current volume & current price bigger than previous:
-//                    .filter(entrySet -> parsedDouble(entrySet.getValue().get(1)
-//                            .getVolume()) > parsedDouble(entrySet.getValue().get(0).getVolume()) * volumeGrowthFactor
-//                            && parsedDouble(entrySet.getValue().get(1).getClose()) > parsedDouble(
-//                            entrySet.getValue().get(0).getClose()) * priceGrowthFactor)
-//                    .forEach(entrySet -> addPairToBuy(entrySet.getKey(),
-//                            parsedDouble(entrySet.getValue().get(1).getClose())));
-//        } catch (Exception e) {
-//            log.error("Error while trying to find grown assets:\n{}.", e.getMessage());
-//            e.printStackTrace();
-//        }
-//    }
-
-//    public void addPairToBuy(String symbol, Double price) {
-//        if (matchTrend) {
-//            List<Candlestick> candleSticks = marketInfo.getCandleSticks(symbol, CandlestickInterval.DAILY, 2);
-//            if (marketInfo.pairHadTradesInThePast(candleSticks, 2)
-//                    && price > parsedDouble(candleSticks.get(0).getHigh())) {
-//                marketData.putPairToBuy(symbol, price);
-//            }
-//        } else {
-//            marketData.putPairToBuy(symbol, price);
-//        }
-//    }
-
-//    @Timed("buyGrownAssets")
-//    public void buyGrownAssets(String quoteAsset) {
-//        var pairsToBuy = marketData.getPairsToBuy();
-//        log.debug("There is {} pairs to buy: {}.", pairsToBuy.size(), pairsToBuy);
-//
-//        spotTrading.buyAssets(pairsToBuy, quoteAsset, accountManager);
-//    }
 
     public void closeOpenedWebSocketStreams() {
         candleStickEventsStreams.forEach((pair, stream) -> {

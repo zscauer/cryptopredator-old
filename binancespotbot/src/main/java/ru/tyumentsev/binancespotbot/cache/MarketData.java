@@ -42,6 +42,7 @@ public class MarketData {
     Map<String, List<Candlestick>> cachedCandles = new ConcurrentHashMap<>();
     // stores current and previous candlestick events for each pair to compare them.
     // first element - previous, last element - current.
+    @Getter
     Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents = new ConcurrentHashMap<>();
     @Getter
     Map<String, Double> pairsToBuy = new ConcurrentHashMap<>();
@@ -65,7 +66,6 @@ public class MarketData {
     @Value("${strategy.global.tradingAsset}")
     String tradingAsset;
 
-    // TODO: replace method to common class.
     public void fillCheapPairs(String asset, MarketInfo marketInfo) {
         // get all pairs, that trades against USDT.
         List<String> pairs = getAvailablePairs(asset);
@@ -110,16 +110,6 @@ public class MarketData {
         return availablePairs.getOrDefault(asset.toUpperCase(), Collections.emptyList());
     }
 
-//    // return string, that formatted to websocket stream requires.
-//    public String getAvailablePairsSymbols(String asset) {
-//        StringBuilder sb = new StringBuilder();
-//
-//        availablePairs.get(asset).forEach(pair -> sb.append(pair.toLowerCase()).append(","));
-//        sb.deleteCharAt(sb.length() - 1);
-//
-//        return sb.toString();
-//    }
-
     public String combinePairsToRequestString(List<String> pairs) {
 //        return pairs.stream()
 //                .collect(Collectors.joining(DELIMETER, QUERY_SYMBOLS_BEGIN, QUERY_SYMBOLS_END));
@@ -155,25 +145,6 @@ public class MarketData {
         
         return pairs;
     }
-
-//    // return string, that formatted to websocket stream requires.
-//    public String getCheapPairsSymbols(String asset) {
-//        StringBuilder sb = new StringBuilder();
-//
-//        cheapPairs.get(asset).forEach(pair -> sb.append(pair.toLowerCase()).append(","));
-//        sb.deleteCharAt(sb.length() - 1);
-//
-//        return sb.toString();
-//    }
-
-//    public String getCheapPairsSymbols(List<String> asset) {
-//        StringBuilder sb = new StringBuilder();
-//
-//        asset.forEach(pair -> sb.append(pair.toLowerCase()).append(","));
-//        sb.deleteCharAt(sb.length() - 1);
-//
-//        return sb.toString();
-//    }
 
     public void putLongPositionToPriceMonitoring(String pair, Double price, Double qty) {
         Optional.ofNullable(longPositions.get(pair)).ifPresentOrElse(pos -> {
@@ -219,15 +190,6 @@ public class MarketData {
         longPositions.remove(pair);
     }
 
-//    public void addCandlesticksToCache(String ticker, List<Candlestick> sticks) {
-//        cachedCandles.put(ticker, sticks);
-//    }
-
-//    public void clearCandleSticksCache() {
-//        cachedCandles.clear();
-//        log.debug("CandleStickCache cleared.");
-//    }
-
     public void addCandlestickEventToCache(String ticker, CandlestickEvent candlestickEvent) {
         Deque<CandlestickEvent> eventsQueue = cachedCandlestickEvents.get(ticker);
         Optional.ofNullable(eventsQueue.peekLast()).ifPresentOrElse(lastCachedEvent -> {
@@ -244,10 +206,6 @@ public class MarketData {
 
     public void removeCandlestickEventsCacheForPair(String ticker) {
         cachedCandlestickEvents.get(ticker).clear();
-    }
-
-    public Map<String, Deque<CandlestickEvent>> getCachedCandleStickEvents() {
-        return cachedCandlestickEvents;
     }
 
     public void putPairToBuy(String symbol, Double price) {

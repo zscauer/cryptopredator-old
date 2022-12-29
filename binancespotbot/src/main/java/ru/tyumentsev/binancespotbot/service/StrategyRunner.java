@@ -37,37 +37,12 @@ public class StrategyRunner {
 
     // +++++++++++++++++++++++++++++++ VolumeCatcher strategy
 
-//    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.initialDelay}")
-//    public void buyBigVolumeGrowth_fillCheapPairs() {
-//        buyBigVolumeGrowth.fillCheapPairs(tradingAsset);
-//    }
-
     @Scheduled(fixedDelayString = "${strategy.volumeCatcher.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.volumeCatcher.startCandlstickEventsCacheUpdating.initialDelay}")
     public void volumeCatcher_startCandlstickEventsCacheUpdating() {
         if (volumeCatcherEnabled && !testLaunch) {
-             volumeCatcher.startCandlstickEventsCacheUpdating(tradingAsset, CandlestickInterval.FIFTEEN_MINUTES);
+             volumeCatcher.startCandlstickEventsCacheUpdating(tradingAsset, CandlestickInterval.THREE_MINUTES);
         }
     }
-
-    // +++ buy fast testing
-//    @Timed("buySelectedGrownAssets")
-//    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.initialDelay}")
-//    public void buyBigVolumeGrowth_buySelectedGrownAssets() {
-//        if (buyBigVolumeGrowthEnabled && !testLaunch) {
-////            buyBigVolumeGrowth.updateMonitoredCandles(tradingAsset, CandlestickInterval.FIFTEEN_MINUTES, 2);
-//
-////            buyBigVolumeGrowth.findGrownAssets();
-//            buyBigVolumeGrowth.buyGrownAssets(tradingAsset);
-//        }
-//    }
-    // --- buy fast testing
-
-//    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.stopMonitorOpenedLongPositions.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.stopMonitorOpenedLongPositions.initialDelay}")
-//    public void buyBigVolumeGrowth_stopMonitorOpenedLongPositions() {
-//        if (buyBigVolumeGrowthEnabled && !testLaunch) {
-//            buyBigVolumeGrowth.stopMonitorOpenedLongPositions();
-//        }
-//    }
 
     // ------------------------------- VolumeCatcher strategy
 

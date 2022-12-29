@@ -78,7 +78,7 @@ public class StateController {
 
     @GetMapping("/buyBigVolumeChange/getCachedCandleStickEvents")
     public Map<String, Deque<CandlestickEvent>> getCachedCandleStickEvents() {
-        return marketData.getCachedCandleStickEvents();
+        return marketData.getCachedCandlestickEvents();
     }
 
     @GetMapping("/openedPositions/long")

@@ -36,11 +36,10 @@ public class ApplicationInitializer implements ApplicationRunner {
         if (testLaunch) {
             log.warn("Application launched in test mode. Deals functionality disabled.");
         }
-        // TODO change to get assets tickers from config file.
         marketData.addAvailablePairs(tradingAsset, marketInfo.getAvailableTradePairs(tradingAsset));
         marketData.initializeOpenedLongPositionsFromMarket(marketInfo, accountManager);
         marketData.fillCheapPairs(tradingAsset, marketInfo);
         marketData.constructCandleStickEventsCache(tradingAsset);
-        log.info("Application initialization complete. Logger class is: '{}'.", log.getClass());
+        log.info("Application initialization complete.");
     }
 }
