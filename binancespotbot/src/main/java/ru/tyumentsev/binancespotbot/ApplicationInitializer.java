@@ -20,26 +20,26 @@ import ru.tyumentsev.binancespotbot.service.MarketInfo;
 @Slf4j
 public class ApplicationInitializer implements ApplicationRunner {
 
-    @NonFinal
-    @Value("${applicationconfig.testLaunch}")
-    boolean testLaunch;
-    
     MarketData marketData;
     MarketInfo marketInfo;
     AccountManager accountManager;
 
-    String USDT = "USDT";
+    @NonFinal
+    @Value("${applicationconfig.testLaunch}")
+    boolean testLaunch;
+    @NonFinal
+    @Value("${strategy.global.tradingAsset}")
+    String tradingAsset;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
         if (testLaunch) {
             log.warn("Application launched in test mode. Deals functionality disabled.");
         }
-        // TODO change to get assets tickers from config file.
-        marketData.addAvailablePairs(USDT, marketInfo.getAvailableTradePairs(USDT));
+        marketData.addAvailablePairs(tradingAsset, marketInfo.getAvailableTradePairs(tradingAsset));
         marketData.initializeOpenedLongPositionsFromMarket(marketInfo, accountManager);
-        marketData.fillCheapPairs(USDT, marketInfo);
-        marketData.constructCandleStickEventsCache(USDT);
-        log.info("Application initialization complete. Logger class is: '{}'.", log.getClass());
+        marketData.fillCheapPairs(tradingAsset, marketInfo);
+        marketData.constructCandleStickEventsCache(tradingAsset);
+        log.info("Application initialization complete.");
     }
 }

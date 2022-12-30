@@ -1,17 +1,11 @@
 package ru.tyumentsev.binancespotbot.service;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.binance.api.client.domain.market.CandlestickInterval;
 
-import io.micrometer.core.annotation.Timed;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -25,57 +19,32 @@ import ru.tyumentsev.binancespotbot.strategy.*;
 @Slf4j
 public class StrategyRunner {
 
-    AccountManager accountManager;
-    BuyBigVolumeGrowth buyBigVolumeGrowth;
+    VolumeCatcher volumeCatcher;
     BuyOrderBookTrend buyOrderBookTrend;
     Buy24hPriceChange buy24hPriceChange;
     BearCub bearCub;
 
-    String USDT = "USDT";
-
+    @NonFinal
+    @Value("${strategy.global.tradingAsset}")
+    String tradingAsset;
     @NonFinal
     @Value("${applicationconfig.testLaunch}")
     boolean testLaunch;
     @NonFinal
-    @Value("${strategy.buyBigVolumeGrowth.enabled}")
-    boolean buyBigVolumeGrowthEnabled;
+    @Value("${strategy.volumeCatcher.enabled}")
+    boolean volumeCatcherEnabled;
 
 
-    // +++++++++++++++++++++++++++++++ BuyBigVolumeGrowth strategy
+    // +++++++++++++++++++++++++++++++ VolumeCatcher strategy
 
-//    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.fillCheapPairs.initialDelay}")
-//    public void buyBigVolumeGrowth_fillCheapPairs() {
-//        buyBigVolumeGrowth.fillCheapPairs(USDT);
-//    }
-
-    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.startCandlstickEventsCacheUpdating.initialDelay}")
-    public void buyBigVolumeGrowth_startCandlstickEventsCacheUpdating() {
-        if (buyBigVolumeGrowthEnabled) {
-             buyBigVolumeGrowth.startCandlstickEventsCacheUpdating(USDT, CandlestickInterval.FIFTEEN_MINUTES);
+    @Scheduled(fixedDelayString = "${strategy.volumeCatcher.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.volumeCatcher.startCandlstickEventsCacheUpdating.initialDelay}")
+    public void volumeCatcher_startCandlstickEventsCacheUpdating() {
+        if (volumeCatcherEnabled && !testLaunch) {
+             volumeCatcher.startCandlstickEventsCacheUpdating(tradingAsset, CandlestickInterval.THREE_MINUTES);
         }
     }
 
-    // +++ buy fast testing
-//    @Timed("buySelectedGrownAssets")
-//    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.buySelectedGrownAssets.initialDelay}")
-//    public void buyBigVolumeGrowth_buySelectedGrownAssets() {
-//        if (buyBigVolumeGrowthEnabled && !testLaunch) {
-////            buyBigVolumeGrowth.updateMonitoredCandles(USDT, CandlestickInterval.FIFTEEN_MINUTES, 2);
-//
-////            buyBigVolumeGrowth.findGrownAssets();
-//            buyBigVolumeGrowth.buyGrownAssets(USDT);
-//        }
-//    }
-    // --- buy fast testing
-
-//    @Scheduled(fixedDelayString = "${strategy.buyBigVolumeGrowth.stopMonitorOpenedLongPositions.fixedDelay}", initialDelayString = "${strategy.buyBigVolumeGrowth.stopMonitorOpenedLongPositions.initialDelay}")
-//    public void buyBigVolumeGrowth_stopMonitorOpenedLongPositions() {
-//        if (buyBigVolumeGrowthEnabled && !testLaunch) {
-//            buyBigVolumeGrowth.stopMonitorOpenedLongPositions();
-//        }
-//    }
-
-    // ------------------------------- BuyBigVolumeGrowth strategy
+    // ------------------------------- VolumeCatcher strategy
 
     // +++++++++++++++++++++++++++++++ BuyOrderBookTrend strategy
 
@@ -97,12 +66,12 @@ public class StrategyRunner {
     //
 //    @Scheduled(fixedDelayString = "${strategy.buy24hPriceChange.fillCheapPairs.fixedDelay}", initialDelayString = "${strategy.buy24hPriceChange.fillCheapPairs.initialDelay}")
 //    public void buy24hPriceChange_fillCheapPairs() {
-//        buy24hPriceChange.fillCheapPairs(USDT);
+//        buy24hPriceChange.fillCheapPairs(tradingAsset);
 //    }
 
 //    @Scheduled(fixedDelayString = "${strategy.buy24hPriceChange.defineGrowingPairs.fixedDelay}", initialDelayString = "${strategy.buy24hPriceChange.defineGrowingPairs.initialDelay}")
 //    public void buy24hPriceChange_defineGrowingPairs() {
-//        buy24hPriceChange.defineGrowingPairs(USDT);
+//        buy24hPriceChange.defineGrowingPairs(tradingAsset);
 ////        buy24hPriceChange.fillWebSocketStreams();
 //    }
 
@@ -112,7 +81,7 @@ public class StrategyRunner {
 
 //    @Scheduled(fixedDelayString = "${strategy.bearCub.defineGrowingPairs.fixedDelay}", initialDelayString = "${strategy.bearCub.defineGrowingPairs.initialDelay}")
 //    public void bearCub_defineGrowingPairs() {
-//        bearCub.defineGrowingPairs(USDT);
+//        bearCub.defineGrowingPairs(tradingAsset);
 //        bearCub.openShortsForGrownPairs();
 //    }
 

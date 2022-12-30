@@ -52,14 +52,6 @@ public class MarketInfo {
         return restClient.getVariousTicker24HrPriceStatistics(symbols);
     }
 
-    public TickerStatistics getWindowPriceChange(String symbol, String windowSize) {
-        return restClient.getWindowPriceChangeStatistics(symbol, windowSize);
-    }
-
-    public List<TickerStatistics> getAllWindowPriceChange(String symbols, String windowSize) {
-        return restClient.getAllWindowPriceChangeStatistics(symbols, windowSize);
-    }
-
     public TickerPrice getLastTickerPrice(String symbol) {
         return restClient.getPrice(symbol);
     }
@@ -74,7 +66,7 @@ public class MarketInfo {
 
     public boolean pairHadTradesInThePast(String ticker, CandlestickInterval interval, Integer qtyBarsToAnalize) {
         // pair should have history of trade for some days before.
-        return getCandleSticks(ticker, interval, qtyBarsToAnalize).size() == qtyBarsToAnalize;
+        return pairHadTradesInThePast(getCandleSticks(ticker, interval, qtyBarsToAnalize), qtyBarsToAnalize);
     }
 
     public boolean pairHadTradesInThePast(List<Candlestick> candleSticks, int qtyBarsToAnalize) {

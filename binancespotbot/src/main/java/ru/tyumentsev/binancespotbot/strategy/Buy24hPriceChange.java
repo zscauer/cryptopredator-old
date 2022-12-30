@@ -67,7 +67,6 @@ public class Buy24hPriceChange implements TradingStrategy {
                     grownPairs.add(tickerStatistics);
                     log.info("[Buy24hPriceChange] {} growth at {}%.", tickerStatistics.getSymbol(), tickerStatistics.getPriceChangePercent());
                 });
-//        log.info("There is {} pairs that grows more than {}%", grownPairs.size(), percentOfGrowingFor24h);
     }
 
     public void fillWebSocketStreams() {

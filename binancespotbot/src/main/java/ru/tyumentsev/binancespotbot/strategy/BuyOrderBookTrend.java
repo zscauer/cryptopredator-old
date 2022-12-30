@@ -7,6 +7,8 @@ import java.util.*;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.market.OrderBookEntry;
 import lombok.NonNull;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.binance.api.client.BinanceApiWebSocketClient;
@@ -30,6 +32,10 @@ public class BuyOrderBookTrend implements TradingStrategy {
     MarketData marketData;
     Map<String, Closeable> webSocketStreams;
 
+    @NonFinal
+    @Value("${strategy.global.tradingAsset}")
+    String tradingAsset;
+
     private static Double parsedDouble(String stringToParse) {
         return Double.parseDouble(stringToParse);
     }
@@ -45,7 +51,7 @@ public class BuyOrderBookTrend implements TradingStrategy {
     }
 
     public void generateWebSocketStreams() {
-        List<String> cheapPairs = marketData.getCheapPairsExcludeOpenedPositions("USDT").subList(0, 5);
+        List<String> cheapPairs = marketData.getCheapPairsExcludeOpenedPositions(tradingAsset).subList(0, 5);
         // fill asks and bids to analize.
         Map<String, Interest> openInterest = marketData.getOpenInterest();
         for (String pair : cheapPairs) {

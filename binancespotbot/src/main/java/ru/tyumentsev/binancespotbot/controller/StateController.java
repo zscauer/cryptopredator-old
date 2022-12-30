@@ -3,7 +3,8 @@ package ru.tyumentsev.binancespotbot.controller;
 import java.util.*;
 
 import com.binance.api.client.domain.event.CandlestickEvent;
-import lombok.extern.slf4j.Slf4j;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,7 +23,7 @@ import lombok.experimental.FieldDefaults;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
 import ru.tyumentsev.binancespotbot.domain.OpenedPosition;
 import ru.tyumentsev.binancespotbot.service.SpotTrading;
-import ru.tyumentsev.binancespotbot.strategy.BuyBigVolumeGrowth;
+import ru.tyumentsev.binancespotbot.strategy.VolumeCatcher;
 
 @RestController
 @RequestMapping("/state")
@@ -33,16 +34,20 @@ public class StateController {
     BinanceApiRestClient restClient;
     MarketData marketData;
     SpotTrading spotTrading;
-    BuyBigVolumeGrowth buyBigVolumeGrowth;
+    VolumeCatcher volumeCatcher;
+
+    @NonFinal
+    @Value("${strategy.global.tradingAsset}")
+    String tradingAsset;
 
 
     @GetMapping("/closeUserDataStream")
     public Map<String, String> closeUserDataStream() {
         try {
-            buyBigVolumeGrowth.getAccountManager().closeCurrentUserDataStream();
+            volumeCatcher.getAccountManager().closeCurrentUserDataStream();
             return Collections.singletonMap("response", "Command to close user data stream was successfully sent.");
         } catch (Exception e) {
-            return Collections.singletonMap("response", e.getStackTrace().toString());
+            return Collections.singletonMap("response", Arrays.toString(e.getStackTrace()));
         }
     }
 
@@ -73,7 +78,7 @@ public class StateController {
 
     @GetMapping("/buyBigVolumeChange/getCachedCandleStickEvents")
     public Map<String, Deque<CandlestickEvent>> getCachedCandleStickEvents() {
-        return marketData.getCachedCandleStickEvents();
+        return marketData.getCachedCandlestickEvents();
     }
 
     @GetMapping("/openedPositions/long")
@@ -93,11 +98,11 @@ public class StateController {
 
     @DeleteMapping("/openedPositions/long")
     public void closeAllOpenedLongPositions() {
-        marketData.initializeOpenedLongPositionsFromMarket(buyBigVolumeGrowth.getMarketInfo(), buyBigVolumeGrowth.getAccountManager());
+        marketData.initializeOpenedLongPositionsFromMarket(volumeCatcher.getMarketInfo(), volumeCatcher.getAccountManager());
         Map<String, Double> positionsToClose = new HashMap<>();
 
         marketData.getLongPositions().forEach((pair, openedPosition) -> positionsToClose.put(pair,
-                Double.parseDouble(restClient.getAccount().getAssetBalance(pair.replace("USDT", "")).getFree())));
+                Double.parseDouble(restClient.getAccount().getAssetBalance(pair.replace(tradingAsset, "")).getFree())));
 
         spotTrading.closePostitions(positionsToClose);
     }

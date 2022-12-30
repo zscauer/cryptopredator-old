@@ -42,6 +42,7 @@ public class MarketData {
     Map<String, List<Candlestick>> cachedCandles = new ConcurrentHashMap<>();
     // stores current and previous candlestick events for each pair to compare them.
     // first element - previous, last element - current.
+    @Getter
     Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents = new ConcurrentHashMap<>();
     @Getter
     Map<String, Double> pairsToBuy = new ConcurrentHashMap<>();
@@ -61,8 +62,10 @@ public class MarketData {
     @NonFinal
     @Value("${strategy.global.candlestickEventsCacheSize}")
     int candlestickEventsCacheSize;
+    @NonFinal
+    @Value("${strategy.global.tradingAsset}")
+    String tradingAsset;
 
-    // TODO: replace method to common class.
     public void fillCheapPairs(String asset, MarketInfo marketInfo) {
         // get all pairs, that trades against USDT.
         List<String> pairs = getAvailablePairs(asset);
@@ -91,8 +94,8 @@ public class MarketData {
         accountManager.refreshAccountBalances()
                 .getAccountBalances().stream()
                 .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
-                .forEach(balance -> putLongPositionToPriceMonitoring(balance.getAsset() + "USDT",
-                        Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + "USDT").getPrice()),
+                .forEach(balance -> putLongPositionToPriceMonitoring(balance.getAsset() + tradingAsset,
+                        Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + tradingAsset).getPrice()),
                         Double.parseDouble(balance.getFree())));
 
         log.info("{} pair(s) initialized from account manager to opened long positions price monitoring: {}",
@@ -105,16 +108,6 @@ public class MarketData {
 
     public List<String> getAvailablePairs(String asset) {
         return availablePairs.getOrDefault(asset.toUpperCase(), Collections.emptyList());
-    }
-
-    // return string, that formatted to websocket stream requires.
-    public String getAvailablePairsSymbols(String asset) {
-        StringBuilder sb = new StringBuilder();
-
-        availablePairs.get(asset).forEach(pair -> sb.append(pair.toLowerCase()).append(","));
-        sb.deleteCharAt(sb.length() - 1);
-
-        return sb.toString();
     }
 
     public String combinePairsToRequestString(List<String> pairs) {
@@ -151,25 +144,6 @@ public class MarketData {
         pairs.removeAll(shortPositions.keySet());
         
         return pairs;
-    }
-
-    // return string, that formatted to websocket stream requires.
-    public String getCheapPairsSymbols(String asset) {
-        StringBuilder sb = new StringBuilder();
-
-        cheapPairs.get(asset).forEach(pair -> sb.append(pair.toLowerCase()).append(","));
-        sb.deleteCharAt(sb.length() - 1);
-
-        return sb.toString();
-    }
-
-    public String getCheapPairsSymbols(List<String> asset) {
-        StringBuilder sb = new StringBuilder();
-
-        asset.forEach(pair -> sb.append(pair.toLowerCase()).append(","));
-        sb.deleteCharAt(sb.length() - 1);
-
-        return sb.toString();
     }
 
     public void putLongPositionToPriceMonitoring(String pair, Double price, Double qty) {
@@ -216,15 +190,6 @@ public class MarketData {
         longPositions.remove(pair);
     }
 
-    public void addCandlesticksToCache(String ticker, List<Candlestick> sticks) {
-        cachedCandles.put(ticker, sticks);
-    }
-
-    public void clearCandleSticksCache() {
-        cachedCandles.clear();
-        log.debug("CandleStickCache cleared.");
-    }
-
     public void addCandlestickEventToCache(String ticker, CandlestickEvent candlestickEvent) {
         Deque<CandlestickEvent> eventsQueue = cachedCandlestickEvents.get(ticker);
         Optional.ofNullable(eventsQueue.peekLast()).ifPresentOrElse(lastCachedEvent -> {
@@ -241,10 +206,6 @@ public class MarketData {
 
     public void removeCandlestickEventsCacheForPair(String ticker) {
         cachedCandlestickEvents.get(ticker).clear();
-    }
-
-    public Map<String, Deque<CandlestickEvent>> getCachedCandleStickEvents() {
-        return cachedCandlestickEvents;
     }
 
     public void putPairToBuy(String symbol, Double price) {
