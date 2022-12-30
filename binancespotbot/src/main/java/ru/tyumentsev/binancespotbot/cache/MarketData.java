@@ -1,5 +1,6 @@
 package ru.tyumentsev.binancespotbot.cache;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -35,7 +36,7 @@ public class MarketData {
     @Getter
     Map<String, OpenedPosition> shortPositions = new ConcurrentHashMap<>();
 
-    // + "Buy big volume growth"
+    // + "VolumeCatcher" strategy
     // stores candles, that have price < 1 USDT.
     Map<String, List<String>> cheapPairs = new ConcurrentHashMap<>();
     @Getter
@@ -46,7 +47,9 @@ public class MarketData {
     Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents = new ConcurrentHashMap<>();
     @Getter
     Map<String, Double> pairsToBuy = new ConcurrentHashMap<>();
-    // - "Buy big volume growth" strategy
+    // stores time of last selling to avoid repeated buy signals.
+    Map<String, LocalDateTime> sellJournal = new ConcurrentHashMap<>();
+    // - "VolumeCatcher" strategy
 
     // + "Buy order book trend"
     @Getter
@@ -203,6 +206,16 @@ public class MarketData {
             eventsQueue.removeFirst();
         }
     }
+
+//    public boolean signalWorkedOutBefore (String pair, long timeDifference) {
+//        Optional.ofNullable(sellJournal.get(pair)).ifPresent(dealTime -> {
+//            if (dealTime.getLong() < LocalDateTime.now().getLong() + timeDifference) {
+//                sellJournal.remove(pair);
+//                return false;
+//            }
+//        });
+//        return true;
+//    }
 
     public void removeCandlestickEventsCacheForPair(String ticker) {
         cachedCandlestickEvents.get(ticker).clear();

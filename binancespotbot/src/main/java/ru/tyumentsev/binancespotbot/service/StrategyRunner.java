@@ -40,7 +40,7 @@ public class StrategyRunner {
     @Scheduled(fixedDelayString = "${strategy.volumeCatcher.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.volumeCatcher.startCandlstickEventsCacheUpdating.initialDelay}")
     public void volumeCatcher_startCandlstickEventsCacheUpdating() {
         if (volumeCatcherEnabled && !testLaunch) {
-             volumeCatcher.startCandlstickEventsCacheUpdating(tradingAsset, CandlestickInterval.THREE_MINUTES);
+             volumeCatcher.startCandlstickEventsCacheUpdating(tradingAsset, CandlestickInterval.FIVE_MINUTES);
         }
     }
 

@@ -1,15 +1,15 @@
 plugins {
     id 'java'
     id 'org.springframework.boot' version '2.7.6'
-    id 'io.freefair.lombok' version '6.5.1'
+    id 'io.freefair.lombok' version '6.6.1'
     id 'maven-publish'
 }
 
 group = 'ru.tyumentsev.binancespotbot'
-version = '0.2.1'
+version = '0.2.2'
 description = 'binancespotbot'
 
-def springBootVersion = '2.7.6'
+def springBootVersion = '2.7.7'
 def prometheusVersion = '0.16.0'
 
 configurations {
