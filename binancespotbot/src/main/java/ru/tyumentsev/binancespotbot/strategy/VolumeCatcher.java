@@ -2,6 +2,7 @@ package ru.tyumentsev.binancespotbot.strategy;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -43,13 +44,14 @@ public class VolumeCatcher implements TradingStrategy {
     @Getter
     final AccountManager accountManager;
 
+    @Getter
     final Map<String, Closeable> candleStickEventsStreams = new ConcurrentHashMap<>();
     CandlestickInterval candlestickInterval;
 
     @Value("${strategy.global.tradingAsset}")
     String tradingAsset;
     @Value("${strategy.volumeCatcher.enabled}")
-    boolean buyBigVolumeGrowthEnabled;
+    boolean volumeCatherEnabled;
     @Value("${strategy.volumeCatcher.matchTrend}")
     boolean matchTrend;
     @Value("${strategy.volumeCatcher.volumeGrowthFactor}")
@@ -64,6 +66,8 @@ public class VolumeCatcher implements TradingStrategy {
     double averagingTriggerFactor;
     @Value("${strategy.global.rocketFactor}")
     double rocketFactor;
+    @Value("${strategy.volumeCatcher.signalIgnoringPeriod}")
+    long signalIgnoringPeriod;
 
     private static Double parsedDouble(String stringToParse) {
         return Double.parseDouble(stringToParse);
@@ -71,7 +75,7 @@ public class VolumeCatcher implements TradingStrategy {
 
     @Override
     public void handleBuying(OrderTradeUpdateEvent buyEvent) {
-        if (buyBigVolumeGrowthEnabled) {
+        if (volumeCatherEnabled) {
             Optional.ofNullable(candleStickEventsStreams.remove(buyEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
                 try {
 //                    marketData.removeCandlestickEventsCacheForPair(buyEvent.getSymbol());
@@ -87,7 +91,8 @@ public class VolumeCatcher implements TradingStrategy {
 
     @Override
     public void handleSelling(OrderTradeUpdateEvent sellEvent) {
-        if (buyBigVolumeGrowthEnabled) {
+        if (volumeCatherEnabled) {
+            marketData.addSellRecordToJournal(sellEvent.getSymbol());
             Optional.ofNullable(candleStickEventsStreams.remove(sellEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
                 try {
 //                    marketData.removeCandlestickEventsCacheForPair(sellEvent.getSymbol());
@@ -160,7 +165,7 @@ public class VolumeCatcher implements TradingStrategy {
     }
 
     private void buyFast(String symbol, Double price, String quoteAsset) {
-        if (!marketInfo.pairOrderIsProcessing(symbol)) {
+        if (!(marketInfo.pairOrderIsProcessing(symbol) || marketData.thisSignalWorkedOutBefore(symbol, signalIgnoringPeriod))) {
             spotTrading.placeBuyOrderFast(symbol, price, quoteAsset, accountManager);
         }
     }

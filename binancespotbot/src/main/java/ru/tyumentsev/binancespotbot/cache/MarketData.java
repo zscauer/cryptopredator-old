@@ -3,6 +3,7 @@ package ru.tyumentsev.binancespotbot.cache;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.binance.api.client.domain.market.TickerPrice;
@@ -48,6 +49,7 @@ public class MarketData {
     @Getter
     Map<String, Double> pairsToBuy = new ConcurrentHashMap<>();
     // stores time of last selling to avoid repeated buy signals.
+    @Getter
     Map<String, LocalDateTime> sellJournal = new ConcurrentHashMap<>();
     // - "VolumeCatcher" strategy
 
@@ -57,7 +59,8 @@ public class MarketData {
     // - "Buy order book trend"
 
     StringBuilder symbolsParameterBuilder = new StringBuilder(); // build query in format, that accepts by binance API.
-    String QUERY_SYMBOLS_BEGIN = "[", DELIMETER = "\"", QUERY_SYMBOLS_END = "]"; // required format is "["BTCUSDT","BNBUSDT"]".
+    String QUERY_SYMBOLS_BEGIN = "[\"", DELIMITER = "\",\"", QUERY_SYMBOLS_END = "\"]"; // required format is "["BTCUSDT","BNBUSDT"]".
+
 
     @NonFinal
     @Value("${strategy.global.maximalPairPrice}")
@@ -114,22 +117,22 @@ public class MarketData {
     }
 
     public String combinePairsToRequestString(List<String> pairs) {
-//        return pairs.stream()
-//                .collect(Collectors.joining(DELIMETER, QUERY_SYMBOLS_BEGIN, QUERY_SYMBOLS_END));
+        return pairs.stream()
+                .collect(Collectors.joining(DELIMITER, QUERY_SYMBOLS_BEGIN, QUERY_SYMBOLS_END));
 
-        symbolsParameterBuilder.delete(0, symbolsParameterBuilder.capacity());
-        symbolsParameterBuilder.append(QUERY_SYMBOLS_BEGIN);
-
-        for (var pair : pairs) {
-            symbolsParameterBuilder.append(DELIMETER);
-            symbolsParameterBuilder.append(pair);
-            symbolsParameterBuilder.append(DELIMETER);
-            symbolsParameterBuilder.append(",");
-        }
-        symbolsParameterBuilder.deleteCharAt(symbolsParameterBuilder.length() - 1); // delete "," in last line.
-        symbolsParameterBuilder.append(QUERY_SYMBOLS_END);
-
-        return symbolsParameterBuilder.toString();
+//        symbolsParameterBuilder.delete(0, symbolsParameterBuilder.capacity());
+//        symbolsParameterBuilder.append(QUERY_SYMBOLS_BEGIN);
+//
+//        for (var pair : pairs) {
+//            symbolsParameterBuilder.append(DELIMITER);
+//            symbolsParameterBuilder.append(pair);
+//            symbolsParameterBuilder.append(DELIMITER);
+//            symbolsParameterBuilder.append(",");
+//        }
+//        symbolsParameterBuilder.deleteCharAt(symbolsParameterBuilder.length() - 1); // delete "," in last line.
+//        symbolsParameterBuilder.append(QUERY_SYMBOLS_END);
+//
+//        return symbolsParameterBuilder.toString();
     }
 
     public void putCheapPairs(String asset, List<String> pairs) {
@@ -207,15 +210,24 @@ public class MarketData {
         }
     }
 
-//    public boolean signalWorkedOutBefore (String pair, long timeDifference) {
-//        Optional.ofNullable(sellJournal.get(pair)).ifPresent(dealTime -> {
-//            if (dealTime.getLong() < LocalDateTime.now().getLong() + timeDifference) {
-//                sellJournal.remove(pair);
-//                return false;
-//            }
-//        });
-//        return true;
-//    }
+    public void addSellRecordToJournal(String pair) {
+        sellJournal.put(pair, LocalDateTime.now());
+    }
+
+    public boolean thisSignalWorkedOutBefore (String pair, long minutesDifference) {
+        AtomicBoolean ignoreSignal = new AtomicBoolean(false);
+
+        Optional.ofNullable(sellJournal.get(pair)).ifPresent(dealTime -> {
+            if (LocalDateTime.now().isBefore(dealTime.plusMinutes(minutesDifference))) {
+                ignoreSignal.set(true);
+            } else {
+//                log.info("Period of signal ignoring for {} expired, remove pair from sell journal.", pair);
+                sellJournal.remove(pair);
+            }
+        });
+
+        return ignoreSignal.get();
+    }
 
     public void removeCandlestickEventsCacheForPair(String ticker) {
         cachedCandlestickEvents.get(ticker).clear();

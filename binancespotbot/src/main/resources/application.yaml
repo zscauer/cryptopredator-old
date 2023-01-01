@@ -95,6 +95,7 @@ strategy:
         priceDecreaseFactor: ${VOLUME_CATCHER_PRICE_DECREASE_FACTOR}
         averagingEnabled: ${VOLUME_CATCHER_AVERAGING_ENABLED}
         averagingTriggerFactor: ${VOLUME_CATCHER_AVERAGING_TRIGGER_FACTOR}
+        signalIgnoringPeriod: ${VOLUME_CATCHER_SIGNAL_IGNORING_PERIOD}
 
         startCandlstickEventsCacheUpdating:
             initialDelay: ${VOLUME_CATCHER_START_CANDLESTICKEVENTS_CACHE_UPDATING_INITIAL_DELAY}
@@ -102,6 +103,7 @@ strategy:
 
     # ------------------ buy24hPriceChange
     buy24hPriceChange:
+        enabled: ${STRATEGY_BUY_24H_PRICE_CHANGE_ENABLED}
         percentOfGrowingFor24h: ${STRATEGY_BUY_24H_PRICE_CHANGE_PERCENT_OF_GROWING_FOR_24H}
         defineGrowingPairs:
             initialDelay: ${STRATEGY_BUY_24H_PRICE_CHANGE_DEFINE_GROWING_PAIRS_INITIAL_DELAY}

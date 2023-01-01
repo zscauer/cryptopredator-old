@@ -1,5 +1,6 @@
 package ru.tyumentsev.binancespotbot.controller;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import com.binance.api.client.domain.event.CandlestickEvent;
@@ -66,19 +67,24 @@ public class StateController {
         return account.getAssetBalance(ticker.toUpperCase());
     }
 
-    @GetMapping("/buyBigVolumeChange/getCheapPairsWithoutOpenedPositions")
+    @GetMapping("/volumeCatcher/getCheapPairsWithoutOpenedPositions")
     public List<String> getCheapPairsWithoutOpenedPositions(@RequestParam String asset) {
         return marketData.getCheapPairsExcludeOpenedPositions(asset);
     }
 
-    @GetMapping("/buyBigVolumeChange/getCachedCandleSticks")
+    @GetMapping("/volumeCatcher/getCachedCandleSticks")
     public Map<String, List<Candlestick>> getCachedCandleSticks() {
         return marketData.getCachedCandles();
     }
 
-    @GetMapping("/buyBigVolumeChange/getCachedCandleStickEvents")
+    @GetMapping("/volumeCatcher/getCachedCandleStickEvents")
     public Map<String, Deque<CandlestickEvent>> getCachedCandleStickEvents() {
         return marketData.getCachedCandlestickEvents();
+    }
+
+    @GetMapping("/volumeCatcher/candleStickEventsStreams")
+    public Set<String> getCandleStickEventsStreams() {
+        return volumeCatcher.getCandleStickEventsStreams().keySet();
     }
 
     @GetMapping("/openedPositions/long")
@@ -94,6 +100,11 @@ public class StateController {
     @DeleteMapping("/openedPositions/long/{pair}")
     public void deletePairFromOpenedLongPositionsCache(@PathVariable String pair) {
         marketData.getLongPositions().remove(pair.toUpperCase());
+    }
+
+    @GetMapping("/sellJournal")
+    public Map<String, LocalDateTime> getSellJournal() {
+        return marketData.getSellJournal();
     }
 
     @DeleteMapping("/openedPositions/long")

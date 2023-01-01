@@ -33,6 +33,9 @@ public class StrategyRunner {
     @NonFinal
     @Value("${strategy.volumeCatcher.enabled}")
     boolean volumeCatcherEnabled;
+    @NonFinal
+    @Value("${strategy.buy24hPriceChange.enabled}")
+    boolean buy24hPriceChangeEnabled;
 
 
     // +++++++++++++++++++++++++++++++ VolumeCatcher strategy
@@ -69,11 +72,13 @@ public class StrategyRunner {
 //        buy24hPriceChange.fillCheapPairs(tradingAsset);
 //    }
 
-//    @Scheduled(fixedDelayString = "${strategy.buy24hPriceChange.defineGrowingPairs.fixedDelay}", initialDelayString = "${strategy.buy24hPriceChange.defineGrowingPairs.initialDelay}")
-//    public void buy24hPriceChange_defineGrowingPairs() {
-//        buy24hPriceChange.defineGrowingPairs(tradingAsset);
-////        buy24hPriceChange.fillWebSocketStreams();
-//    }
+    @Scheduled(fixedDelayString = "${strategy.buy24hPriceChange.defineGrowingPairs.fixedDelay}", initialDelayString = "${strategy.buy24hPriceChange.defineGrowingPairs.initialDelay}")
+    public void buy24hPriceChange_defineGrowingPairs() {
+        if (buy24hPriceChangeEnabled && !testLaunch) {
+            buy24hPriceChange.defineGrowingPairs(tradingAsset);
+//        buy24hPriceChange.fillWebSocketStreams();
+        }
+    }
 
     // ------------------------------- Buy24hPriceChange strategy
 
