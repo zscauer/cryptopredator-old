@@ -25,9 +25,11 @@ server:
 spring:
     main:
         banner-mode: off
+    profiles:
+        active: "default"
     output:
         ansi:
-            enabled: "ALWAYS"
+            enabled: ALWAYS
     # mvc:
     #     pathmatch:
     #         matching-strategy: ant-path-matcher

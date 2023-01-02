@@ -58,9 +58,7 @@ public class MarketData {
     Map<String, Interest> openInterest = new ConcurrentHashMap<>();
     // - "Buy order book trend"
 
-    StringBuilder symbolsParameterBuilder = new StringBuilder(); // build query in format, that accepts by binance API.
     String QUERY_SYMBOLS_BEGIN = "[\"", DELIMITER = "\",\"", QUERY_SYMBOLS_END = "\"]"; // required format is "["BTCUSDT","BNBUSDT"]".
-
 
     @NonFinal
     @Value("${strategy.global.maximalPairPrice}")
@@ -119,20 +117,6 @@ public class MarketData {
     public String combinePairsToRequestString(List<String> pairs) {
         return pairs.stream()
                 .collect(Collectors.joining(DELIMITER, QUERY_SYMBOLS_BEGIN, QUERY_SYMBOLS_END));
-
-//        symbolsParameterBuilder.delete(0, symbolsParameterBuilder.capacity());
-//        symbolsParameterBuilder.append(QUERY_SYMBOLS_BEGIN);
-//
-//        for (var pair : pairs) {
-//            symbolsParameterBuilder.append(DELIMITER);
-//            symbolsParameterBuilder.append(pair);
-//            symbolsParameterBuilder.append(DELIMITER);
-//            symbolsParameterBuilder.append(",");
-//        }
-//        symbolsParameterBuilder.deleteCharAt(symbolsParameterBuilder.length() - 1); // delete "," in last line.
-//        symbolsParameterBuilder.append(QUERY_SYMBOLS_END);
-//
-//        return symbolsParameterBuilder.toString();
     }
 
     public void putCheapPairs(String asset, List<String> pairs) {
@@ -188,8 +172,13 @@ public class MarketData {
         });
     }
 
-    public void updateOpenedPosition(String pair, Double price, Map<String, OpenedPosition> openedPositions) {
-        Optional.ofNullable(openedPositions.get(pair)).ifPresent(pos -> pos.maxPrice(price));
+    public void updateOpenedPosition(String pair, Double lastPrice, Map<String, OpenedPosition> openedPositions) {
+        Optional.ofNullable(openedPositions.get(pair)).ifPresent(pos -> {
+            pos.lastPrice(lastPrice);
+            if (lastPrice > pos.maxPrice()) {
+                pos.maxPrice(lastPrice);
+            }
+        });
     }
 
     public void removeLongPositionFromPriceMonitoring(String pair) {

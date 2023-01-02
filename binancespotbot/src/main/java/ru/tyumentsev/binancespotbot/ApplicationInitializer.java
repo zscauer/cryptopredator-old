@@ -13,6 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
 import ru.tyumentsev.binancespotbot.service.AccountManager;
 import ru.tyumentsev.binancespotbot.service.MarketInfo;
+import ru.tyumentsev.binancespotbot.strategy.TradingStrategy;
+
+import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -23,6 +27,7 @@ public class ApplicationInitializer implements ApplicationRunner {
     MarketData marketData;
     MarketInfo marketInfo;
     AccountManager accountManager;
+    Map<String, TradingStrategy> tradingStrategies;
 
     @NonFinal
     @Value("${applicationconfig.testLaunch}")
@@ -36,10 +41,17 @@ public class ApplicationInitializer implements ApplicationRunner {
         if (testLaunch) {
             log.warn("Application launched in test mode. Deals functionality disabled.");
         }
+
         marketData.addAvailablePairs(tradingAsset, marketInfo.getAvailableTradePairs(tradingAsset));
         marketData.initializeOpenedLongPositionsFromMarket(marketInfo, accountManager);
         marketData.fillCheapPairs(tradingAsset, marketInfo);
         marketData.constructCandleStickEventsCache(tradingAsset);
-        log.info("Application initialization complete.");
+
+        List<String> activeStrategies = tradingStrategies.entrySet().stream()
+                .filter(entry -> entry.getValue().isEnabled())
+                .map(Map.Entry::getKey)
+                .toList();
+
+        log.info("Application initialization complete.\nActive strategies: {}.", activeStrategies);
     }
 }

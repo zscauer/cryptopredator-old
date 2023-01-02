@@ -23,12 +23,17 @@ public class Averaging implements TradingStrategy {
     MarketData marketData;
 
     @Override
-    public void handleBuying(OrderTradeUpdateEvent event) {
+    public boolean isEnabled() {
+        return false;
+    }
+
+    @Override
+    public void handleBuying(final OrderTradeUpdateEvent event) {
 
     }
 
     @Override
-    public void handleSelling(OrderTradeUpdateEvent event) {
+    public void handleSelling(final OrderTradeUpdateEvent event) {
 
     }
 

@@ -48,10 +48,10 @@ public class VolumeCatcher implements TradingStrategy {
     final Map<String, Closeable> candleStickEventsStreams = new ConcurrentHashMap<>();
     CandlestickInterval candlestickInterval;
 
-    @Value("${strategy.global.tradingAsset}")
-    String tradingAsset;
     @Value("${strategy.volumeCatcher.enabled}")
     boolean volumeCatherEnabled;
+    @Value("${strategy.global.tradingAsset}")
+    String tradingAsset;
     @Value("${strategy.volumeCatcher.matchTrend}")
     boolean matchTrend;
     @Value("${strategy.volumeCatcher.volumeGrowthFactor}")
@@ -74,14 +74,31 @@ public class VolumeCatcher implements TradingStrategy {
     }
 
     @Override
-    public void handleBuying(OrderTradeUpdateEvent buyEvent) {
-        if (volumeCatherEnabled) {
+    public boolean isEnabled() {
+        return volumeCatherEnabled;
+    }
+
+    @Override
+    public void handleBuying(final OrderTradeUpdateEvent buyEvent) {
+        if (volumeCatherEnabled
+                && parsedDouble(buyEvent.getAccumulatedQuantity()).equals(parsedDouble(buyEvent.getOriginalQuantity()))) {
+            // if price == 0 most likely it was market order, use last market price.
+            Double dealPrice = parsedDouble(buyEvent.getPrice()) == 0
+                    ? parsedDouble(marketInfo.getLastTickerPrice(buyEvent.getSymbol()).getPrice())
+                    : parsedDouble(buyEvent.getPrice());
+
+            log.info("BUY order trade updated, put result in opened positions cache: buy {} {} at {}.",
+                    buyEvent.getOriginalQuantity(), buyEvent.getSymbol(), dealPrice);
+            marketData.putLongPositionToPriceMonitoring(buyEvent.getSymbol(), dealPrice, parsedDouble(buyEvent.getOriginalQuantity()));
+            marketInfo.pairOrderFilled(buyEvent.getSymbol());
+
             Optional.ofNullable(candleStickEventsStreams.remove(buyEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
                 try {
-//                    marketData.removeCandlestickEventsCacheForPair(buyEvent.getSymbol());
                     candlestickEventsStream.close();
                 } catch (IOException e) {
                     log.error("Error while trying to close candlestick event stream of '{}':\n{}", buyEvent.getSymbol(), e.getMessage());
+                } finally {
+                    marketData.removeCandlestickEventsCacheForPair(buyEvent.getSymbol());
                 }
             });
             candleStickEventsStreams.put(buyEvent.getSymbol(), marketInfo.openCandleStickEventsStream(buyEvent.getSymbol().toLowerCase(), candlestickInterval,
@@ -90,9 +107,21 @@ public class VolumeCatcher implements TradingStrategy {
     }
 
     @Override
-    public void handleSelling(OrderTradeUpdateEvent sellEvent) {
-        if (volumeCatherEnabled) {
-            marketData.addSellRecordToJournal(sellEvent.getSymbol());
+    public void handleSelling(final OrderTradeUpdateEvent sellEvent) {
+        if (volumeCatherEnabled
+                && parsedDouble(sellEvent.getAccumulatedQuantity()).equals(parsedDouble(sellEvent.getOriginalQuantity()))) {
+            // if price == 0 most likely it was market order, use last market price.
+            Double dealPrice = parsedDouble(sellEvent.getPrice()) == 0
+                    ? parsedDouble(marketInfo.getLastTickerPrice(sellEvent.getSymbol()).getPrice())
+                    : parsedDouble(sellEvent.getPrice());
+
+            log.info("SELL order trade updated, remove result from opened positions cache: sell {} {} at {}.",
+                    sellEvent.getOriginalQuantity(), sellEvent.getSymbol(), dealPrice);
+
+            marketData.removeLongPositionFromPriceMonitoring(sellEvent.getSymbol());
+            marketInfo.pairOrderFilled(sellEvent.getSymbol());
+
+//            marketData.addSellRecordToJournal(sellEvent.getSymbol());
             Optional.ofNullable(candleStickEventsStreams.remove(sellEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
                 try {
 //                    marketData.removeCandlestickEventsCacheForPair(sellEvent.getSymbol());
@@ -150,9 +179,9 @@ public class VolumeCatcher implements TradingStrategy {
             Optional.ofNullable(marketData.getLongPositions().get(ticker)).ifPresent(openedPosition -> {
                 var assetPrice = parsedDouble(event.getClose());
 
-                if (assetPrice > openedPosition.maxPrice()) { // update current price if it's growth.
+//                if (assetPrice > openedPosition.maxPrice()) { // update current price if it's growth.
                     marketData.updateOpenedPosition(ticker, assetPrice, marketData.getLongPositions());
-                }
+//                }
                 if (assetPrice < openedPosition.maxPrice() * priceDecreaseFactor) {
                     log.debug("PRICE of {} DECREASED and now equals {}.", ticker, assetPrice);
                     sellFast(ticker, openedPosition.qty(), tradingAsset);
@@ -165,14 +194,17 @@ public class VolumeCatcher implements TradingStrategy {
     }
 
     private void buyFast(String symbol, Double price, String quoteAsset) {
-        if (!(marketInfo.pairOrderIsProcessing(symbol) || marketData.thisSignalWorkedOutBefore(symbol, signalIgnoringPeriod))) {
+        if (!(marketInfo.pairOrderIsProcessing(symbol)
+//                || marketData.thisSignalWorkedOutBefore(symbol, signalIgnoringPeriod)
+        )) {
+            marketInfo.pairOrderPlaced(symbol);
             spotTrading.placeBuyOrderFast(symbol, price, quoteAsset, accountManager);
         }
     }
 
     private void sellFast(String symbol, Double qty, String quoteAsset) {
-        if (marketInfo.pairOrderIsProcessing(symbol)) {
-            return;
+        if (!marketInfo.pairOrderIsProcessing(symbol)) {
+            spotTrading.placeSellOrderFast(symbol, qty);
         }
 
 //        if (matchTrend) {
@@ -190,7 +222,7 @@ public class VolumeCatcher implements TradingStrategy {
 //                }
 //            }
 //        } else {
-            spotTrading.placeSellOrderFast(symbol, qty);
+//        spotTrading.placeSellOrderFast(symbol, qty);
 //        }
     }
 

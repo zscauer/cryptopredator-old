@@ -90,24 +90,24 @@ public class GeneralMonitoring {
             if (callback.getEventType() == UserDataUpdateEvent.UserDataUpdateEventType.ORDER_TRADE_UPDATE
                     && callback.getOrderTradeUpdateEvent().getExecutionType() == ExecutionType.TRADE) {
                 OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();
-                // if price == 0 most likely it was market order, use last market price.
-                Double dealPrice = parsedDouble(event.getPrice()) == 0
-                        ? parsedDouble(marketInfo.getLastTickerPrice(event.getSymbol()).getPrice())
-                        : parsedDouble(event.getPrice());
+//                // if price == 0 most likely it was market order, use last market price.
+//                Double dealPrice = parsedDouble(event.getPrice()) == 0
+//                        ? parsedDouble(marketInfo.getLastTickerPrice(event.getSymbol()).getPrice())
+//                        : parsedDouble(event.getPrice());
 
                 switch (event.getSide()) {
                     case BUY -> {
-                        log.info("BUY order trade updated, put result in opened positions cache: buy {} {} at {}.",
-                                event.getOriginalQuantity(), event.getSymbol(), dealPrice);
-                        marketData.putLongPositionToPriceMonitoring(event.getSymbol(), dealPrice, parsedDouble(event.getOriginalQuantity()));
-                        marketInfo.pairOrderFilled(event.getSymbol());
+//                        log.info("BUY order trade updated, put result in opened positions cache: buy {} {} at {}.",
+//                                event.getOriginalQuantity(), event.getSymbol(), dealPrice);
+//                        marketData.putLongPositionToPriceMonitoring(event.getSymbol(), dealPrice, parsedDouble(event.getOriginalQuantity()));
+//                        marketInfo.pairOrderFilled(event.getSymbol());
                         tradingStrategies.values().forEach(strategy -> strategy.handleBuying(event));
                     }
                     case SELL -> {
-                        log.info("SELL order trade updated, remove result from opened positions cache: sell {} {} at {}.",
-                                event.getOriginalQuantity(), event.getSymbol(), dealPrice);
-                        marketData.removeLongPositionFromPriceMonitoring(event.getSymbol());
-                        marketInfo.pairOrderFilled(event.getSymbol());
+//                        log.info("SELL order trade updated, remove result from opened positions cache: sell {} {} at {}.",
+//                                event.getOriginalQuantity(), event.getSymbol(), dealPrice);
+//                        marketData.removeLongPositionFromPriceMonitoring(event.getSymbol());
+//                        marketInfo.pairOrderFilled(event.getSymbol());
                         tradingStrategies.values().forEach(strategy -> strategy.handleSelling(event));
                     }
                 }

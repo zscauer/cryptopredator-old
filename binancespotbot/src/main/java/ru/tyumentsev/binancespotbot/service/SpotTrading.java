@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
-public class SpotTrading {
+public class SpotTrading implements TradingService {
 
     final BinanceApiAsyncRestClient asyncRestClient;
     final MarketInfo marketInfo;
@@ -59,10 +59,11 @@ public class SpotTrading {
     public void placeBuyOrderFast(String symbol, Double price, String quoteAsset, AccountManager accountManager) {
         int availableOrdersCount = accountManager.getFreeAssetBalance(quoteAsset).intValue() / minimalAssetBalance;
         if (availableOrdersCount > 1) {
-            marketInfo.pairOrderPlaced(symbol);
-            placeLimitBuyOrderAtLastMarketPrice(symbol, baseOrderVolume / price);
+//            marketInfo.pairOrderPlaced(symbol);
+//            placeLimitBuyOrderAtLastMarketPrice(symbol, baseOrderVolume / price);
+            placeMarketBuyOrder(symbol, baseOrderVolume / price);
         } else {
-            log.info("NOT enough balance to buy {}.", symbol);
+            log.debug("NOT enough balance to buy {}.", symbol);
         }
     }
 

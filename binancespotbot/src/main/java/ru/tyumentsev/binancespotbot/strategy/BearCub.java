@@ -42,12 +42,17 @@ public class BearCub implements TradingStrategy {
     }
 
     @Override
-    public void handleBuying(OrderTradeUpdateEvent event) {
+    public boolean isEnabled() {
+        return false;
+    }
+
+    @Override
+    public void handleBuying(final OrderTradeUpdateEvent event) {
 
     }
 
     @Override
-    public void handleSelling(OrderTradeUpdateEvent event) {
+    public void handleSelling(final OrderTradeUpdateEvent event) {
 
     }
 
@@ -79,7 +84,7 @@ public class BearCub implements TradingStrategy {
         webSocketStreams.forEach((pair, stream) -> {
             try {
                 stream.close();
-                log.info("WebStream of '{}' closed.", pair);
+                log.debug("WebStream of '{}' closed.", pair);
             } catch (IOException e) {
                 log.error(e.getMessage());
             }

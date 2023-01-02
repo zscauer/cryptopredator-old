@@ -7,6 +7,7 @@ import com.binance.api.client.domain.market.TickerStatistics;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,9 @@ public class Buy24hPriceChange implements TradingStrategy {
     final MarketData marketData;
     final Map<String, Closeable> webSocketStreams;
 
+    @NonFinal
+    @Value("${strategy.buy24hPriceChange.enabled}")
+    boolean buy24hPriceChangeEnabled;
     @Value("${strategy.global.maximalPairPrice}")
     int maximalPairPrice;
     @Value("${strategy.buy24hPriceChange.percentOfGrowingFor24h}")
@@ -45,12 +49,17 @@ public class Buy24hPriceChange implements TradingStrategy {
     }
 
     @Override
-    public void handleBuying(OrderTradeUpdateEvent event) {
+    public boolean isEnabled() {
+        return buy24hPriceChangeEnabled;
+    }
+
+    @Override
+    public void handleBuying(final OrderTradeUpdateEvent event) {
 
     }
 
     @Override
-    public void handleSelling(OrderTradeUpdateEvent event) {
+    public void handleSelling(final OrderTradeUpdateEvent event) {
 
     }
 
@@ -87,7 +96,7 @@ public class Buy24hPriceChange implements TradingStrategy {
         webSocketStreams.forEach((key, value) -> {
             try {
                 value.close();
-                log.info("WebStream of '{}' closed.", key);
+                log.debug("WebStream of '{}' closed.", key);
             } catch (IOException e) {
                 log.error(e.getMessage());
             }

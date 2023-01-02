@@ -67,6 +67,21 @@ public class StateController {
         return account.getAssetBalance(ticker.toUpperCase());
     }
 
+    @GetMapping("/openedPositions/long")
+    public Map<String, OpenedPosition> getOpenedLongPositions() {
+        return marketData.getLongPositions();
+    }
+
+    @GetMapping("/openedPositions/short")
+    public Map<String, OpenedPosition> getOpenedShortPositions() {
+        return marketData.getShortPositions();
+    }
+
+    @DeleteMapping("/openedPositions/long/{pair}")
+    public void deletePairFromOpenedLongPositionsCache(@PathVariable String pair) {
+        marketData.getLongPositions().remove(pair.toUpperCase());
+    }
+
     @GetMapping("/volumeCatcher/getCheapPairsWithoutOpenedPositions")
     public List<String> getCheapPairsWithoutOpenedPositions(@RequestParam String asset) {
         return marketData.getCheapPairsExcludeOpenedPositions(asset);
@@ -85,21 +100,6 @@ public class StateController {
     @GetMapping("/volumeCatcher/candleStickEventsStreams")
     public Set<String> getCandleStickEventsStreams() {
         return volumeCatcher.getCandleStickEventsStreams().keySet();
-    }
-
-    @GetMapping("/openedPositions/long")
-    public Map<String, OpenedPosition> getOpenedLongPositions() {
-        return marketData.getLongPositions();
-    }
-
-    @GetMapping("/openedPositions/short")
-    public Map<String, OpenedPosition> getOpenedShortPositions() {
-        return marketData.getShortPositions();
-    }
-
-    @DeleteMapping("/openedPositions/long/{pair}")
-    public void deletePairFromOpenedLongPositionsCache(@PathVariable String pair) {
-        marketData.getLongPositions().remove(pair.toUpperCase());
     }
 
     @GetMapping("/sellJournal")
