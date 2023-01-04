@@ -69,10 +69,6 @@ public class VolumeCatcher implements TradingStrategy {
     @Value("${strategy.volumeCatcher.signalIgnoringPeriod}")
     long signalIgnoringPeriod;
 
-    private static Double parsedDouble(String stringToParse) {
-        return Double.parseDouble(stringToParse);
-    }
-
     @Override
     public boolean isEnabled() {
         return volumeCatherEnabled;
@@ -153,6 +149,8 @@ public class VolumeCatcher implements TradingStrategy {
     private BinanceApiCallback<CandlestickEvent> marketMonitoringCallback(String ticker) {
         return event -> {
             marketData.addCandlestickEventToCache(ticker, event);
+//            log.info("Callback in VolumeCatcher of {}, close = {}, open = {}, priceGrowthFactor = {}."
+//                    , ticker, event.getClose(), event.getOpen(), priceGrowthFactor);
 
             var currentEvent = marketData.getCachedCandlestickEvents().get(ticker).getLast();
             var previousEvent = marketData.getCachedCandlestickEvents().get(ticker).getFirst();

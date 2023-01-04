@@ -23,6 +23,7 @@ public class StrategyRunner {
     BuyOrderBookTrend buyOrderBookTrend;
     Buy24hPriceChange buy24hPriceChange;
     BearCub bearCub;
+    Daily daily;
 
     @NonFinal
     @Value("${strategy.global.tradingAsset}")
@@ -33,6 +34,9 @@ public class StrategyRunner {
     @NonFinal
     @Value("${strategy.volumeCatcher.enabled}")
     boolean volumeCatcherEnabled;
+    @NonFinal
+    @Value("${strategy.daily.enabled}")
+    boolean dailyEnabled;
     @NonFinal
     @Value("${strategy.buy24hPriceChange.enabled}")
     boolean buy24hPriceChangeEnabled;
@@ -91,5 +95,16 @@ public class StrategyRunner {
 //    }
 
     // ------------------------------- BearCub strategy
+
+    // +++++++++++++++++++++++++++++++ daily strategy
+
+    @Scheduled(fixedDelayString = "${strategy.volumeCatcher.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.volumeCatcher.startCandlstickEventsCacheUpdating.initialDelay}")
+    public void daily_startCandlstickEventsCacheUpdating() {
+        if (dailyEnabled && !testLaunch) {
+            daily.startCandlstickEventsCacheUpdating(tradingAsset, CandlestickInterval.DAILY);
+        }
+    }
+
+    // ------------------------------- daily strategy
 
 }

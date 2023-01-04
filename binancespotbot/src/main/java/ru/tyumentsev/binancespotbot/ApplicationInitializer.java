@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
 import ru.tyumentsev.binancespotbot.service.AccountManager;
 import ru.tyumentsev.binancespotbot.service.MarketInfo;
+import ru.tyumentsev.binancespotbot.strategy.Daily;
 import ru.tyumentsev.binancespotbot.strategy.TradingStrategy;
 
 import java.util.List;
@@ -45,12 +46,15 @@ public class ApplicationInitializer implements ApplicationRunner {
         marketData.addAvailablePairs(tradingAsset, marketInfo.getAvailableTradePairs(tradingAsset));
         marketData.initializeOpenedLongPositionsFromMarket(marketInfo, accountManager);
         marketData.fillCheapPairs(tradingAsset, marketInfo);
-        marketData.constructCandleStickEventsCache(tradingAsset);
+
+        marketData.constructCandleStickEventsCache(tradingAsset, marketData.getCachedCandlestickEvents());
+        marketData.constructCandleStickEventsCache(tradingAsset, ((Daily)tradingStrategies.get("daily")).getCachedCandlestickEvents());
 
         List<String> activeStrategies = tradingStrategies.entrySet().stream()
                 .filter(entry -> entry.getValue().isEnabled())
                 .map(Map.Entry::getKey)
                 .toList();
+
 
         log.info("Application initialization complete.\nActive strategies: {}.", activeStrategies);
     }

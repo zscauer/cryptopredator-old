@@ -85,7 +85,7 @@ public class MarketData {
         putCheapPairs(asset, filteredPairs);
     }
 
-    public void constructCandleStickEventsCache(String asset) {
+    public void constructCandleStickEventsCache(String asset, Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents) {
         cheapPairs.get(asset).forEach(pair -> {
             cachedCandlestickEvents.put(pair, new LinkedList<>());
         });

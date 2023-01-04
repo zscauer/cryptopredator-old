@@ -36,10 +36,6 @@ public class BuyOrderBookTrend implements TradingStrategy {
     @Value("${strategy.global.tradingAsset}")
     String tradingAsset;
 
-    private static Double parsedDouble(String stringToParse) {
-        return Double.parseDouble(stringToParse);
-    }
-
     @Override
     public boolean isEnabled() {
         return false;

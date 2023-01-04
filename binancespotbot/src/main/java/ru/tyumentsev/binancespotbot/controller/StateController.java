@@ -24,6 +24,7 @@ import lombok.experimental.FieldDefaults;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
 import ru.tyumentsev.binancespotbot.domain.OpenedPosition;
 import ru.tyumentsev.binancespotbot.service.SpotTrading;
+import ru.tyumentsev.binancespotbot.strategy.Daily;
 import ru.tyumentsev.binancespotbot.strategy.VolumeCatcher;
 
 @RestController
@@ -36,6 +37,7 @@ public class StateController {
     MarketData marketData;
     SpotTrading spotTrading;
     VolumeCatcher volumeCatcher;
+    Daily daily;
 
     @NonFinal
     @Value("${strategy.global.tradingAsset}")
@@ -98,7 +100,7 @@ public class StateController {
     }
 
     @GetMapping("/volumeCatcher/candleStickEventsStreams")
-    public Set<String> getCandleStickEventsStreams() {
+    public Set<String> getVolumeCatcherCandleStickEventsStreams() {
         return volumeCatcher.getCandleStickEventsStreams().keySet();
     }
 
@@ -116,5 +118,15 @@ public class StateController {
                 Double.parseDouble(restClient.getAccount().getAssetBalance(pair.replace(tradingAsset, "")).getFree())));
 
         spotTrading.closePostitions(positionsToClose);
+    }
+
+    @GetMapping("/daily/candleStickEventsStreams")
+    public Set<String> getDailyCandleStickEventsStreams() {
+        return daily.getCandleStickEventsStreams().keySet();
+    }
+
+    @GetMapping("/daily/getCachedCandleStickEvents")
+    public Map<String, Deque<CandlestickEvent>> getDailyCachedCandleStickEvents() {
+        return daily.getCachedCandlestickEvents();
     }
 }

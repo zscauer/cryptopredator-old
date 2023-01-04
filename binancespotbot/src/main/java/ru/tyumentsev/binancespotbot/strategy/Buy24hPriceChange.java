@@ -44,10 +44,6 @@ public class Buy24hPriceChange implements TradingStrategy {
 
     final List<TickerStatistics> grownPairs = new ArrayList<>();
 
-    private static Double parsedDouble(String stringToParse) {
-        return Double.parseDouble(stringToParse);
-    }
-
     @Override
     public boolean isEnabled() {
         return buy24hPriceChangeEnabled;

@@ -37,10 +37,6 @@ public class BearCub implements TradingStrategy {
     @Value("${strategy.bearCub.percentOfGrowingFor24h}")
     int percentOfGrowingFor24h;
 
-    private static Double parsedDouble(String stringToParse) {
-        return Double.parseDouble(stringToParse);
-    }
-
     @Override
     public boolean isEnabled() {
         return false;

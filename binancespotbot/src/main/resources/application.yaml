@@ -117,3 +117,10 @@ strategy:
         defineGrowingPairs:
             initialDelay: ${STRATEGY_BEAR_CUB_DEFINE_GROWING_PAIRS_INITIAL_DELAY}
             fixedDelay: ${STRATEGY_BEAR_CUB_DEFINE_GROWING_PAIRS_FIXED_DELAY}
+
+    # ------------------ daily
+    daily:
+        enabled: ${STRATEGY_DAILY_ENABLED}
+        volumeGrowthFactor: ${DAILY_VOLUME_GROWTH_FACTOR}
+        priceGrowthFactor: ${DAILY_PRICE_GROWTH_FACTOR}
+
