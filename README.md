@@ -1,6 +1,6 @@
-# Binance spot bot
-
-## Usage
-
-Template of settings file named "application_example.yml" and locates into "src/main/resources/".  
-This file should be renamed to "application.yml" and need some parameters to inject in, such as "apiKey" and "secret" to have access to binance account via binance API.
+![License](https://img.shields.io/static/v1?logo=apache&label=&message=Apache-2.0&color=grey&style=flat)
+![Java](https://img.shields.io/static/v1?logo=openjdk&label=&message=17&color=blue&style=flat)
+![SpringBoot](https://img.shields.io/static/v1?logo=springboot&label=&message=2.7.7&color=darkgreen&style=flat)
+![Gradle](https://img.shields.io/static/v1?logo=gradle&label=&message=7.6&color=lightgrey&style=flat)
+![Docker](https://img.shields.io/static/v1?logo=docker&label=&message=20.10&color=blue&style=flat)
+![Grafana](https://img.shields.io/static/v1?logo=grafana&label=&message=OSS&color=critical&style=flat)

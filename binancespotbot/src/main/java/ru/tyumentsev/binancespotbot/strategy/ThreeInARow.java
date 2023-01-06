@@ -19,6 +19,11 @@ public class ThreeInARow implements TradingStrategy {
     }
 
     @Override
+    public void prepareData() {
+
+    }
+
+    @Override
     public void handleBuying(final OrderTradeUpdateEvent event) {
 
     }

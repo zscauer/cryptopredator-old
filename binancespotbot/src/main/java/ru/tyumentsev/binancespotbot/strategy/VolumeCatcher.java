@@ -2,7 +2,6 @@ package ru.tyumentsev.binancespotbot.strategy;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -44,6 +43,10 @@ public class VolumeCatcher implements TradingStrategy {
     @Getter
     final AccountManager accountManager;
 
+    // stores current and previous candlestick events for each pair to compare them.
+    // first element - previous, last element - current.
+    @Getter
+    final Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents = new ConcurrentHashMap<>();
     @Getter
     final Map<String, Closeable> candleStickEventsStreams = new ConcurrentHashMap<>();
     CandlestickInterval candlestickInterval;
@@ -75,9 +78,15 @@ public class VolumeCatcher implements TradingStrategy {
     }
 
     @Override
+    public void prepareData() {
+        marketData.constructCandleStickEventsCache(tradingAsset, cachedCandlestickEvents);
+        marketData.getLongPositions().values().forEach(openedPosition -> openedPosition.priceDecreaseFactor(priceDecreaseFactor));
+    }
+
+    @Override
     public void handleBuying(final OrderTradeUpdateEvent buyEvent) {
         if (volumeCatherEnabled
-                && parsedDouble(buyEvent.getAccumulatedQuantity()).equals(parsedDouble(buyEvent.getOriginalQuantity()))) {
+                && parsedDouble(buyEvent.getAccumulatedQuantity()) == (parsedDouble(buyEvent.getOriginalQuantity()))) {
             // if price == 0 most likely it was market order, use last market price.
             Double dealPrice = parsedDouble(buyEvent.getPrice()) == 0
                     ? parsedDouble(marketInfo.getLastTickerPrice(buyEvent.getSymbol()).getPrice())
@@ -85,7 +94,7 @@ public class VolumeCatcher implements TradingStrategy {
 
             log.info("BUY order trade updated, put result in opened positions cache: buy {} {} at {}.",
                     buyEvent.getOriginalQuantity(), buyEvent.getSymbol(), dealPrice);
-            marketData.putLongPositionToPriceMonitoring(buyEvent.getSymbol(), dealPrice, parsedDouble(buyEvent.getOriginalQuantity()));
+            marketData.putLongPositionToPriceMonitoring(buyEvent.getSymbol(), dealPrice, parsedDouble(buyEvent.getOriginalQuantity()), priceDecreaseFactor);
             marketInfo.pairOrderFilled(buyEvent.getSymbol());
 
             Optional.ofNullable(candleStickEventsStreams.remove(buyEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
@@ -94,7 +103,7 @@ public class VolumeCatcher implements TradingStrategy {
                 } catch (IOException e) {
                     log.error("Error while trying to close candlestick event stream of '{}':\n{}", buyEvent.getSymbol(), e.getMessage());
                 } finally {
-                    marketData.removeCandlestickEventsCacheForPair(buyEvent.getSymbol());
+                    marketData.removeCandlestickEventsCacheForPair(buyEvent.getSymbol(), cachedCandlestickEvents);
                 }
             });
             candleStickEventsStreams.put(buyEvent.getSymbol(), marketInfo.openCandleStickEventsStream(buyEvent.getSymbol().toLowerCase(), candlestickInterval,
@@ -105,7 +114,7 @@ public class VolumeCatcher implements TradingStrategy {
     @Override
     public void handleSelling(final OrderTradeUpdateEvent sellEvent) {
         if (volumeCatherEnabled
-                && parsedDouble(sellEvent.getAccumulatedQuantity()).equals(parsedDouble(sellEvent.getOriginalQuantity()))) {
+                && parsedDouble(sellEvent.getAccumulatedQuantity()) == (parsedDouble(sellEvent.getOriginalQuantity()))) {
             // if price == 0 most likely it was market order, use last market price.
             Double dealPrice = parsedDouble(sellEvent.getPrice()) == 0
                     ? parsedDouble(marketInfo.getLastTickerPrice(sellEvent.getSymbol()).getPrice())
@@ -136,24 +145,20 @@ public class VolumeCatcher implements TradingStrategy {
         closeOpenedWebSocketStreams();
 
         marketData.getCheapPairsExcludeOpenedPositions(asset)
-            .forEach(ticker -> {
-                candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
-                    marketMonitoringCallback(ticker)));
-            });
-        marketData.getLongPositions().forEach((ticker, openedPosition) -> {
-            candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
-                    longPositionMonitoringCallback(ticker)));
-        });
+            .forEach(ticker -> candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
+                marketMonitoringCallback(ticker))));
+        marketData.getLongPositions().forEach((ticker, openedPosition) -> candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
+                longPositionMonitoringCallback(ticker))));
     }
 
     private BinanceApiCallback<CandlestickEvent> marketMonitoringCallback(String ticker) {
         return event -> {
-            marketData.addCandlestickEventToCache(ticker, event);
+            marketData.addCandlestickEventToCache(ticker, event, cachedCandlestickEvents);
 //            log.info("Callback in VolumeCatcher of {}, close = {}, open = {}, priceGrowthFactor = {}."
 //                    , ticker, event.getClose(), event.getOpen(), priceGrowthFactor);
 
-            var currentEvent = marketData.getCachedCandlestickEvents().get(ticker).getLast();
-            var previousEvent = marketData.getCachedCandlestickEvents().get(ticker).getFirst();
+            var currentEvent = cachedCandlestickEvents.get(ticker).getLast();
+            var previousEvent = cachedCandlestickEvents.get(ticker).getFirst();
 
             if (parsedDouble(currentEvent.getVolume()) > parsedDouble(previousEvent.getVolume()) * volumeGrowthFactor
                     && parsedDouble(currentEvent.getClose()) > parsedDouble(previousEvent.getClose()) * priceGrowthFactor) {
@@ -164,7 +169,7 @@ public class VolumeCatcher implements TradingStrategy {
 
     private BinanceApiCallback<CandlestickEvent> longPositionMonitoringCallback(String ticker) {
         return event -> {
-            marketData.addCandlestickEventToCache(ticker, event);
+            marketData.addCandlestickEventToCache(ticker, event, cachedCandlestickEvents);
 
             List<AssetBalance> currentBalances = accountManager.getAccountBalances().stream()
                     .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB"))).toList();
@@ -180,7 +185,7 @@ public class VolumeCatcher implements TradingStrategy {
 //                if (assetPrice > openedPosition.maxPrice()) { // update current price if it's growth.
                     marketData.updateOpenedPosition(ticker, assetPrice, marketData.getLongPositions());
 //                }
-                if (assetPrice < openedPosition.maxPrice() * priceDecreaseFactor) {
+                if (assetPrice < openedPosition.maxPrice() * openedPosition.priceDecreaseFactor()) {
                     log.debug("PRICE of {} DECREASED and now equals {}.", ticker, assetPrice);
                     sellFast(ticker, openedPosition.qty(), tradingAsset);
                 } else if (averagingEnabled && assetPrice > openedPosition.avgPrice() * averagingTriggerFactor) {

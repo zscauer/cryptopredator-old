@@ -60,8 +60,9 @@ public class MarketInfo {
         return restClient.getPrices(symbols);
     }
 
-    public List<Candlestick> getCandleSticks(String symbol, CandlestickInterval interval, Integer limit) {
-        return restClient.getCandlestickBars(symbol, interval, limit);
+    public boolean pairHadTradesInThePast(List<Candlestick> candleSticks, int qtyBarsToAnalize) {
+        // pair should have history of trade for some days before.
+        return candleSticks.size() == qtyBarsToAnalize;
     }
 
     public boolean pairHadTradesInThePast(String ticker, CandlestickInterval interval, Integer qtyBarsToAnalize) {
@@ -69,9 +70,8 @@ public class MarketInfo {
         return pairHadTradesInThePast(getCandleSticks(ticker, interval, qtyBarsToAnalize), qtyBarsToAnalize);
     }
 
-    public boolean pairHadTradesInThePast(List<Candlestick> candleSticks, int qtyBarsToAnalize) {
-        // pair should have history of trade for some days before.
-        return candleSticks.size() == qtyBarsToAnalize;
+    public List<Candlestick> getCandleSticks(String symbol, CandlestickInterval interval, Integer limit) {
+        return restClient.getCandlestickBars(symbol, interval, limit);
     }
 
     public Closeable openCandleStickEventsStream(String asset, CandlestickInterval interval, BinanceApiCallback<CandlestickEvent> callback) {

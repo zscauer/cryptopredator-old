@@ -39,13 +39,11 @@ public class MarketData {
 
     // + "VolumeCatcher" strategy
     // stores candles, that have price < 1 USDT.
+    @Getter
     Map<String, List<String>> cheapPairs = new ConcurrentHashMap<>();
     @Getter
     Map<String, List<Candlestick>> cachedCandles = new ConcurrentHashMap<>();
-    // stores current and previous candlestick events for each pair to compare them.
-    // first element - previous, last element - current.
-    @Getter
-    Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents = new ConcurrentHashMap<>();
+
     @Getter
     Map<String, Double> pairsToBuy = new ConcurrentHashMap<>();
     // stores time of last selling to avoid repeated buy signals.
@@ -86,10 +84,17 @@ public class MarketData {
     }
 
     public void constructCandleStickEventsCache(String asset, Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents) {
-        cheapPairs.get(asset).forEach(pair -> {
-            cachedCandlestickEvents.put(pair, new LinkedList<>());
+        Optional.ofNullable(cheapPairs.get(asset)).ifPresentOrElse(list -> {
+            list.forEach(pair -> {
+                cachedCandlestickEvents.put(pair, new LinkedList<>());
+            });
+            log.debug("Cache of candle stick events constructed with {} elements.", cachedCandlestickEvents.size());
+        }, () -> {
+            log.warn("Can't construct queues of candlestick events cache for {} - list of cheap pairs for this asset is empty.", asset);
         });
-        log.debug("Cache of candle stick events constructed with {} elements.", cachedCandlestickEvents.size());
+//        cheapPairs.get(asset).forEach(pair -> {
+//            cachedCandlestickEvents.put(pair, new LinkedList<>());
+//        });
     }
 
     public void initializeOpenedLongPositionsFromMarket(MarketInfo marketInfo, AccountManager accountManager) {
@@ -100,7 +105,7 @@ public class MarketData {
                 .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
                 .forEach(balance -> putLongPositionToPriceMonitoring(balance.getAsset() + tradingAsset,
                         Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + tradingAsset).getPrice()),
-                        Double.parseDouble(balance.getFree())));
+                        Double.parseDouble(balance.getFree()), 1D));
 
         log.info("{} pair(s) initialized from account manager to opened long positions price monitoring: {}",
                 longPositions.size(), longPositions);
@@ -136,16 +141,18 @@ public class MarketData {
         return pairs;
     }
 
-    public void putLongPositionToPriceMonitoring(String pair, Double price, Double qty) {
+    public void putLongPositionToPriceMonitoring(String pair, Double price, Double qty, Double priceDecreaseFactor) {
         Optional.ofNullable(longPositions.get(pair)).ifPresentOrElse(pos -> {
             var newQty = pos.qty() + qty;
             pos.avgPrice((pos.avgPrice() * pos.qty() + price * qty) / newQty);
             pos.qty(newQty);
+            pos.priceDecreaseFactor(priceDecreaseFactor);
         }, () -> {
             var pos = OpenedPosition.of(pair);
-            pos.maxPrice(price);
-            pos.avgPrice(price); // TODO: how to define avg at application initializing? connect db?
-            pos.qty(qty);
+            pos.maxPrice(price)
+                .avgPrice(price) // TODO: how to define avg at application initializing? connect db?
+                .qty(qty)
+                .priceDecreaseFactor(priceDecreaseFactor);
             log.debug("{} not found in opened long positions, adding new one - '{}'.", pair, pos);
             longPositions.put(pair, pos);
         });
@@ -185,7 +192,7 @@ public class MarketData {
         longPositions.remove(pair);
     }
 
-    public void addCandlestickEventToCache(String ticker, CandlestickEvent candlestickEvent) {
+    public void addCandlestickEventToCache(String ticker, CandlestickEvent candlestickEvent, Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents) {
         Deque<CandlestickEvent> eventsQueue = cachedCandlestickEvents.get(ticker);
         Optional.ofNullable(eventsQueue.peekLast()).ifPresentOrElse(lastCachedEvent -> {
             if (lastCachedEvent.getOpenTime().equals(candlestickEvent.getOpenTime())) { // refreshed candle event.
@@ -218,7 +225,7 @@ public class MarketData {
         return ignoreSignal.get();
     }
 
-    public void removeCandlestickEventsCacheForPair(String ticker) {
+    public void removeCandlestickEventsCacheForPair(String ticker, Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents) {
         cachedCandlestickEvents.get(ticker).clear();
     }
 

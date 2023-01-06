@@ -20,10 +20,12 @@ public class OpenedPosition {
     @JsonProperty
     Double qty;
     @JsonProperty
+    Double avgPrice;
+    @JsonProperty
     Double lastPrice;
     @JsonProperty
     Double maxPrice;
     @JsonProperty
-    Double avgPrice;
+    double priceDecreaseFactor;
 
 }

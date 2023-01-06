@@ -50,6 +50,11 @@ public class Buy24hPriceChange implements TradingStrategy {
     }
 
     @Override
+    public void prepareData() {
+
+    }
+
+    @Override
     public void handleBuying(final OrderTradeUpdateEvent event) {
 
     }
@@ -67,7 +72,9 @@ public class Buy24hPriceChange implements TradingStrategy {
         grownPairs.clear();
         tickers24HrPriceStatistics.stream()
                 .filter(stats -> parsedDouble(stats.getPriceChangePercent()) > percentOfGrowingFor24h)
-                .sorted((x1, x2) -> parsedDouble(x2.getPriceChangePercent()).compareTo(parsedDouble(x1.getPriceChangePercent())))
+                .sorted(Comparator.comparingDouble(tickerStats -> parsedDouble(tickerStats.getPriceChangePercent()))
+                        //(x1, x2) -> parsedDouble(x2.getPriceChangePercent()).compareTo(parsedDouble(x1.getPriceChangePercent()))
+                        )
                 .forEach(tickerStatistics -> {
                     grownPairs.add(tickerStatistics);
                     log.info("[Buy24hPriceChange] {} growth at {}%.", tickerStatistics.getSymbol(), tickerStatistics.getPriceChangePercent());

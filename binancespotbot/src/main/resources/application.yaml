@@ -120,7 +120,12 @@ strategy:
 
     # ------------------ daily
     daily:
-        enabled: ${STRATEGY_DAILY_ENABLED}
+        enabled: ${DAILY_ENABLED}
+        averagingEnabled: ${DAILY_AVERAGING_ENABLED}
         volumeGrowthFactor: ${DAILY_VOLUME_GROWTH_FACTOR}
         priceGrowthFactor: ${DAILY_PRICE_GROWTH_FACTOR}
+        takeProfitFactor: ${DAILY_TAKE_PROFIT_FACTOR}
+        priceDecreaseFactor: ${DAILY_PRICE_DECREASE_FACTOR}
+        takeProfitPriceDecreaseFactor: ${DAILY_TAKE_PROFIT_PRICE_DECREASE_FACTOR}
+        averagingTriggerFactor: ${DAILY_AVERAGING_TRIGGER_FACTOR}
 

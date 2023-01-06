@@ -96,7 +96,7 @@ public class StateController {
 
     @GetMapping("/volumeCatcher/getCachedCandleStickEvents")
     public Map<String, Deque<CandlestickEvent>> getCachedCandleStickEvents() {
-        return marketData.getCachedCandlestickEvents();
+        return volumeCatcher.getCachedCandlestickEvents();
     }
 
     @GetMapping("/volumeCatcher/candleStickEventsStreams")

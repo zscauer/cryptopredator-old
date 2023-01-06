@@ -1,12 +1,12 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.7.6'
+    id 'org.springframework.boot' version '2.7.7'
     id 'io.freefair.lombok' version '6.6.1'
     id 'maven-publish'
 }
 
 group = 'ru.tyumentsev.binancespotbot'
-version = '0.2.2'
+version = '0.2.3'
 description = 'binancespotbot'
 
 def springBootVersion = '2.7.7'
