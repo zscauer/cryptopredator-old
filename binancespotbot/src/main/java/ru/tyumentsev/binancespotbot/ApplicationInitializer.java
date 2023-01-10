@@ -11,14 +11,17 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
+import ru.tyumentsev.binancespotbot.cache.SellRecordRepository;
+import ru.tyumentsev.binancespotbot.domain.SellRecord;
 import ru.tyumentsev.binancespotbot.service.AccountManager;
+import ru.tyumentsev.binancespotbot.service.DataService;
 import ru.tyumentsev.binancespotbot.service.MarketInfo;
-import ru.tyumentsev.binancespotbot.strategy.Daily;
 import ru.tyumentsev.binancespotbot.strategy.TradingStrategy;
-import ru.tyumentsev.binancespotbot.strategy.VolumeCatcher;
 
-import java.util.List;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Component
@@ -31,6 +34,7 @@ public class ApplicationInitializer implements ApplicationRunner {
     MarketInfo marketInfo;
     AccountManager accountManager;
     Map<String, TradingStrategy> tradingStrategies;
+    DataService dataService;
 
     @NonFinal
     @Value("${applicationconfig.testLaunch}")
@@ -43,6 +47,11 @@ public class ApplicationInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) throws Exception {
         if (testLaunch) {
             log.warn("Application launched in test mode. Deals functionality disabled.");
+//            LocalDateTime sellTime = LocalDateTime.now();
+//            SellRecord record = new SellRecord("BTCUSDT", sellTime);
+//            SellRecord record2 = new SellRecord("ETHUSDT", sellTime);
+//            dataService.save(record);
+//            dataService.save(record2);
         }
 
         marketData.addAvailablePairs(tradingAsset, marketInfo.getAvailableTradePairs(tradingAsset));

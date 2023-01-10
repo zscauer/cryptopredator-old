@@ -5,6 +5,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.redis.core.RedisHash;
+
+import java.io.Serializable;
 
 @Getter
 @Setter
@@ -13,9 +17,11 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor(staticName = "of")
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OpenedPosition {
+@RedisHash("OpenedPosition")
+public class OpenedPosition implements Serializable {
 
     @JsonProperty
+    @Id
     final String symbol;
     @JsonProperty
     Double qty;

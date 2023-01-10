@@ -66,6 +66,11 @@ applicationconfig:
     apiKey: ${BINANCE_API_KEY}
     secret: ${BINANCE_SECRET_KEY}
 
+databaseconfig:
+    redisHost: ${REDIS_HOST}
+    redisPort: ${REDIS_PORT}
+    redisPassword: ${REDIS_PASSWORD}
+
 strategy:
     # ------------------ monitoring
     monitoring:

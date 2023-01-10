@@ -1,6 +1,7 @@
 .java-version
 metrics/logs/
 metrics/grafana/
+cache/*
 
 ### Gradle ###
 HELP.md

@@ -13,8 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
+import ru.tyumentsev.binancespotbot.domain.OpenedPosition;
+import ru.tyumentsev.binancespotbot.domain.SellRecord;
 import ru.tyumentsev.binancespotbot.mapping.CandlestickToEventMapper;
 import ru.tyumentsev.binancespotbot.service.AccountManager;
+import ru.tyumentsev.binancespotbot.service.DataService;
 import ru.tyumentsev.binancespotbot.service.MarketInfo;
 import ru.tyumentsev.binancespotbot.service.SpotTrading;
 
@@ -37,15 +40,15 @@ public class Daily implements TradingStrategy {
     final MarketData marketData;
     final SpotTrading spotTrading;
     final AccountManager accountManager;
+    final DataService dataService;
 
     CandlestickInterval candlestickInterval;
     @Getter
     final Map<String, Closeable> candleStickEventsStreams = new ConcurrentHashMap<>();
     @Getter
     final Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents = new ConcurrentHashMap<>();
-    final Map<String, LocalDateTime> sellJournal = new ConcurrentHashMap<>();
-    final LocalTime eveningStopTime = LocalTime.of(22, 0);
-    final LocalTime nightStopTime = LocalTime.of(3, 5);
+    final Map<String, SellRecord> sellJournal = new ConcurrentHashMap<>();
+    final LocalTime eveningStopTime = LocalTime.of(22, 0), nightStopTime = LocalTime.of(3, 5);
 
     @Value("${strategy.daily.enabled}")
     boolean dailyEnabled;
@@ -87,7 +90,28 @@ public class Daily implements TradingStrategy {
 
         log.info("[DAILY] prepared candlestick events of {} pairs.", cachedCandlestickEvents.values().stream().filter(value -> !value.isEmpty()).count());
 
-        marketData.getLongPositions().values().forEach(openedPosition -> openedPosition.priceDecreaseFactor(priceDecreaseFactor));
+        restoreSellJournalFromBackup();
+        prepareOpenedLongPositions();
+    }
+
+    private void restoreSellJournalFromBackup() {
+        dataService.findAllSellRecords().forEach(record -> sellJournal.put(record.symbol(), record));
+        dataService.deleteAllSellRecords();
+    }
+
+    private void prepareOpenedLongPositions() {
+        Map<String, OpenedPosition> cachedPositions = new HashMap<>();
+        dataService.findAllOpenedPositions().forEach(cachedPosition -> cachedPositions.put(cachedPosition.symbol(), cachedPosition));
+
+        marketData.getLongPositions().values().forEach(openedPosition -> {
+            Optional.ofNullable(cachedPositions.get(openedPosition.symbol()))
+                    .ifPresentOrElse(cachedPosition -> {
+                        openedPosition.avgPrice(cachedPosition.avgPrice());
+                        openedPosition.priceDecreaseFactor(cachedPosition.priceDecreaseFactor());
+                    }, () -> openedPosition.priceDecreaseFactor(priceDecreaseFactor));
+        });
+
+        dataService.deleteAllOpenedPositions();
     }
 
     @Override
@@ -151,15 +175,14 @@ public class Daily implements TradingStrategy {
     public void startCandlstickEventsCacheUpdating(String asset, CandlestickInterval interval) {
         candlestickInterval = interval;
         closeOpenedWebSocketStreams();
-//        actualizeSellRecordJournal();
 
         marketData.getCheapPairsExcludeOpenedPositions(asset)
-            .forEach(ticker ->
-                    candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
-                    marketMonitoringCallback(ticker))));
+                .forEach(ticker ->
+                        candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
+                                marketMonitoringCallback(ticker))));
         marketData.getLongPositions().forEach((ticker, openedPosition) ->
-                    candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
-                    longPositionMonitoringCallback(ticker))));
+                candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
+                        longPositionMonitoringCallback(ticker))));
     }
 
     private BinanceApiCallback<CandlestickEvent> marketMonitoringCallback(String ticker) {
@@ -198,7 +221,7 @@ public class Daily implements TradingStrategy {
 
                 marketData.updateOpenedPosition(ticker, assetPrice, marketData.getLongPositions());
                 if (assetPrice > parsedDouble(event.getOpen()) * takeProfitFactor
-                    && openedPosition.priceDecreaseFactor() != takeProfitPriceDecreaseFactor) {
+                        && openedPosition.priceDecreaseFactor() != takeProfitPriceDecreaseFactor) {
                     openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
                 }
                 if (assetPrice < openedPosition.maxPrice() * openedPosition.priceDecreaseFactor()) {
@@ -213,7 +236,7 @@ public class Daily implements TradingStrategy {
     }
 
     private void buyFast(String symbol, double price, String quoteAsset) {
-        if (//itsDealsAllowedPeriod(LocalTime.now()) &&
+        if (itsDealsAllowedPeriod(LocalTime.now()) &&
                 !(marketInfo.pairOrderIsProcessing(symbol) || thisSignalWorkedOutBefore(symbol))) {
             log.debug("[DAILY] price of {} growth more than {}%, and now equals {}.", symbol, Double.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
             marketInfo.pairOrderPlaced(symbol);
@@ -246,25 +269,14 @@ public class Daily implements TradingStrategy {
     }
 
     private void addSellRecordToJournal(String pair) {
-        sellJournal.put(pair, LocalDateTime.now());
+        sellJournal.put(pair, new SellRecord(pair, LocalDateTime.now()));
     }
 
-    /**
-     * Remove from sell record journal all entries, that were added before today.
-     */
-    private void actualizeSellRecordJournal() {
-        int today = LocalDateTime.now().getDayOfYear();
-        List<String> expiredEntries = sellJournal.entrySet().stream()
-                .filter((entry) -> entry.getValue().getDayOfYear() < today)
-                .map(Map.Entry::getKey).toList();
-        expiredEntries.forEach(sellJournal::remove);
-    }
-
-    private boolean thisSignalWorkedOutBefore (String pair) {
+    private boolean thisSignalWorkedOutBefore(String pair) {
         AtomicBoolean ignoreSignal = new AtomicBoolean(false);
 
-        Optional.ofNullable(sellJournal.get(pair)).ifPresent(sellTime -> {
-            if (sellTime.getDayOfYear() == LocalDateTime.now().getDayOfYear()) {
+        Optional.ofNullable(sellJournal.get(pair)).ifPresent(sellRecord -> {
+            if (sellRecord.sellTime().getDayOfYear() == LocalDateTime.now().getDayOfYear()) {
                 ignoreSignal.set(true);
             } else {
                 log.info("[DAILY] Period of signal ignoring for {} expired, remove pair from sell journal.", pair);
@@ -275,7 +287,7 @@ public class Daily implements TradingStrategy {
         return ignoreSignal.get();
     }
 
-    private boolean itsDealsAllowedPeriod (final LocalTime time) {
+    private boolean itsDealsAllowedPeriod(final LocalTime time) {
         return time.isBefore(eveningStopTime) && time.isAfter(nightStopTime);
     }
 
@@ -291,8 +303,18 @@ public class Daily implements TradingStrategy {
         candleStickEventsStreams.clear();
     }
 
+    private void backupSellRecords() {
+        dataService.saveAllSellRecords(sellJournal.values());
+    }
+
+    private void backupOpenedPositions() {
+        dataService.saveAllOpenedPositions(marketData.getLongPositions().values());
+    }
+
     @PreDestroy
     public void destroy() {
         closeOpenedWebSocketStreams();
+        backupSellRecords();
+        backupOpenedPositions();
     }
 }

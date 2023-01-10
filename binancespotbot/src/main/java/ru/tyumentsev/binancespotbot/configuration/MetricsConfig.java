@@ -25,7 +25,7 @@ import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;
 
 @Configuration
-public class MetricsConfiguration {
+public class MetricsConfig {
 
     @Bean
     public TimedAspect timedAspect(MeterRegistry meterRegistry) {
