@@ -37,8 +37,6 @@ public class Buy24hPriceChange implements TradingStrategy {
     @NonFinal
     @Value("${strategy.buy24hPriceChange.enabled}")
     boolean buy24hPriceChangeEnabled;
-    @Value("${strategy.global.maximalPairPrice}")
-    int maximalPairPrice;
     @Value("${strategy.buy24hPriceChange.percentOfGrowingFor24h}")
     int percentOfGrowingFor24h;
 

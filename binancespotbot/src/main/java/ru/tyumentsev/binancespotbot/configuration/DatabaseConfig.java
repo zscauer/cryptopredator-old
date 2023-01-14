@@ -24,7 +24,9 @@ public class DatabaseConfig {
     @Bean(name = "jedisConnectionFactory")
     JedisConnectionFactory jedisConnectionFactory() {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(redisHost, redisPort);
-//        redisStandaloneConfiguration.setPassword(RedisPassword.of(redisPassword));
+        if (!redisPassword.isBlank()) {
+            redisStandaloneConfiguration.setPassword(RedisPassword.of(redisPassword));
+        }
         return new JedisConnectionFactory(redisStandaloneConfiguration);
 
     }

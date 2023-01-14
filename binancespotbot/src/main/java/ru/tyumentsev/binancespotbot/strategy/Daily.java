@@ -108,6 +108,9 @@ public class Daily implements TradingStrategy {
                     .ifPresentOrElse(cachedPosition -> {
                         openedPosition.avgPrice(cachedPosition.avgPrice());
                         openedPosition.priceDecreaseFactor(cachedPosition.priceDecreaseFactor());
+                        if (cachedPosition.maxPrice() > openedPosition.maxPrice()) {
+                            openedPosition.maxPrice(cachedPosition.maxPrice());
+                        }
                     }, () -> openedPosition.priceDecreaseFactor(priceDecreaseFactor));
         });
 
@@ -228,7 +231,7 @@ public class Daily implements TradingStrategy {
                     log.debug("[DAILY] PRICE of {} DECREASED and now equals {}.", ticker, assetPrice);
                     sellFast(ticker, openedPosition.qty(), tradingAsset);
                 } else if (averagingEnabled && assetPrice > openedPosition.avgPrice() * averagingTriggerFactor) {
-                    log.debug("[DAILY] PRICE of {} GROWTH more than avg and now equals {}.", ticker, assetPrice);
+                    log.info("[DAILY] PRICE of {} GROWTH more than AVG ({}) and now equals {}.", ticker, openedPosition.avgPrice(), assetPrice);
                     buyFast(ticker, assetPrice, tradingAsset);
                 }
             });

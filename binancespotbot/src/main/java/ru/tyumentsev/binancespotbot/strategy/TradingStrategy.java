@@ -11,6 +11,7 @@ public interface TradingStrategy {
     default double percentageDifference(double bigger, double smaller) {
         return 100 * (bigger - smaller) / bigger;
     }
+
     /**
      * Active status of strategy.
      * @return true if straregy enabled.

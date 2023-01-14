@@ -60,7 +60,7 @@ public class MarketData {
 
     @NonFinal
     @Value("${strategy.global.maximalPairPrice}")
-    int maximalPairPrice;
+    double maximalPairPrice;
     @NonFinal
     @Value("${strategy.global.candlestickEventsCacheSize}")
     int candlestickEventsCacheSize;
