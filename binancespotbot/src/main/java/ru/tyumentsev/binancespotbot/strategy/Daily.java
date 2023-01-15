@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.tyumentsev.binancespotbot.cache.MarketData;
 import ru.tyumentsev.binancespotbot.domain.OpenedPosition;
+import ru.tyumentsev.binancespotbot.domain.PreviousCandleData;
 import ru.tyumentsev.binancespotbot.domain.SellRecord;
 import ru.tyumentsev.binancespotbot.mapping.CandlestickToEventMapper;
 import ru.tyumentsev.binancespotbot.service.AccountManager;
@@ -29,6 +30,7 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -70,6 +72,8 @@ public class Daily implements TradingStrategy {
     double takeProfitPriceDecreaseFactor;
     @Value("${strategy.daily.averagingTriggerFactor}")
     double averagingTriggerFactor;
+    @Value("${strategy.daily.rocketCandidatePercentageGrowth}")
+    double rocketCandidatePercentageGrowth;
 
     @Override
     public boolean isEnabled() {
@@ -92,6 +96,7 @@ public class Daily implements TradingStrategy {
 
         restoreSellJournalFromBackup();
         prepareOpenedLongPositions();
+        restoreCachedCandlestickEvents();
     }
 
     private void restoreSellJournalFromBackup() {
@@ -115,6 +120,10 @@ public class Daily implements TradingStrategy {
         });
 
         dataService.deleteAllOpenedPositions();
+    }
+
+    private void restoreCachedCandlestickEvents() {
+
     }
 
     @Override
@@ -199,9 +208,9 @@ public class Daily implements TradingStrategy {
             var openPrice = parsedDouble(event.getOpen());
 
             if (closePrice > openPrice * priceGrowthFactor
-                    && parsedDouble(currentEvent.getVolume()) > parsedDouble(previousEvent.getVolume()) * volumeGrowthFactor
-                    && percentageDifference(parsedDouble(event.getHigh()), closePrice) < 5 // candle's max price not much higher than current.
-            ) {
+                    && (parsedDouble(currentEvent.getVolume()) > parsedDouble(previousEvent.getVolume()) * volumeGrowthFactor
+                    || percentageDifference(closePrice, openPrice) > rocketCandidatePercentageGrowth) // if price grown a lot without volume, it might be a rocket.
+                    && percentageDifference(parsedDouble(event.getHigh()), closePrice) < 4) { // candle's max price not much higher than current.
                 buyFast(ticker, closePrice, tradingAsset);
             }
         };
@@ -314,10 +323,22 @@ public class Daily implements TradingStrategy {
         dataService.saveAllOpenedPositions(marketData.getLongPositions().values());
     }
 
+    private void backupPreviousCandleData() {
+        dataService.saveAllPreviousCandleData(cachedCandlestickEvents.values().stream()
+                .map(deque -> Optional.ofNullable(deque.peekFirst()))
+                .filter(Optional::isPresent)
+                .map(optional -> {
+                    var event = optional.get();
+                    return new PreviousCandleData("Daily:" + event.getSymbol(), event.getSymbol(), event.getOpenTime(), event.getVolume());
+                }).collect(Collectors.toSet())
+        );
+    }
+
     @PreDestroy
     public void destroy() {
         closeOpenedWebSocketStreams();
         backupSellRecords();
         backupOpenedPositions();
+//        backupPreviousCandleData();
     }
 }
