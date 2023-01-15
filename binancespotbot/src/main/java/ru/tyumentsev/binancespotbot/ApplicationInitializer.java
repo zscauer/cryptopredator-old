@@ -1,5 +1,6 @@
 package ru.tyumentsev.binancespotbot;
 
+import com.binance.api.client.domain.event.CandlestickEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -62,6 +63,17 @@ public class ApplicationInitializer implements ApplicationRunner {
 //            dataService.save(d1);
 //            dataService.save(d2);
 //            dataService.save(d3);
+
+            CandlestickEvent e1 = new CandlestickEvent();
+            e1.setSymbol("U3RUSDT");
+            e1.setClose("2838383");
+            PreviousCandleData d1 = new PreviousCandleData("DailyTest:" + e1.getSymbol(), e1);
+            dataService.save(d1);
+
+            Iterable<PreviousCandleData> r1 = dataService.findAllPreviousCandleData();
+                        StreamSupport.stream(r1.spliterator(), false)
+                    .filter(data -> data.id().startsWith("DailyTest"))
+                    .forEach(e -> log.info(e.event().getSymbol() + e.event().getClose()));
 //
 //            Iterable<PreviousCandleData> r1 = dataService.findAllPreviousCandleData();
 //            StreamSupport.stream(r1.spliterator(), false)

@@ -58,4 +58,8 @@ public class DataService {
         openedPositionRepository.deleteAll();
     }
 
+    public void deleteAllPreviousCandleData(Iterable<PreviousCandleData> entities) {
+        previousCandleDataRepository.deleteAll(entities);
+    }
+
 }

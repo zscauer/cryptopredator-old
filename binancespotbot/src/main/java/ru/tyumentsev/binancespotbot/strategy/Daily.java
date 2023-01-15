@@ -25,12 +25,15 @@ import ru.tyumentsev.binancespotbot.service.SpotTrading;
 import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -84,19 +87,30 @@ public class Daily implements TradingStrategy {
     public void prepareData() {
         marketData.constructCandleStickEventsCache(tradingAsset, cachedCandlestickEvents);
 
-        Optional.ofNullable(marketData.getCheapPairs().get(tradingAsset)).ifPresent(pairs -> pairs.stream().map(symbol -> {
-                    var candlestick = marketInfo.getCandleSticks(symbol, CandlestickInterval.DAILY, 2).get(0);
-                    return CandlestickToEventMapper.map(symbol, candlestick);
+        restoreCachedCandlestickEvents();
+
+        cachedCandlestickEvents.entrySet().stream()
+                .filter(entry -> entry.getValue().isEmpty())
+                .map(entry -> {
+                    var candlestick = marketInfo.getCandleSticks(entry.getKey(), CandlestickInterval.DAILY, 2).get(0);
+                    return CandlestickToEventMapper.map(entry.getKey(), candlestick);
                 }).filter(Optional::isPresent)
                 .map(Optional::get)
                 .forEach(event -> marketData.addCandlestickEventToCache(event.getSymbol(), event, cachedCandlestickEvents)
-                ));
+                );
+
+//        Optional.ofNullable(marketData.getCheapPairs().get(tradingAsset)).ifPresent(pairs -> pairs.stream().map(symbol -> {
+//                    var candlestick = marketInfo.getCandleSticks(symbol, CandlestickInterval.DAILY, 2).get(0);
+//                    return CandlestickToEventMapper.map(symbol, candlestick);
+//                }).filter(Optional::isPresent)
+//                .map(Optional::get)
+//                .forEach(event -> marketData.addCandlestickEventToCache(event.getSymbol(), event, cachedCandlestickEvents)
+//                ));
 
         log.info("[DAILY] prepared candlestick events of {} pairs.", cachedCandlestickEvents.values().stream().filter(value -> !value.isEmpty()).count());
 
         restoreSellJournalFromBackup();
         prepareOpenedLongPositions();
-        restoreCachedCandlestickEvents();
     }
 
     private void restoreSellJournalFromBackup() {
@@ -123,7 +137,20 @@ public class Daily implements TradingStrategy {
     }
 
     private void restoreCachedCandlestickEvents() {
+        int yesterdayDayOfYear = LocalDateTime.now().minusDays(1L).getDayOfYear();
 
+        List<PreviousCandleData> dailyCachedCandleData = StreamSupport.stream(dataService.findAllPreviousCandleData().spliterator(), false).filter(data -> data.id().startsWith("Daily")).toList();
+        log.info("[DAILY] size of empty cached candlestick events before restoring from cache is: {}.",
+                cachedCandlestickEvents.entrySet().stream().filter(entry -> entry.getValue().isEmpty()).collect(Collectors.toSet()).size());
+
+        dailyCachedCandleData.stream()
+                .filter(data -> LocalDateTime.ofInstant(Instant.ofEpochMilli(data.event().getOpenTime()), ZoneId.systemDefault()).getDayOfYear() == yesterdayDayOfYear)
+                .forEach(element -> marketData.addCandlestickEventToCache(element.event().getSymbol(), element.event(), cachedCandlestickEvents));
+
+        log.info("[DAILY] size of cached candlestick events after restoring from cache is: {}.",
+                cachedCandlestickEvents.entrySet().stream().filter(entry -> entry.getValue().isEmpty()).collect(Collectors.toSet()).size());
+
+        dataService.deleteAllPreviousCandleData(dailyCachedCandleData);
     }
 
     @Override
@@ -328,8 +355,8 @@ public class Daily implements TradingStrategy {
                 .map(deque -> Optional.ofNullable(deque.peekFirst()))
                 .filter(Optional::isPresent)
                 .map(optional -> {
-                    var event = optional.get();
-                    return new PreviousCandleData("Daily:" + event.getSymbol(), event.getSymbol(), event.getOpenTime(), event.getVolume());
+                    var prevEvent = optional.get();
+                    return new PreviousCandleData("Daily:" + prevEvent.getSymbol(), prevEvent);//prevEvent.getSymbol(), prevEvent.getOpenTime(), prevEvent.getVolume());
                 }).collect(Collectors.toSet())
         );
     }
@@ -339,6 +366,6 @@ public class Daily implements TradingStrategy {
         closeOpenedWebSocketStreams();
         backupSellRecords();
         backupOpenedPositions();
-//        backupPreviousCandleData();
+        backupPreviousCandleData();
     }
 }
