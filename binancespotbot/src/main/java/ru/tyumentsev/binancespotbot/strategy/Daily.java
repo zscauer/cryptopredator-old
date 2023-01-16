@@ -53,6 +53,7 @@ public class Daily implements TradingStrategy {
     @Getter
     final Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents = new ConcurrentHashMap<>();
     final Map<String, SellRecord> sellJournal = new ConcurrentHashMap<>();
+    final Map<String, Boolean> rocketCandidates;
     final LocalTime eveningStopTime = LocalTime.of(22, 0), nightStopTime = LocalTime.of(3, 5);
 
     @Value("${strategy.daily.enabled}")
@@ -127,6 +128,7 @@ public class Daily implements TradingStrategy {
                     .ifPresentOrElse(cachedPosition -> {
                         openedPosition.avgPrice(cachedPosition.avgPrice());
                         openedPosition.priceDecreaseFactor(cachedPosition.priceDecreaseFactor());
+                        openedPosition.rocketCandidate(cachedPosition.rocketCandidate());
                         if (cachedPosition.maxPrice() > openedPosition.maxPrice()) {
                             openedPosition.maxPrice(cachedPosition.maxPrice());
                         }
@@ -164,7 +166,10 @@ public class Daily implements TradingStrategy {
 
             log.info("[DAILY] BUY {} {} at {}.",
                     buyEvent.getOriginalQuantity(), buyEvent.getSymbol(), dealPrice);
-            marketData.putLongPositionToPriceMonitoring(buyEvent.getSymbol(), dealPrice, parsedDouble(buyEvent.getOriginalQuantity()), priceDecreaseFactor);
+            marketData.putLongPositionToPriceMonitoring(buyEvent.getSymbol(), dealPrice, parsedDouble(buyEvent.getOriginalQuantity()),
+                    priceDecreaseFactor, Optional.ofNullable(rocketCandidates.remove(buyEvent.getSymbol())).orElse(false)
+            );
+
             marketInfo.pairOrderFilled(buyEvent.getSymbol());
 
             Optional.ofNullable(candleStickEventsStreams.remove(buyEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
@@ -236,9 +241,11 @@ public class Daily implements TradingStrategy {
 
             if (closePrice > openPrice * priceGrowthFactor
                     && (parsedDouble(currentEvent.getVolume()) > parsedDouble(previousEvent.getVolume()) * volumeGrowthFactor
-                    || percentageDifference(closePrice, openPrice) > rocketCandidatePercentageGrowth) // if price grown a lot without volume, it might be a rocket.
+                            || percentageDifference(closePrice, openPrice) > rocketCandidatePercentageGrowth) // if price grown a lot without volume, it might be a rocket.
                     && percentageDifference(parsedDouble(event.getHigh()), closePrice) < 4) { // candle's max price not much higher than current.
                 buyFast(ticker, closePrice, tradingAsset);
+                rocketCandidates.put(ticker, percentageDifference(closePrice, openPrice) > rocketCandidatePercentageGrowth
+                        && !(parsedDouble(currentEvent.getVolume()) > parsedDouble(previousEvent.getVolume()) * volumeGrowthFactor));
             }
         };
     }
@@ -259,9 +266,12 @@ public class Daily implements TradingStrategy {
                 var assetPrice = parsedDouble(event.getClose());
 
                 marketData.updateOpenedPosition(ticker, assetPrice, marketData.getLongPositions());
+                double currentPositionTakeProfitPriceDecreaseFactor = openedPosition.rocketCandidate() ?
+                        takeProfitPriceDecreaseFactor : 1D - (1D - takeProfitPriceDecreaseFactor) * 2;
+
                 if (assetPrice > parsedDouble(event.getOpen()) * takeProfitFactor
-                        && openedPosition.priceDecreaseFactor() != takeProfitPriceDecreaseFactor) {
-                    openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
+                        && openedPosition.priceDecreaseFactor() != currentPositionTakeProfitPriceDecreaseFactor) {
+                    openedPosition.priceDecreaseFactor(currentPositionTakeProfitPriceDecreaseFactor);
                 }
                 if (assetPrice < openedPosition.maxPrice() * openedPosition.priceDecreaseFactor()) {
                     log.debug("[DAILY] PRICE of {} DECREASED and now equals {}.", ticker, assetPrice);

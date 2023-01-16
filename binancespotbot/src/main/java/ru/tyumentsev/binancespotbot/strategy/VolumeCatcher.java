@@ -94,7 +94,7 @@ public class VolumeCatcher implements TradingStrategy {
 
             log.info("BUY order trade updated, put result in opened positions cache: buy {} {} at {}.",
                     buyEvent.getOriginalQuantity(), buyEvent.getSymbol(), dealPrice);
-            marketData.putLongPositionToPriceMonitoring(buyEvent.getSymbol(), dealPrice, parsedDouble(buyEvent.getOriginalQuantity()), priceDecreaseFactor);
+            marketData.putLongPositionToPriceMonitoring(buyEvent.getSymbol(), dealPrice, parsedDouble(buyEvent.getOriginalQuantity()), priceDecreaseFactor, false);
             marketInfo.pairOrderFilled(buyEvent.getSymbol());
 
             Optional.ofNullable(candleStickEventsStreams.remove(buyEvent.getSymbol())).ifPresent(candlestickEventsStream -> {

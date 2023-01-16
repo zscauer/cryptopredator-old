@@ -24,6 +24,8 @@ public class OpenedPosition implements Serializable {
     @Id
     final String symbol;
     @JsonProperty
+    boolean rocketCandidate;
+    @JsonProperty
     Double qty;
     @JsonProperty
     Double avgPrice;

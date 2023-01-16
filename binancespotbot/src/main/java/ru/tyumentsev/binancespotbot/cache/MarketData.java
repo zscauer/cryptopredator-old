@@ -105,7 +105,7 @@ public class MarketData {
                 .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
                 .forEach(balance -> putLongPositionToPriceMonitoring(balance.getAsset() + tradingAsset,
                         Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + tradingAsset).getPrice()),
-                        Double.parseDouble(balance.getFree()), 1D));
+                        Double.parseDouble(balance.getFree()), 1D, false));
 
         log.info("{} pair(s) initialized from account manager to opened long positions price monitoring: {}",
                 longPositions.size(), longPositions);
@@ -141,7 +141,7 @@ public class MarketData {
         return pairs;
     }
 
-    public void putLongPositionToPriceMonitoring(String pair, Double price, Double qty, Double priceDecreaseFactor) {
+    public void putLongPositionToPriceMonitoring(String pair, Double price, Double qty, Double priceDecreaseFactor, Boolean rocketCandidate) {
         Optional.ofNullable(longPositions.get(pair)).ifPresentOrElse(pos -> {
             var newQty = pos.qty() + qty;
             pos.avgPrice((pos.avgPrice() * pos.qty() + price * qty) / newQty);
@@ -152,10 +152,14 @@ public class MarketData {
             pos.maxPrice(price)
                 .avgPrice(price) // TODO: how to define avg at application initializing? connect db?
                 .qty(qty)
-                .priceDecreaseFactor(priceDecreaseFactor);
+                .priceDecreaseFactor(priceDecreaseFactor)
+                .rocketCandidate(rocketCandidate);
             log.debug("{} not found in opened long positions, adding new one - '{}'.", pair, pos);
             longPositions.put(pair, pos);
         });
+        if (rocketCandidate) {
+            log.info("{} added to opened positions as rocket candidate.", pair);
+        }
     }
 
     public void putShortPositionToPriceMonitoring(String pair, Double price, Double qty) {
@@ -193,7 +197,10 @@ public class MarketData {
     }
 
     public void addCandlestickEventToCache(String ticker, CandlestickEvent candlestickEvent, Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents) {
-        Deque<CandlestickEvent> eventsQueue = cachedCandlestickEvents.get(ticker);
+        Deque<CandlestickEvent> eventsQueue = Optional.ofNullable(cachedCandlestickEvents.get(ticker)).orElseGet(() -> {
+            cachedCandlestickEvents.put(ticker, new LinkedList<>());
+            return cachedCandlestickEvents.get(ticker);
+        });
         Optional.ofNullable(eventsQueue.peekLast()).ifPresentOrElse(lastCachedEvent -> {
             if (lastCachedEvent.getOpenTime().equals(candlestickEvent.getOpenTime())) { // refreshed candle event.
                 eventsQueue.remove(lastCachedEvent); // remove previous version of this event.
