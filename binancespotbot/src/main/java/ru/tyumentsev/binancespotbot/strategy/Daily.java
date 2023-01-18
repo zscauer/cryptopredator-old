@@ -68,8 +68,10 @@ public class Daily implements TradingStrategy {
     double volumeGrowthFactor;
     @Value("${strategy.daily.priceGrowthFactor}")
     double priceGrowthFactor;
-    @Value("${strategy.daily.takeProfitFactor}")
-    double takeProfitFactor;
+    @Value("${strategy.daily.candleTakeProfitFactor}")
+    double candleTakeProfitFactor;
+    @Value("${strategy.daily.pairTakeProfitFactor}")
+    double pairTakeProfitFactor;
     @Value("${strategy.daily.priceDecreaseFactor}")
     double priceDecreaseFactor;
     @Value("${strategy.daily.takeProfitPriceDecreaseFactor}")
@@ -99,14 +101,6 @@ public class Daily implements TradingStrategy {
                 .map(Optional::get)
                 .forEach(event -> marketData.addCandlestickEventToCache(event.getSymbol(), event, cachedCandlestickEvents)
                 );
-
-//        Optional.ofNullable(marketData.getCheapPairs().get(tradingAsset)).ifPresent(pairs -> pairs.stream().map(symbol -> {
-//                    var candlestick = marketInfo.getCandleSticks(symbol, CandlestickInterval.DAILY, 2).get(0);
-//                    return CandlestickToEventMapper.map(symbol, candlestick);
-//                }).filter(Optional::isPresent)
-//                .map(Optional::get)
-//                .forEach(event -> marketData.addCandlestickEventToCache(event.getSymbol(), event, cachedCandlestickEvents)
-//                ));
 
         log.info("[DAILY] prepared candlestick events of {} pairs.", cachedCandlestickEvents.values().stream().filter(value -> !value.isEmpty()).count());
 
@@ -142,15 +136,16 @@ public class Daily implements TradingStrategy {
         int yesterdayDayOfYear = LocalDateTime.now().minusDays(1L).getDayOfYear();
 
         List<PreviousCandleData> dailyCachedCandleData = StreamSupport.stream(dataService.findAllPreviousCandleData().spliterator(), false).filter(data -> data.id().startsWith("Daily")).toList();
-        log.info("[DAILY] size of empty cached candlestick events before restoring from cache is: {}.",
+        log.debug("[DAILY] size of empty cached candlestick events before restoring from cache is: {}.",
                 cachedCandlestickEvents.entrySet().stream().filter(entry -> entry.getValue().isEmpty()).collect(Collectors.toSet()).size());
 
         dailyCachedCandleData.stream()
                 .filter(data -> LocalDateTime.ofInstant(Instant.ofEpochMilli(data.event().getOpenTime()), ZoneId.systemDefault()).getDayOfYear() == yesterdayDayOfYear)
                 .forEach(element -> marketData.addCandlestickEventToCache(element.event().getSymbol(), element.event(), cachedCandlestickEvents));
 
-        log.info("[DAILY] size of cached candlestick events after restoring from cache is: {}.",
-                cachedCandlestickEvents.entrySet().stream().filter(entry -> entry.getValue().isEmpty()).collect(Collectors.toSet()).size());
+        var emptyCachedCandlestickEvents = cachedCandlestickEvents.entrySet().stream().filter(entry -> entry.getValue().isEmpty()).collect(Collectors.toSet());
+        log.debug("[DAILY] size of empty cached candlestick events after restoring from cache is: {} ({}).",
+                emptyCachedCandlestickEvents.size(), emptyCachedCandlestickEvents);
 
         dataService.deleteAllPreviousCandleData(dailyCachedCandleData);
     }
@@ -159,6 +154,14 @@ public class Daily implements TradingStrategy {
     public void handleBuying(final OrderTradeUpdateEvent buyEvent) {
         if (dailyEnabled
                 && parsedDouble(buyEvent.getAccumulatedQuantity()) == parsedDouble(buyEvent.getOriginalQuantity())) {
+            Optional.ofNullable(candleStickEventsStreams.remove(buyEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
+                try {
+                    candlestickEventsStream.close();
+                } catch (IOException e) {
+                    log.error("[DAILY] Error while trying to close candlestick event stream of '{}':\n{}", buyEvent.getSymbol(), e.getMessage());
+                }
+            });
+
             // if price == 0 most likely it was market order, use last market price.
             double dealPrice = parsedDouble(buyEvent.getPrice()) == 0
                     ? parsedDouble(marketInfo.getLastTickerPrice(buyEvent.getSymbol()).getPrice())
@@ -172,15 +175,6 @@ public class Daily implements TradingStrategy {
 
             marketInfo.pairOrderFilled(buyEvent.getSymbol());
 
-            Optional.ofNullable(candleStickEventsStreams.remove(buyEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
-                try {
-                    candlestickEventsStream.close();
-                } catch (IOException e) {
-                    log.error("[DAILY] Error while trying to close candlestick event stream of '{}':\n{}", buyEvent.getSymbol(), e.getMessage());
-//                } finally {
-//                    marketData.removeCandlestickEventsCacheForPair(buyEvent.getSymbol(), cachedCandlestickEvents);
-                }
-            });
             candleStickEventsStreams.put(buyEvent.getSymbol(), marketInfo.openCandleStickEventsStream(buyEvent.getSymbol().toLowerCase(), candlestickInterval,
                     longPositionMonitoringCallback(buyEvent.getSymbol())));
         }
@@ -190,6 +184,14 @@ public class Daily implements TradingStrategy {
     public void handleSelling(final OrderTradeUpdateEvent sellEvent) {
         if (dailyEnabled
                 && parsedDouble(sellEvent.getAccumulatedQuantity()) == (parsedDouble(sellEvent.getOriginalQuantity()))) {
+            Optional.ofNullable(candleStickEventsStreams.remove(sellEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
+                try {
+                    candlestickEventsStream.close();
+                } catch (IOException e) {
+                    log.error("[DAILY] Error while trying to close candlestick event stream of '{}':\n{}", sellEvent.getSymbol(), e.getMessage());
+                }
+            });
+
             // if price == 0 most likely it was market order, use last market price.
             double dealPrice = parsedDouble(sellEvent.getPrice()) == 0
                     ? parsedDouble(marketInfo.getLastTickerPrice(sellEvent.getSymbol()).getPrice())
@@ -201,16 +203,8 @@ public class Daily implements TradingStrategy {
             marketData.removeLongPositionFromPriceMonitoring(sellEvent.getSymbol());
 
             addSellRecordToJournal(sellEvent.getSymbol());
-            Optional.ofNullable(candleStickEventsStreams.remove(sellEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
-                try {
-//                    marketData.removeCandlestickEventsCacheForPair(sellEvent.getSymbol());
-                    candlestickEventsStream.close();
-                } catch (IOException e) {
-                    log.error("[DAILY] Error while trying to close candlestick event stream of '{}':\n{}", sellEvent.getSymbol(), e.getMessage());
-                }
-            });
-
             marketInfo.pairOrderFilled(sellEvent.getSymbol());
+
             candleStickEventsStreams.put(sellEvent.getSymbol(), marketInfo.openCandleStickEventsStream(sellEvent.getSymbol().toLowerCase(), candlestickInterval,
                     marketMonitoringCallback(sellEvent.getSymbol())));
         }
@@ -243,7 +237,7 @@ public class Daily implements TradingStrategy {
                     && (parsedDouble(currentEvent.getVolume()) > parsedDouble(previousEvent.getVolume()) * volumeGrowthFactor
                             || percentageDifference(closePrice, openPrice) > rocketCandidatePercentageGrowth) // if price grown a lot without volume, it might be a rocket.
                     && percentageDifference(parsedDouble(event.getHigh()), closePrice) < 4) { // candle's max price not much higher than current.
-                buyFast(ticker, closePrice, tradingAsset);
+                buyFast(ticker, closePrice, tradingAsset, false);
                 rocketCandidates.put(ticker, percentageDifference(closePrice, openPrice) > rocketCandidatePercentageGrowth
                         && !(parsedDouble(currentEvent.getVolume()) > parsedDouble(previousEvent.getVolume()) * volumeGrowthFactor));
             }
@@ -263,29 +257,39 @@ public class Daily implements TradingStrategy {
             }
 
             Optional.ofNullable(marketData.getLongPositions().get(ticker)).ifPresent(openedPosition -> {
-                var assetPrice = parsedDouble(event.getClose());
+                var currentPrice = parsedDouble(event.getClose());
 
-                marketData.updateOpenedPosition(ticker, assetPrice, marketData.getLongPositions());
-                double currentPositionTakeProfitPriceDecreaseFactor = openedPosition.rocketCandidate() ?
-                        takeProfitPriceDecreaseFactor : 1D - (1D - takeProfitPriceDecreaseFactor) * 2;
+                marketData.updateOpenedPosition(ticker, currentPrice, marketData.getLongPositions());
+//                double currentPositionTakeProfitPriceDecreaseFactor = openedPosition.rocketCandidate() ?
+//                        takeProfitPriceDecreaseFactor : 1D - (1D - takeProfitPriceDecreaseFactor) * 2;
 
-                if (assetPrice > parsedDouble(event.getOpen()) * takeProfitFactor
-                        && openedPosition.priceDecreaseFactor() != currentPositionTakeProfitPriceDecreaseFactor) {
-                    openedPosition.priceDecreaseFactor(currentPositionTakeProfitPriceDecreaseFactor);
+//                if (assetPrice > parsedDouble(event.getOpen()) * candleTakeProfitFactor
+//                        && openedPosition.priceDecreaseFactor() != currentPositionTakeProfitPriceDecreaseFactor) {
+//                    openedPosition.priceDecreaseFactor(currentPositionTakeProfitPriceDecreaseFactor);
+//                }
+                if (currentPrice > openedPosition.avgPrice() * pairTakeProfitFactor) {
+                    openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
+                    if (averagingEnabled) {
+//                        log.info("[DAILY] PRICE of {} GROWTH more than AVG ({}) and now equals {}.", ticker, openedPosition.avgPrice(), currentPrice);
+                        buyFast(ticker, currentPrice, tradingAsset, true);
+                    }
                 }
-                if (assetPrice < openedPosition.maxPrice() * openedPosition.priceDecreaseFactor()) {
-                    log.debug("[DAILY] PRICE of {} DECREASED and now equals {}.", ticker, assetPrice);
+                double stopTriggerValue = openedPosition.priceDecreaseFactor() == takeProfitPriceDecreaseFactor ? openedPosition.maxPrice() : openedPosition.avgPrice();
+
+                if (currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor()) {
+                    log.debug("[DAILY] PRICE of {} DECREASED and now equals {}.", ticker, currentPrice);
                     sellFast(ticker, openedPosition.qty(), tradingAsset);
-                } else if (averagingEnabled && assetPrice > openedPosition.avgPrice() * averagingTriggerFactor) {
-                    log.info("[DAILY] PRICE of {} GROWTH more than AVG ({}) and now equals {}.", ticker, openedPosition.avgPrice(), assetPrice);
-                    buyFast(ticker, assetPrice, tradingAsset);
+//                } else if (averagingEnabled && currentPrice > openedPosition.avgPrice() * averagingTriggerFactor) {
+//                    log.info("[DAILY] PRICE of {} GROWTH more than AVG ({}) and now equals {}.", ticker, openedPosition.avgPrice(), currentPrice);
+////                    openedPosition.priceDecreaseFactor(1D - (1D - pairTakeProfitFactor) / 2);
+//                    buyFast(ticker, currentPrice, tradingAsset);
                 }
             });
         };
     }
 
-    private void buyFast(String symbol, double price, String quoteAsset) {
-        if (itsDealsAllowedPeriod(LocalTime.now()) &&
+    private void buyFast(String symbol, double price, String quoteAsset, boolean itsAveraging) {
+        if (itsDealsAllowedPeriod(LocalTime.now()) || itsAveraging &&
                 !(marketInfo.pairOrderIsProcessing(symbol) || thisSignalWorkedOutBefore(symbol))) {
             log.debug("[DAILY] price of {} growth more than {}%, and now equals {}.", symbol, Double.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
             marketInfo.pairOrderPlaced(symbol);
@@ -366,7 +370,7 @@ public class Daily implements TradingStrategy {
                 .filter(Optional::isPresent)
                 .map(optional -> {
                     var prevEvent = optional.get();
-                    return new PreviousCandleData("Daily:" + prevEvent.getSymbol(), prevEvent);//prevEvent.getSymbol(), prevEvent.getOpenTime(), prevEvent.getVolume());
+                    return new PreviousCandleData("Daily:" + prevEvent.getSymbol(), prevEvent);
                 }).collect(Collectors.toSet())
         );
     }
