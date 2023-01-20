@@ -2,18 +2,6 @@
 # https://refactorfirst.com/spring-boot-prometheus-grafana
 
 services:
-  
-  binancespotbot:
-    image: binancespotbot
-    container_name: binancespotbot
-    env_file:
-      - binancespotbot_env.env
-    ports:
-      - 85:8080
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - ./metrics/logs:/tmp/logs
 
   redis:
     image: redis:7.0.7-alpine
@@ -25,7 +13,54 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - ./cache:/data
+      - ./data/redis:/data
+
+  postgres:
+    image: postgres:15.1
+    container_name: postgres_binancespotbot
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - binancespotbot_env.env
+    ports:
+      - 5434:5432
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+# https://habr.com/ru/post/578744/
+#  postgres_exporter:
+#    container_name: postgres_exporter
+#    extra_hosts:
+#      - "host.docker.internal:host-gateway"
+#    image: prometheuscommunity/postgres-exporter
+#    env_file:
+#      - binancespotbot_env.env
+#    volumes:
+#      - .metrics/postgres_exporter_queries.yaml:/etc/postgres_exporter/queries.yaml:ro
+#    ports:
+#      - "9181:9187"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - binancespotbot_env.env
+    ports:
+      - 5050:80
+
+  binancespotbot:
+    image: binancespotbot
+    container_name: binancespotbot
+    env_file:
+      - binancespotbot_env.env
+    ports:
+      - 85:8080
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./metrics/logs:/tmp/logs
 
   prometheus:
     image: prom/prometheus

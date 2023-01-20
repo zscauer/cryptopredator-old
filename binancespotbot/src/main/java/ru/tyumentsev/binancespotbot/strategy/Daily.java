@@ -289,7 +289,7 @@ public class Daily implements TradingStrategy {
     }
 
     private void buyFast(String symbol, double price, String quoteAsset, boolean itsAveraging) {
-        if (itsDealsAllowedPeriod(LocalTime.now()) || itsAveraging &&
+        if ((itsDealsAllowedPeriod(LocalTime.now()) || itsAveraging) &&
                 !(marketInfo.pairOrderIsProcessing(symbol) || thisSignalWorkedOutBefore(symbol))) {
             log.debug("[DAILY] price of {} growth more than {}%, and now equals {}.", symbol, Double.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
             marketInfo.pairOrderPlaced(symbol);
@@ -325,7 +325,7 @@ public class Daily implements TradingStrategy {
         sellJournal.put(pair, new SellRecord(pair, LocalDateTime.now()));
     }
 
-    private boolean thisSignalWorkedOutBefore(String pair) {
+    private boolean thisSignalWorkedOutBefore(final String pair) {
         AtomicBoolean ignoreSignal = new AtomicBoolean(false);
 
         Optional.ofNullable(sellJournal.get(pair)).ifPresent(sellRecord -> {
