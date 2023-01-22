@@ -3,9 +3,38 @@
 
 services:
 
+  binancespotbot:
+    image: binancespotbot
+    container_name: binancespotbot
+    depends_on:
+      - binancedatakeeper
+    env_file:
+      - binancespotbot_env.env
+    ports:
+      - 85:8080
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./metrics/logs:/tmp/logs
+
+  binancedatakeeper:
+    image: binancedatakeeper
+    container_name: binancedatakeeper
+    depends_on:
+      - redis
+      - postgres
+    env_file:
+      - binancespotbot_env.env
+    ports:
+      - 86:8080
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./metrics/logs:/tmp/logs
+
   redis:
     image: redis:7.0.7-alpine
-    container_name: redis_binancespotbot
+    container_name: redis_binancetradebot
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -13,11 +42,11 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - ./data/redis:/data
+      - ../data/redis:/data
 
   postgres:
-    image: postgres:15.1
-    container_name: postgres_binancespotbot
+    image: postgres:15.1-alpine
+    container_name: postgres_binancetradebot
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
@@ -25,7 +54,9 @@ services:
     ports:
       - 5434:5432
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ../data/postgres:/var/lib/postgresql/data
 
 # https://habr.com/ru/post/578744/
 #  postgres_exporter:
@@ -49,18 +80,9 @@ services:
       - binancespotbot_env.env
     ports:
       - 5050:80
-
-  binancespotbot:
-    image: binancespotbot
-    container_name: binancespotbot
-    env_file:
-      - binancespotbot_env.env
-    ports:
-      - 85:8080
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - ./metrics/logs:/tmp/logs
 
   prometheus:
     image: prom/prometheus

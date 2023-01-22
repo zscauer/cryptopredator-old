@@ -5,12 +5,13 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'ru.tyumentsev.binancespotbot'
-version = '0.2.3'
-description = 'binancespotbot'
-
+def artifactVersion = '0.2.3'
 def springBootVersion = '2.7.7'
 def prometheusVersion = '0.16.0'
+
+group = 'ru.tyumentsev.binancetradebot'
+version = artifactVersion
+description = 'binancespotbot'
 
 configurations {
 	compileOnly {
@@ -24,7 +25,7 @@ repositories {
 }
 
 dependencies {
-    implementation ("com.binance.api:binance-api-client:1.2.0")
+    implementation "com.binance.api:binance-api-client:1.2.0"
     implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-configuration-processor:${springBootVersion}"
     runtimeOnly "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
@@ -43,22 +44,32 @@ dependencies {
 }
 
 jar {
-    archivesBaseName = 'binancespotbot'
     project.version = ''
+    setArchivesBaseName('binancespotbot')
+    setProperty('version', artifactVersion)
+//    setProperty('classifier', '') // build jar without "-plain" suffix
 }
+
+//bootJar {
+//    enabled = true;
+//    setProperty('archiveClassifier', 'fat')
+//}
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
-//publishing {
-//    publications {
-//        maven(MavenPublication) {
-//            groupId = 'ru.tyumentsev.binancespotbot'
-//            artifactId = 'binancespotbot'
-//            version = '0.2.0'
-//
-//            from components.java
-//        }
-//    }
-//}
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'ru.tyumentsev.binancetradebot'
+            artifactId = 'binancespotbot'
+            version = artifactVersion
+
+            from components.java
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
