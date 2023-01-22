@@ -9,7 +9,7 @@ def artifactVersion = '0.2.3'
 def springBootVersion = '2.7.7'
 def prometheusVersion = '0.16.0'
 
-group = 'ru.tyumentsev.binancetradebot'
+group = 'ru.tyumentsev.cryptopredator'
 version = artifactVersion
 description = 'binancespotbot'
 
@@ -62,7 +62,7 @@ tasks.withType(JavaCompile) {
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId = 'ru.tyumentsev.binancetradebot'
+            groupId = 'ru.tyumentsev.cryptopredator'
             artifactId = 'binancespotbot'
             version = artifactVersion
 

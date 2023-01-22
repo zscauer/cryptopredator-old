@@ -7,7 +7,7 @@ services:
     image: binancespotbot
     container_name: binancespotbot
     depends_on:
-      - binancedatakeeper
+      - datakeeper
     env_file:
       - binancespotbot/.env
     ports:
@@ -17,20 +17,20 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ./binancespotbot/metrics/logs:/tmp/logs
 
-  binancedatakeeper:
-    image: binancedatakeeper
-    container_name: binancedatakeeper
+  datakeeper:
+    image: datakeeper
+    container_name: datakeeper
     depends_on:
       - redis
       - postgres
     env_file:
-      - binancedatakeeper/.env
+      - datakeeper/.env
     ports:
       - 86:8080
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - ./binancedatakeeper/metrics/logs:/tmp/logs
+      - ./datakeeper/metrics/logs:/tmp/logs
 
   redis:
     image: redis:7.0.7-alpine
