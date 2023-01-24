@@ -11,6 +11,9 @@ import ru.tyumentsev.cryptopredator.binancespotbot.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.binancespotbot.domain.PreviousCandleData;
 import ru.tyumentsev.cryptopredator.binancespotbot.domain.SellRecord;
 
+import java.util.Collection;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -26,7 +29,7 @@ public class CacheService {
 
     public void save(PreviousCandleData previousCandleData) {previousCandleDataRepository.save(previousCandleData);}
 
-    public void saveAllSellRecords(Iterable<SellRecord> sellRecords) {
+    public void saveAllSellRecords(Collection<SellRecord> sellRecords) {
         sellRecordRepository.saveAll(sellRecords);
     }
 
