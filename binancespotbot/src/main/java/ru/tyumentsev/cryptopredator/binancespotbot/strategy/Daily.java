@@ -18,7 +18,7 @@ import ru.tyumentsev.cryptopredator.binancespotbot.domain.PreviousCandleData;
 import ru.tyumentsev.cryptopredator.binancespotbot.domain.SellRecord;
 import ru.tyumentsev.cryptopredator.binancespotbot.mapping.CandlestickToEventMapper;
 import ru.tyumentsev.cryptopredator.binancespotbot.service.AccountManager;
-import ru.tyumentsev.cryptopredator.binancespotbot.service.DataService;
+import ru.tyumentsev.cryptopredator.binancespotbot.service.CacheService;
 import ru.tyumentsev.cryptopredator.binancespotbot.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.binancespotbot.service.SpotTrading;
 
@@ -45,7 +45,7 @@ public class Daily implements TradingStrategy {
     final MarketData marketData;
     final SpotTrading spotTrading;
     final AccountManager accountManager;
-    final DataService dataService;
+    final CacheService cacheService;
 
     CandlestickInterval candlestickInterval;
     @Getter
@@ -109,13 +109,13 @@ public class Daily implements TradingStrategy {
     }
 
     private void restoreSellJournalFromBackup() {
-        dataService.findAllSellRecords().forEach(record -> sellJournal.put(record.symbol(), record));
-        dataService.deleteAllSellRecords();
+        cacheService.findAllSellRecords().forEach(record -> sellJournal.put(record.symbol(), record));
+        cacheService.deleteAllSellRecords();
     }
 
     private void prepareOpenedLongPositions() {
         Map<String, OpenedPosition> cachedPositions = new HashMap<>();
-        dataService.findAllOpenedPositions().forEach(cachedPosition -> cachedPositions.put(cachedPosition.symbol(), cachedPosition));
+        cacheService.findAllOpenedPositions().forEach(cachedPosition -> cachedPositions.put(cachedPosition.symbol(), cachedPosition));
 
         marketData.getLongPositions().values().forEach(openedPosition -> {
             Optional.ofNullable(cachedPositions.get(openedPosition.symbol()))
@@ -129,13 +129,13 @@ public class Daily implements TradingStrategy {
                     }, () -> openedPosition.priceDecreaseFactor(priceDecreaseFactor));
         });
 
-        dataService.deleteAllOpenedPositions();
+        cacheService.deleteAllOpenedPositions();
     }
 
     private void restoreCachedCandlestickEvents() {
         int yesterdayDayOfYear = LocalDateTime.now().minusDays(1L).getDayOfYear();
 
-        List<PreviousCandleData> dailyCachedCandleData = StreamSupport.stream(dataService.findAllPreviousCandleData().spliterator(), false).filter(data -> data.id().startsWith("Daily")).toList();
+        List<PreviousCandleData> dailyCachedCandleData = StreamSupport.stream(cacheService.findAllPreviousCandleData().spliterator(), false).filter(data -> data.id().startsWith("Daily")).toList();
         log.debug("[DAILY] size of empty cached candlestick events before restoring from cache is: {}.",
                 cachedCandlestickEvents.entrySet().stream().filter(entry -> entry.getValue().isEmpty()).collect(Collectors.toSet()).size());
 
@@ -147,7 +147,7 @@ public class Daily implements TradingStrategy {
         log.debug("[DAILY] size of empty cached candlestick events after restoring from cache is: {} ({}).",
                 emptyCachedCandlestickEvents.size(), emptyCachedCandlestickEvents);
 
-        dataService.deleteAllPreviousCandleData(dailyCachedCandleData);
+        cacheService.deleteAllPreviousCandleData(dailyCachedCandleData);
     }
 
     @Override
@@ -357,15 +357,15 @@ public class Daily implements TradingStrategy {
     }
 
     private void backupSellRecords() {
-        dataService.saveAllSellRecords(sellJournal.values());
+        cacheService.saveAllSellRecords(sellJournal.values());
     }
 
     private void backupOpenedPositions() {
-        dataService.saveAllOpenedPositions(marketData.getLongPositions().values());
+        cacheService.saveAllOpenedPositions(marketData.getLongPositions().values());
     }
 
     private void backupPreviousCandleData() {
-        dataService.saveAllPreviousCandleData(cachedCandlestickEvents.values().stream()
+        cacheService.saveAllPreviousCandleData(cachedCandlestickEvents.values().stream()
                 .map(deque -> Optional.ofNullable(deque.peekFirst()))
                 .filter(Optional::isPresent)
                 .map(optional -> {
