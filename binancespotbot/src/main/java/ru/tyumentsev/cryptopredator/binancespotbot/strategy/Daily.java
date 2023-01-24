@@ -264,11 +264,11 @@ public class Daily implements TradingStrategy {
             Optional.ofNullable(marketData.getLongPositions().get(ticker)).ifPresent(openedPosition -> {
                 var currentPrice = parsedDouble(event.getClose());
 
-//                marketData.updateOpenedPosition(ticker, currentPrice, marketData.getLongPositions());
-                marketData.updateOpenedPosition(openedPosition, currentPrice);
+                marketData.updateOpenedPosition(ticker, currentPrice, marketData.getLongPositions());
 
                 if (currentPrice > openedPosition.avgPrice() * pairTakeProfitFactor) {
-                    openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
+                    marketData.updatePriceDecreaseFactor(ticker, takeProfitPriceDecreaseFactor, marketData.getLongPositions());
+//                    openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
                     if (averagingEnabled) {
 //                        log.info("[DAILY] PRICE of {} GROWTH more than AVG ({}) and now equals {}.", ticker, openedPosition.avgPrice(), currentPrice);
                         buyFast(ticker, currentPrice, tradingAsset, true);
