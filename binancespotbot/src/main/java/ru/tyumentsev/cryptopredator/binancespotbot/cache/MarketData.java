@@ -192,6 +192,20 @@ public class MarketData {
         });
     }
 
+//    public void updateOpenedPosition(final OpenedPosition openedPosition, final Double lastPrice) {
+//        openedPosition.lastPrice(lastPrice);
+//        if (lastPrice > openedPosition.maxPrice()) {
+//            openedPosition.maxPrice(lastPrice);
+//        }
+//    }
+
+    public void updatePriceDecreaseFactor(final String pair, double priceDecreaseFactor, Map<String, OpenedPosition> openedPositions) {
+        Optional.ofNullable(openedPositions.get(pair)).ifPresent(pos -> {
+            pos.priceDecreaseFactor(priceDecreaseFactor);
+            log.info("Updating price decrease factor of {} to {}. Value after updating: {}.", pair, priceDecreaseFactor, pos.priceDecreaseFactor());
+        });
+    }
+
     public void removeLongPositionFromPriceMonitoring(String pair) {
         longPositions.remove(pair);
     }

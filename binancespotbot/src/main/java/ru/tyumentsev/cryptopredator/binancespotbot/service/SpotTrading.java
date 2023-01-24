@@ -56,20 +56,26 @@ public class SpotTrading implements TradingService {
         pairsToBuy.clear();
     }
 
-    public void placeBuyOrderFast(String symbol, Double price, String quoteAsset, AccountManager accountManager) {
-        int availableOrdersCount = accountManager.getFreeAssetBalance(quoteAsset).intValue() / minimalAssetBalance;
-        if (availableOrdersCount > 1) {
+    public void placeBuyOrderFast(final String symbol, final Double price, String quoteAsset, AccountManager accountManager) {
+        marketInfo.pairOrderPlaced(symbol);
+        synchronized (this) {
+            int availableOrdersCount = accountManager.getFreeAssetBalance(quoteAsset).intValue() / minimalAssetBalance;
+            if (availableOrdersCount > 1) {
 //            marketInfo.pairOrderPlaced(symbol);
 //            placeLimitBuyOrderAtLastMarketPrice(symbol, baseOrderVolume / price);
-            placeMarketBuyOrder(symbol, baseOrderVolume / price);
-        } else {
-            log.debug("NOT enough balance to buy {}.", symbol);
+                placeMarketBuyOrder(symbol, baseOrderVolume / price);
+            } else {
+                marketInfo.pairOrderFilled(symbol);
+                log.debug("NOT enough balance to buy {}.", symbol);
+            }
         }
     }
 
-    public void placeSellOrderFast(String symbol, Double qty) {
+    public void placeSellOrderFast(final String symbol, final Double qty) {
         marketInfo.pairOrderPlaced(symbol);
-        placeMarketSellOrder(symbol, qty);
+        synchronized (this) {
+            placeMarketSellOrder(symbol, qty);
+        }
     }
 
     public void placeLimitBuyOrderAtLastMarketPrice(String symbol, Double quantity) {

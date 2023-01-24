@@ -12,6 +12,7 @@ import com.binance.api.client.BinanceApiCallback;
 import com.binance.api.client.BinanceApiWebSocketClient;
 import com.binance.api.client.domain.event.CandlestickEvent;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import com.binance.api.client.BinanceApiRestClient;
@@ -29,6 +30,7 @@ import lombok.experimental.FieldDefaults;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
 public class MarketInfo {
 
     BinanceApiRestClient restClient;
@@ -37,6 +39,7 @@ public class MarketInfo {
     /**
      * Store flags, which indicates that order already placed.
      */
+    @Getter
     Map<String, Boolean> processedOrders = new ConcurrentHashMap<>();
 
     public List<String> getAvailableTradePairs(final String quoteAsset) {
@@ -84,10 +87,13 @@ public class MarketInfo {
 
     public void pairOrderPlaced(String symbol) {
         processedOrders.put(symbol, true);
+        log.debug("Add {} to processed orders.", symbol);
+
     }
 
     public void pairOrderFilled(String symbol) {
         processedOrders.remove(symbol);
+        log.debug("Remove {} from processed orders.", symbol);
     }
 
 }
