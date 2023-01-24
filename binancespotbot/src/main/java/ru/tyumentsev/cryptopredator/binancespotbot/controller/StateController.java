@@ -23,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import ru.tyumentsev.cryptopredator.binancespotbot.cache.MarketData;
 import ru.tyumentsev.cryptopredator.binancespotbot.domain.OpenedPosition;
+import ru.tyumentsev.cryptopredator.binancespotbot.domain.SellRecord;
+import ru.tyumentsev.cryptopredator.binancespotbot.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.binancespotbot.service.SpotTrading;
 import ru.tyumentsev.cryptopredator.binancespotbot.strategy.Daily;
 import ru.tyumentsev.cryptopredator.binancespotbot.strategy.VolumeCatcher;
@@ -35,6 +37,7 @@ public class StateController {
 
     BinanceApiRestClient restClient;
     MarketData marketData;
+    MarketInfo marketInfo;
     SpotTrading spotTrading;
     VolumeCatcher volumeCatcher;
     Daily daily;
@@ -67,6 +70,11 @@ public class StateController {
     public AssetBalance assetBalance(@PathVariable String ticker) {
         Account account = restClient.getAccount();
         return account.getAssetBalance(ticker.toUpperCase());
+    }
+
+    @GetMapping("/processedOrders")
+    public Map<String, Boolean> getProcessedOrders() {
+        return marketInfo.getProcessedOrders();
     }
 
     @GetMapping("/openedPositions/long")
@@ -118,6 +126,11 @@ public class StateController {
                 Double.parseDouble(restClient.getAccount().getAssetBalance(pair.replace(tradingAsset, "")).getFree())));
 
         spotTrading.closePostitions(positionsToClose);
+    }
+
+    @GetMapping("/daily/sellJournal")
+    public Map<String, SellRecord> getDailySellJournal() {
+        return daily.getSellJournal();
     }
 
     @GetMapping("/daily/candleStickEventsStreams")

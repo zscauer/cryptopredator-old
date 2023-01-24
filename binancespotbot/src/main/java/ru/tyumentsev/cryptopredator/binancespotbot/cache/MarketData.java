@@ -192,6 +192,13 @@ public class MarketData {
         });
     }
 
+    public void updateOpenedPosition(final OpenedPosition openedPosition, final Double lastPrice) {
+        openedPosition.lastPrice(lastPrice);
+        if (lastPrice > openedPosition.maxPrice()) {
+            openedPosition.maxPrice(lastPrice);
+        }
+    }
+
     public void removeLongPositionFromPriceMonitoring(String pair) {
         longPositions.remove(pair);
     }
