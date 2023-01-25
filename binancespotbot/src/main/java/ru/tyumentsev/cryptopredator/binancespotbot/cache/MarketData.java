@@ -204,7 +204,7 @@ public class MarketData {
     public void updatePriceDecreaseFactor(final String pair, double priceDecreaseFactor, Map<String, OpenedPosition> openedPositions) {
         Optional.ofNullable(openedPositions.get(pair)).ifPresent(pos -> {
             pos.priceDecreaseFactor(priceDecreaseFactor);
-            log.info("Updating price decrease factor of {} to {}. Value after updating: {}.", pair, priceDecreaseFactor, pos.priceDecreaseFactor());
+            log.info("Updating price decrease factor of {} to {}. Value after updating: {}.", pair, priceDecreaseFactor, openedPositions.get(pair).priceDecreaseFactor());
         });
     }
 
