@@ -15,14 +15,14 @@ import java.io.Serializable;
 @ToString
 @Accessors(fluent = true, chain = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@RequiredArgsConstructor(staticName = "of")
+@NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @RedisHash("OpenedPosition")
 public class OpenedPosition implements Serializable {
 
     @JsonProperty
     @Id
-    final String symbol;
+    String symbol;
     @JsonProperty
     boolean rocketCandidate;
     @JsonProperty

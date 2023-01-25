@@ -1,8 +1,10 @@
 package ru.tyumentsev.cryptopredator.binancespotbot.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import ru.tyumentsev.cryptopredator.binancespotbot.domain.OpenedPosition;
@@ -11,74 +13,97 @@ import ru.tyumentsev.cryptopredator.binancespotbot.domain.SellRecord;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
 @Slf4j
 public class DataService {
 
-    String dataKeeperURL = "http://localhost:86/api/cache/v1";
+    RestTemplate restTemplate;
+    @Value("${databaseconfig.dataKeeperURL}")
+    String dataKeeperURL;
+    String cacheEndpoint = "/api/cache/v1";
 
-    public void saveAllSellRecords(Collection<SellRecord> sellRecords) {
-        RestTemplate restTemplate = new RestTemplate();
-        HttpEntity<List<SellRecord>> requeset = new HttpEntity<>(new ArrayList<>(sellRecords));
-        var response = restTemplate.postForEntity(dataKeeperURL, requeset, ArrayList.class);
-        log.info("Next sell records saved:\n{}", response.getBody());
-    }
+    public List<SellRecord> saveAllSellRecords(Collection<SellRecord> sellRecords) {
+//        RestTemplate restTemplate = new RestTemplate();
+        ParameterizedTypeReference<List<SellRecord>> typeRef = new ParameterizedTypeReference<List<SellRecord>>(){};
+        HttpEntity<List<SellRecord>> request = new HttpEntity<>(new ArrayList<>(sellRecords));
+        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/sellRecord", HttpMethod.POST, request, typeRef);
+        log.info("Next sell records saved:\n{}", response);
 
-    public void saveAllOpenedPositions(Collection<OpenedPosition> openedPositions) {
-        RestTemplate restTemplate = new RestTemplate();
-        HttpEntity<List<OpenedPosition>> requeset = new HttpEntity<>(new ArrayList<>(openedPositions));
-        var response = restTemplate.postForEntity(dataKeeperURL, requeset, ArrayList.class);
-        log.info("Next opened positions saved:\n{}", response.getBody());
-    }
-
-    public void saveAllPreviousCandleData(Collection<PreviousCandleData> previousCandleData) {
-        RestTemplate restTemplate = new RestTemplate();
-        HttpEntity<List<PreviousCandleData>> requeset = new HttpEntity<>(new ArrayList<>(previousCandleData));
-        var response = restTemplate.postForEntity(dataKeeperURL, requeset, ArrayList.class);
-//        log.info("Next previous candle data saved:\n{}", response.getBody());
+        return response.getBody();
     }
 
     public List<SellRecord> findAllSellRecords() {
-        RestTemplate restTemplate = new RestTemplate();
-        var records = restTemplate.getForObject(dataKeeperURL, ArrayList.class);
-        log.info("Get next sell records:\n{}", records);
+//        RestTemplate restTemplate = new RestTemplate();
+        ParameterizedTypeReference<List<SellRecord>> typeRef = new ParameterizedTypeReference<List<SellRecord>>(){};
+        HttpEntity<List<SellRecord>> request = new HttpEntity<>(new ArrayList<>());
+        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/sellRecord", HttpMethod.GET, request, typeRef);
+        log.info("Get next sell records:\n{}", response);
 
-        return records;
-    }
-
-    public List<OpenedPosition> findAllOpenedPositions() {
-        RestTemplate restTemplate = new RestTemplate();
-        var positions = restTemplate.getForObject(dataKeeperURL, ArrayList.class);
-        log.info("Get next sell records:\n{}", positions);
-
-        return positions;
-    }
-
-    public List<PreviousCandleData> findAllPreviousCandleData() {
-        RestTemplate restTemplate = new RestTemplate();
-        var candleData = restTemplate.getForObject(dataKeeperURL, ArrayList.class);
-        log.info("Get next sell records:\n{}", candleData);
-
-        return candleData;
+        return response.getBody();
     }
 
     public void deleteAllSellRecords() {
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.delete(dataKeeperURL);
+//        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.delete(dataKeeperURL + cacheEndpoint + "/sellRecord");
+    }
+
+    public List<PreviousCandleData> saveAllPreviousCandleData(Collection<PreviousCandleData> previousCandleData) {
+//        RestTemplate restTemplate = new RestTemplate();
+        ParameterizedTypeReference<List<PreviousCandleData>> typeRef = new ParameterizedTypeReference<List<PreviousCandleData>>(){};
+        HttpEntity<List<PreviousCandleData>> request = new HttpEntity<>(new ArrayList<>(previousCandleData));
+        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/previousCandleData", HttpMethod.POST, request, typeRef);
+        log.info("Next previous candle data saved:\n{}", response);
+
+        return response.getBody();
+    }
+
+    public List<PreviousCandleData> findAllPreviousCandleData() {
+//        RestTemplate restTemplate = new RestTemplate();
+        ParameterizedTypeReference<List<PreviousCandleData>> typeRef = new ParameterizedTypeReference<List<PreviousCandleData>>(){};
+        HttpEntity<List<PreviousCandleData>> request = new HttpEntity<>(new ArrayList<>());
+        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/previousCandleData", HttpMethod.GET, request, typeRef);
+        log.info("Get next previous candle data:\n{}", response);
+
+        return response.getBody();
+    }
+
+    public void deleteAllPreviousCandleData(Collection<PreviousCandleData> previousCandleData) {
+//        RestTemplate restTemplate = new RestTemplate();
+
+        ParameterizedTypeReference<List<PreviousCandleData>> typeRef = new ParameterizedTypeReference<List<PreviousCandleData>>(){};
+        HttpEntity<List<String>> request = new HttpEntity<>((previousCandleData.stream().map(PreviousCandleData::id)).collect(Collectors.toList()));
+        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/previousCandleData/delete", HttpMethod.POST, request, typeRef);
+        log.info("Deleted next previous candle data:\n{}", response);
+    }
+
+    public List<OpenedPosition> saveAllOpenedPositions(Collection<OpenedPosition> openedPositions) {
+//        RestTemplate restTemplate = new RestTemplate();
+
+        ParameterizedTypeReference<List<OpenedPosition>> typeRef = new ParameterizedTypeReference<List<OpenedPosition>>(){};
+        HttpEntity<List<OpenedPosition>> request = new HttpEntity<>(new ArrayList<>(openedPositions));
+        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/openedPosition", HttpMethod.POST, request, typeRef);
+        log.info("Next opened positions saved:\n{}", response);
+
+        return response.getBody();
+    }
+
+    public List<OpenedPosition> findAllOpenedPositions() {
+//        RestTemplate restTemplate = new RestTemplate();
+
+        ParameterizedTypeReference<List<OpenedPosition>> typeRef = new ParameterizedTypeReference<List<OpenedPosition>>(){};
+        HttpEntity<List<OpenedPosition>> request = new HttpEntity<>(new ArrayList<>());
+        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/openedPosition", HttpMethod.GET, request, typeRef);
+        log.info("Get next opened positions:\n{}", response);
+
+        return response.getBody();
     }
 
     public void deleteAllOpenedPositions() {
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.delete(dataKeeperURL);
+//        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.delete(dataKeeperURL + cacheEndpoint + "/openedPosition");
     }
-
-    public void deleteAllPreviousCandleData(Collection<PreviousCandleData> openedPositions) {
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.delete(dataKeeperURL, Collections.singletonMap("openedPositions", openedPositions));
-    }
-
 }

@@ -70,8 +70,7 @@ databaseconfig:
     redisHost: ${REDIS_HOST}
     redisPort: ${REDIS_PORT}
     redisPassword: ${REDIS_PASSWORD}
-    dataKeeperAddress: ${DATAKEEPER_HOST}
-    dataKeeperPort: ${DATAKEEPER_PORT}
+    dataKeeperURL: http://${DATAKEEPER_HOST}:${DATAKEEPER_PORT}
 
 strategy:
     # ------------------ monitoring
