@@ -234,7 +234,7 @@ public class Daily implements TradingStrategy {
             longMonitoringThreadsCounter.getAndIncrement();
         });
 
-        log.info("Initialized {} market monitoring threads and {} long monitoring threads.", marketMonitoringThreadsCounter, longMonitoringThreadsCounter);
+        log.info("Runned {} market monitoring threads and {} long monitoring threads.", marketMonitoringThreadsCounter, longMonitoringThreadsCounter);
     }
 
     private BinanceApiCallback<CandlestickEvent> marketMonitoringCallback(String ticker) {
@@ -300,7 +300,7 @@ public class Daily implements TradingStrategy {
     private void buyFast(final String symbol, final double price, String quoteAsset, boolean itsAveraging) {
         if ((itsDealsAllowedPeriod(LocalTime.now()) || itsAveraging) &&
                 !(marketInfo.pairOrderIsProcessing(symbol) || thisSignalWorkedOutBefore(symbol))) {
-            log.debug("[DAILY] price of {} growth more than {}%, and now equals {}.", symbol, Double.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
+            log.info("[DAILY] price of {} growth more than {}%, and now equals {}.", symbol, Double.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
             spotTrading.placeBuyOrderFast(symbol, price, quoteAsset, accountManager);
         }
     }

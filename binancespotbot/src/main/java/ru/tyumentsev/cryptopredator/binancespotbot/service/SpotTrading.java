@@ -56,7 +56,7 @@ public class SpotTrading implements TradingService {
         pairsToBuy.clear();
     }
 
-    public void placeBuyOrderFast(final String symbol, final Double price, String quoteAsset, AccountManager accountManager) {
+    public void placeBuyOrderFast(final String symbol, final double price, String quoteAsset, AccountManager accountManager) {
         if (Thread.holdsLock(this)) {
             log.info("placeBuyOrderFast({}) object monitor already locked by the current thread {} ({}).", symbol, Thread.currentThread().getName(), Thread.currentThread().getId());
             return;
@@ -117,14 +117,14 @@ public class SpotTrading implements TradingService {
         });
     }
 
-    public void placeMarketBuyOrder(String symbol, Double quantity) {
+    public void placeMarketBuyOrder(String symbol, double quantity) {
         asyncRestClient.newOrder(NewOrder.marketBuy(symbol, String.valueOf(Math.ceil(quantity))),
             marketBuyOrderCallback -> {
                 log.debug("Async MARKET BUY order placed: {}", marketBuyOrderCallback);
             });
     }
 
-    public void placeMarketSellOrder(String symbol, Double quantity) {
+    public void placeMarketSellOrder(String symbol, double quantity) {
         asyncRestClient.newOrder(NewOrder.marketSell(symbol, String.valueOf(quantity)),
             marketSellOrderCallback -> {
                 log.debug("Async MARKET SELL order placed: {}", marketSellOrderCallback);
