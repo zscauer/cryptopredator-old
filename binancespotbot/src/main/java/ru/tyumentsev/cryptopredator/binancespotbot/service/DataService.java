@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DataService {
 
-    RestTemplate restTemplate;
+    RestTemplate restTemplate = new RestTemplate();
     @Value("${databaseconfig.dataKeeperURL}")
     String dataKeeperURL;
     String cacheEndpoint = "/api/cache/v1";
