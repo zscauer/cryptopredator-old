@@ -112,13 +112,13 @@ public class Daily implements TradingStrategy {
     }
 
     private void restoreSellJournalFromBackup() {
-        cacheService.findAllSellRecords().forEach(record -> sellJournal.put(record.symbol(), record));
-        cacheService.deleteAllSellRecords();
+        dataService.findAllSellRecords().forEach(record -> sellJournal.put(record.symbol(), record));
+        dataService.deleteAllSellRecords();
     }
 
     private void prepareOpenedLongPositions() {
         Map<String, OpenedPosition> cachedPositions = new HashMap<>();
-        cacheService.findAllOpenedPositions().forEach(cachedPosition -> cachedPositions.put(cachedPosition.symbol(), cachedPosition));
+        dataService.findAllOpenedPositions().forEach(cachedPosition -> cachedPositions.put(cachedPosition.symbol(), cachedPosition));
 
         marketData.getLongPositions().values().forEach(openedPosition -> {
             Optional.ofNullable(cachedPositions.get(openedPosition.symbol()))
@@ -132,13 +132,13 @@ public class Daily implements TradingStrategy {
                     }, () -> openedPosition.priceDecreaseFactor(priceDecreaseFactor));
         });
 
-        cacheService.deleteAllOpenedPositions();
+        dataService.deleteAllOpenedPositions();
     }
 
     private void restoreCachedCandlestickEvents() {
         int yesterdayDayOfYear = LocalDateTime.now().minusDays(1L).getDayOfYear();
 
-        List<PreviousCandleData> dailyCachedCandleData = cacheService.findAllPreviousCandleData().stream().filter(data -> data.id().startsWith("Daily")).toList();
+        List<PreviousCandleData> dailyCachedCandleData = dataService.findAllPreviousCandleData().stream().filter(data -> data.id().startsWith("Daily")).toList();
         log.debug("[DAILY] size of empty cached candlestick events before restoring from cache is: {}.",
                 cachedCandlestickEvents.entrySet().stream().filter(entry -> entry.getValue().isEmpty()).collect(Collectors.toSet()).size());
 
@@ -150,7 +150,7 @@ public class Daily implements TradingStrategy {
         log.debug("[DAILY] size of empty cached candlestick events after restoring from cache is: {} ({}).",
                 emptyCachedCandlestickEvents.size(), emptyCachedCandlestickEvents);
 
-        cacheService.deleteAllPreviousCandleData(dailyCachedCandleData);
+        dataService.deleteAllPreviousCandleData(dailyCachedCandleData);
     }
 
     @Override
@@ -365,15 +365,15 @@ public class Daily implements TradingStrategy {
     }
 
     private void backupSellRecords() {
-        cacheService.saveAllSellRecords(sellJournal.values());
+        dataService.saveAllSellRecords(sellJournal.values());
     }
 
     private void backupOpenedPositions() {
-        cacheService.saveAllOpenedPositions(marketData.getLongPositions().values());
+        dataService.saveAllOpenedPositions(marketData.getLongPositions().values());
     }
 
     private void backupPreviousCandleData() {
-        cacheService.saveAllPreviousCandleData(cachedCandlestickEvents.values().stream()
+        dataService.saveAllPreviousCandleData(cachedCandlestickEvents.values().stream()
                 .map(deque -> Optional.ofNullable(deque.peekFirst()))
                 .filter(Optional::isPresent)
                 .map(optional -> {
