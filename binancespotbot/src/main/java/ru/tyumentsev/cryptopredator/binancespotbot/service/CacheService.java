@@ -13,6 +13,8 @@ import ru.tyumentsev.cryptopredator.binancespotbot.domain.SellRecord;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -41,16 +43,16 @@ public class CacheService {
         previousCandleDataRepository.saveAll(previousCandleData);
     }
 
-    public Iterable<SellRecord> findAllSellRecords() {
-        return sellRecordRepository.findAll();
+    public List<SellRecord> findAllSellRecords() {
+        return StreamSupport.stream(sellRecordRepository.findAll().spliterator(), false).collect(Collectors.toList());
     }
 
-    public Iterable<OpenedPosition> findAllOpenedPositions() {
-        return openedPositionRepository.findAll();
+    public List<OpenedPosition> findAllOpenedPositions() {
+        return StreamSupport.stream(openedPositionRepository.findAll().spliterator(), false).collect(Collectors.toList());
     }
 
-    public Iterable<PreviousCandleData> findAllPreviousCandleData() {
-        return previousCandleDataRepository.findAll();
+    public List<PreviousCandleData> findAllPreviousCandleData() {
+        return StreamSupport.stream(previousCandleDataRepository.findAll().spliterator(), false).collect(Collectors.toList());
     }
 
     public void deleteAllSellRecords() {

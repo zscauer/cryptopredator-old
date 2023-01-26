@@ -57,10 +57,10 @@ public class SpotTrading implements TradingService {
     }
 
     public void placeBuyOrderFast(final String symbol, final Double price, String quoteAsset, AccountManager accountManager) {
-//        if (Thread.holdsLock(this)) {
-//            log.info("placeBuyOrderFast({}) object monitor already locked by the current thread {} ({}).", symbol, Thread.currentThread().getName(), Thread.currentThread().getId());
-//            return;
-//        }
+        if (Thread.holdsLock(this)) {
+            log.info("placeBuyOrderFast({}) object monitor already locked by the current thread {} ({}).", symbol, Thread.currentThread().getName(), Thread.currentThread().getId());
+            return;
+        }
         marketInfo.pairOrderPlaced(symbol);
         synchronized (this) {
             int availableOrdersCount = accountManager.getFreeAssetBalance(quoteAsset).intValue() / minimalAssetBalance;
@@ -76,10 +76,10 @@ public class SpotTrading implements TradingService {
     }
 
     public void placeSellOrderFast(final String symbol, final Double qty) {
-//        if (Thread.holdsLock(this)) {
-//            log.info("placeSellOrderFast({}) object monitor already locked by the current thread {} ({}).", symbol, Thread.currentThread().getName(), Thread.currentThread().getId());
-//            return;
-//        }
+        if (Thread.holdsLock(this)) {
+            log.info("placeSellOrderFast({}) object monitor already locked by the current thread {} ({}).", symbol, Thread.currentThread().getName(), Thread.currentThread().getId());
+            return;
+        }
         marketInfo.pairOrderPlaced(symbol);
         synchronized (this) {
             placeMarketSellOrder(symbol, qty);
