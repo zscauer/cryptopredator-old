@@ -41,6 +41,8 @@ dependencies {
     implementation "io.prometheus:simpleclient_servlet:${prometheusVersion}"
     implementation "io.prometheus:simpleclient_hotspot:${prometheusVersion}"
     implementation "com.squareup.okhttp3:okhttp:4.10.0"
+
+    implementation "org.springframework.boot:spring-boot-starter-webflux:${springBootVersion}"
 }
 
 jar {
