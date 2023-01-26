@@ -76,6 +76,7 @@ public class DataService {
         ParameterizedTypeReference<List<PreviousCandleData>> typeRef = new ParameterizedTypeReference<List<PreviousCandleData>>(){};
         HttpHeaders headers = new HttpHeaders();
         headers.set("bot-id", botId);
+        log.info("dataKeeperURL: {}, cacheEndpoint: {}. Result path: {}.", dataKeeperURL, cacheEndpoint, dataKeeperURL + cacheEndpoint + "/previousCandleData");
         HttpEntity<List<PreviousCandleData>> request = new HttpEntity<>(new ArrayList<>(), headers);
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/previousCandleData", HttpMethod.GET, request, typeRef);
         log.debug("Get next previous candle data:\n{}", response.getBody());
