@@ -56,6 +56,7 @@ public class SpotTrading implements TradingService {
         pairsToBuy.clear();
     }
 
+
     public void placeBuyOrderFast(final String symbol, final double price, String quoteAsset, AccountManager accountManager) {
         if (Thread.holdsLock(this)) {
             log.info("placeBuyOrderFast({}) object monitor already locked by the current thread {} ({}).", symbol, Thread.currentThread().getName(), Thread.currentThread().getId());
