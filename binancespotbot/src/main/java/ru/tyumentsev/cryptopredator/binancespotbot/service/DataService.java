@@ -35,7 +35,7 @@ public class DataService {
         headers.set("bot-id", botId);
         HttpEntity<List<SellRecord>> request = new HttpEntity<>(new ArrayList<>(sellRecords));
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/sellRecord", HttpMethod.POST, request, typeRef);
-        log.info("Next sell records saved:\n{}", response);
+        log.debug("Next sell records saved:\n{}", response);
 
         return response.getBody();
     }
@@ -47,7 +47,7 @@ public class DataService {
         headers.set("bot-id", botId);
         HttpEntity<List<SellRecord>> request = new HttpEntity<>(new ArrayList<>());
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/sellRecord", HttpMethod.GET, request, typeRef);
-        log.info("Get next sell records:\n{}", response);
+        log.debug("Get next sell records:\n{}", response);
 
         return response.getBody();
     }
@@ -67,7 +67,7 @@ public class DataService {
         headers.set("bot-id", botId);
         HttpEntity<List<PreviousCandleData>> request = new HttpEntity<>(new ArrayList<>(previousCandleData));
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/previousCandleData", HttpMethod.POST, request, typeRef);
-        log.info("Next previous candle data saved:\n{}", response.getBody());
+        log.debug("Next previous candle data saved:\n{}", response.getBody());
 
         return response.getBody();
     }
@@ -79,7 +79,7 @@ public class DataService {
         headers.set("bot-id", botId);
         HttpEntity<List<PreviousCandleData>> request = new HttpEntity<>(new ArrayList<>());
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/previousCandleData", HttpMethod.GET, request, typeRef);
-        log.info("Get next previous candle data:\n{}", response.getBody());
+        log.debug("Get next previous candle data:\n{}", response.getBody());
 
         return response.getBody();
     }
@@ -92,7 +92,7 @@ public class DataService {
         headers.set("bot-id", botId);
         HttpEntity<List<String>> request = new HttpEntity<>((previousCandleData.stream().map(PreviousCandleData::id)).collect(Collectors.toList()));
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/previousCandleData/delete", HttpMethod.POST, request, typeRef);
-        log.info("Deleted next previous candle data:\n{}", response.getBody());
+        log.debug("Deleted next previous candle data:\n{}", response.getBody());
     }
 
     public List<OpenedPosition> saveAllOpenedPositions(Collection<OpenedPosition> openedPositions) {
@@ -103,7 +103,7 @@ public class DataService {
         headers.set("bot-id", botId);
         HttpEntity<List<OpenedPosition>> request = new HttpEntity<>(new ArrayList<>(openedPositions));
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/openedPosition", HttpMethod.POST, request, typeRef);
-        log.info("Next opened positions saved:\n{}", response.getBody());
+        log.debug("Next opened positions saved:\n{}", response.getBody());
 
         return response.getBody();
     }
@@ -116,7 +116,7 @@ public class DataService {
         headers.set("bot-id", botId);
         HttpEntity<List<OpenedPosition>> request = new HttpEntity<>(new ArrayList<>());
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/openedPosition", HttpMethod.GET, request, typeRef);
-        log.info("Get next opened positions:\n{}", response.getBody());
+        log.debug("Get next opened positions:\n{}", response.getBody());
 
         return response.getBody();
     }

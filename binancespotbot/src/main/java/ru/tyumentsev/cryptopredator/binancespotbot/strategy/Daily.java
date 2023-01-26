@@ -33,8 +33,8 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -220,14 +220,21 @@ public class Daily implements TradingStrategy {
     public void startCandlstickEventsCacheUpdating(String asset, CandlestickInterval interval) {
         candlestickInterval = interval;
         closeOpenedWebSocketStreams();
+        AtomicInteger marketMonitoringThreadsCounter = new AtomicInteger();
+        AtomicInteger longMonitoringThreadsCounter = new AtomicInteger();
 
-        marketData.getCheapPairsExcludeOpenedPositions(asset)
-                .forEach(ticker ->
-                        candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
-                                marketMonitoringCallback(ticker))));
-        marketData.getLongPositions().forEach((ticker, openedPosition) ->
-                candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
-                        longPositionMonitoringCallback(ticker))));
+        marketData.getCheapPairsExcludeOpenedPositions(asset).forEach(ticker -> {
+            candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
+                    marketMonitoringCallback(ticker)));
+            marketMonitoringThreadsCounter.getAndIncrement();
+        });
+        marketData.getLongPositions().forEach((ticker, openedPosition) -> {
+            candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
+                    longPositionMonitoringCallback(ticker)));
+            longMonitoringThreadsCounter.getAndIncrement();
+        });
+
+        log.info("Initialized {} market monitoring threads and {} long monitoring threads.", marketMonitoringThreadsCounter, longMonitoringThreadsCounter);
     }
 
     private BinanceApiCallback<CandlestickEvent> marketMonitoringCallback(String ticker) {
