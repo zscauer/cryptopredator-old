@@ -47,7 +47,6 @@ public class Daily implements TradingStrategy {
     final MarketInfo marketInfo;
     final MarketData marketData;
     final SpotTrading spotTrading;
-    final AccountManager accountManager;
     final CacheService cacheService;
     final DataService dataService;
 
@@ -277,7 +276,7 @@ public class Daily implements TradingStrategy {
         return event -> {
             marketData.addCandlestickEventToCache(ticker, event, cachedCandlestickEvents);
 
-            List<AssetBalance> currentBalances = accountManager.getAccountBalances().stream()
+            List<AssetBalance> currentBalances = spotTrading.getAccountBalances().stream()
                     .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB"))).toList();
 
             if (currentBalances.isEmpty()) {
@@ -317,7 +316,7 @@ public class Daily implements TradingStrategy {
         if ((itsDealsAllowedPeriod(LocalTime.now()) || itsAveraging) &&
                 !(marketInfo.pairOrderIsProcessing(symbol) || thisSignalWorkedOutBefore(symbol))) {
             log.debug("[DAILY] price of {} growth more than {}%, and now equals {}.", symbol, Double.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
-            spotTrading.placeBuyOrderFast(symbol, price, quoteAsset, accountManager);
+            spotTrading.placeBuyOrderFast(symbol, price, quoteAsset);
         }
     }
 

@@ -1,9 +1,11 @@
 package ru.tyumentsev.cryptopredator.dailyvolumesbot.service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.binance.api.client.domain.account.AssetBalance;
 import com.binance.api.client.domain.market.CandlestickInterval;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SpotTrading implements TradingService {
 
+    final AccountManager accountManager;
     final BinanceApiAsyncRestClient asyncRestClient;
     final MarketInfo marketInfo;
 
@@ -31,8 +34,11 @@ public class SpotTrading implements TradingService {
     @Value("${strategy.global.baseOrderVolume}")
     int baseOrderVolume;
 
+    public List<AssetBalance> getAccountBalances() {
+        return accountManager.getAccountBalances();
+    }
 
-    public void placeBuyOrderFast(final String symbol, final double price, String quoteAsset, AccountManager accountManager) {
+    public void placeBuyOrderFast(final String symbol, final double price, String quoteAsset) {
         if (Thread.holdsLock(this)) {
             log.info("placeBuyOrderFast({}) object monitor already locked by the current thread {} ({}).", symbol, Thread.currentThread().getName(), Thread.currentThread().getId());
             return;
