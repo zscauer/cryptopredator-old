@@ -30,86 +30,86 @@ public class CacheController {
     CacheService cacheService;
 
     @GetMapping("/sellRecord")
-    public List<SellRecord> getSellRecords(@RequestHeader HttpHeaders headers) {
-        log.info("getSellRecords() call from {}.", headers.map().get("bot-id"));
+    public List<SellRecord> getSellRecords() {
+//        log.info("getSellRecords() call from {}.", headers.map().get("bot-id"));
         return cacheService.findAllSellRecords();
     }
 
     @GetMapping("/sellRecord/{id}")
-    public SellRecord getSellRecord(@PathVariable String id, @RequestHeader HttpHeaders headers) {
-        log.info("getSellRecord({}) call from {}.", id, headers.map().get("bot-id"));
+    public SellRecord getSellRecord(@PathVariable String id) {
+//        log.info("getSellRecord({}) call from {}.", id, headers.map().get("bot-id"));
         return cacheService.findSellRecord(id).orElseThrow();
     }
 
     @PostMapping("/sellRecord")
-    public List<SellRecord> saveSellRecordsCache(@RequestBody List<SellRecord> records, @RequestHeader HttpHeaders headers) {
-        log.info("saveSellRecordsCache({}) call from {}.", records, headers.map().get("bot-id"));
+    public List<SellRecord> saveSellRecordsCache(@RequestBody List<SellRecord> records) {
+//        log.info("saveSellRecordsCache({}) call from {}.", records, headers.map().get("bot-id"));
         return cacheService.saveAllSellRecords(records);
     }
 
     @PostMapping("/sellRecord/delete")
-    public void deleteAllSellRecordsById(@RequestBody List<String> ids, @RequestHeader HttpHeaders headers) {
-        log.info("deleteAllSellRecordsById({}) call from {}.", ids, headers.map().get("bot-id"));
+    public void deleteAllSellRecordsById(@RequestBody List<String> ids) {
+//        log.info("deleteAllSellRecordsById({}) call from {}.", ids, headers.map().get("bot-id"));
         cacheService.deleteAllSellRecordsById(ids);
     }
 
     @DeleteMapping("/sellRecord")
-    public void deleteAllSellRecords(@RequestHeader HttpHeaders headers) {
-        log.info("deleteAllSellRecords() call from {}.", headers.map().get("bot-id"));
+    public void deleteAllSellRecords() {
+//        log.info("deleteAllSellRecords() call from {}.", headers.map().get("bot-id"));
         cacheService.deleteAllSellRecords();
     }
 
     @GetMapping("/previousCandleData")
-    public List<PreviousCandleData> getPreviousCandlesData(@RequestHeader HttpHeaders headers) {
-        log.info("getPreviousCandlesData() call from {}.", headers.map().get("bot-id"));
+    public List<PreviousCandleData> getPreviousCandlesData() {
+//        log.info("getPreviousCandlesData() call from {}.", headers.map().get("bot-id"));
         return cacheService.findAllPreviousCandleData();
     }
 
     @GetMapping("/previousCandleData/{id}")
-    public PreviousCandleData getPreviousCandleData(@PathVariable String id, @RequestHeader HttpHeaders headers) {
-        log.info("getPreviousCandleData({}) call from {}.", id, headers.map().get("bot-id"));
+    public PreviousCandleData getPreviousCandleData(@PathVariable String id) {
+//        log.info("getPreviousCandleData({}) call from {}.", id, headers.map().get("bot-id"));
         return cacheService.findPreviousCandleData(id).orElseThrow();
     }
 
     @PostMapping("/previousCandleData")
-    public List<PreviousCandleData> savePreviousCandleDataCache(@RequestBody List<PreviousCandleData> previousCandleData, @RequestHeader HttpHeaders headers) {
-        log.info("savePreviousCandleDataCache({}) call from {}.", previousCandleData, headers.map().get("bot-id"));
+    public List<PreviousCandleData> savePreviousCandleDataCache(@RequestBody List<PreviousCandleData> previousCandleData) {
+//        log.info("savePreviousCandleDataCache({}) call from {}.", previousCandleData, headers.map().get("bot-id"));
         return cacheService.saveAllPreviousCandleData(previousCandleData);
     }
 
     @PostMapping("/previousCandleData/delete")
-    public void deleteAllPreviousCandlesDataById(@RequestBody List<String> ids, @RequestHeader HttpHeaders headers) {
-        log.info("deleteAllPreviousCandlesDataById({}) call from {}.", ids, headers.map().get("bot-id"));
+    public void deleteAllPreviousCandlesDataById(@RequestBody List<String> ids) {
+//        log.info("deleteAllPreviousCandlesDataById({}) call from {}.", ids, headers.map().get("bot-id"));
         cacheService.deleteAllPreviousCandleDataById(ids);
     }
 
     @GetMapping("/openedPosition")
-    public List<OpenedPosition> getOpenedPositions(@RequestHeader HttpHeaders headers) {
-        log.info("getOpenedPositions() call from {}.", headers.map().get("bot-id"));
+    public List<OpenedPosition> getOpenedPositions() {
+//        log.info("getOpenedPositions() call from {}.", headers.map().get("bot-id"));
         return cacheService.findAllOpenedPositions();
     }
 
     @GetMapping("/openedPosition/{id}")
-    public OpenedPosition getOpenedPosition(@PathVariable String id, @RequestHeader HttpHeaders headers) {
-        log.info("getOpenedPosition({}) call from {}.", id, headers.map().get("bot-id"));
+    public OpenedPosition getOpenedPosition(@PathVariable String id) {
+//        log.info("getOpenedPosition({}) call from {}.", id, headers.map().get("bot-id"));
         return cacheService.findOpenedPosition(id).orElseThrow();
     }
 
     @PostMapping("/openedPosition")
-    public List<OpenedPosition> saveOpenedPositionsCache(@RequestBody List<OpenedPosition> openedPositions, @RequestHeader HttpHeaders headers) {
-        log.info("saveOpenedPositionsCache({}) call from {}.", openedPositions, headers.map().get("bot-id"));
+    public List<OpenedPosition> saveOpenedPositionsCache(@RequestBody List<OpenedPosition> openedPositions) {
+//        log.info("saveOpenedPositionsCache({}) call from {}.", openedPositions, headers.map().get("bot-id"));
         return cacheService.saveAllOpenedPositions(openedPositions);
     }
 
     @DeleteMapping("/openedPosition")
-    public void deleteAllOpenedPositions(@RequestHeader HttpHeaders headers) {
-        log.info("deleteAllOpenedPositions() call from {}.", headers.map().get("bot-id"));
+    public void deleteAllOpenedPositions() {
+//        log.info("deleteAllOpenedPositions() call from {}.", headers.map().get("bot-id"));
         cacheService.deleteAllOpenedPositions();
     }
 
     @PostMapping("/openedPosition/delete")
-    public void deleteAllOpenedPositionsById(@RequestBody List<String> ids, @RequestHeader HttpHeaders headers) {
-        log.info("deleteAllOpenedPositionsById({}) call from {}.", ids, headers.map().get("bot-id"));
+    public void deleteAllOpenedPositionsById(@RequestBody List<String> ids) {
+//        log.info("deleteAllOpenedPositionsById({}) call from {}.", ids, headers.map().get("bot-id"));
         cacheService.deleteAllOpenedPositionsById(ids);
     }
 }
