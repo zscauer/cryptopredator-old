@@ -276,10 +276,11 @@ public class Daily implements TradingStrategy {
                 marketData.updateOpenedPosition(ticker, currentPrice, marketData.getLongPositions());
 
                 if (currentPrice > openedPosition.avgPrice() * pairTakeProfitFactor) {
+                    log.info("[DAILY] current price decrease factor of {} is {}.", openedPosition.symbol(), openedPosition.priceDecreaseFactor());
                     marketData.updatePriceDecreaseFactor(ticker, takeProfitPriceDecreaseFactor, marketData.getLongPositions());
 //                    openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
                     if (averagingEnabled) {
-//                        log.info("[DAILY] PRICE of {} GROWTH more than AVG ({}) and now equals {}.", ticker, openedPosition.avgPrice(), currentPrice);
+                        log.info("[DAILY] avergaing enabled, try to buy fast {} with price decrease factor {}.", ticker, openedPosition.priceDecreaseFactor());
                         buyFast(ticker, currentPrice, tradingAsset, true);
                     }
                 }
@@ -300,7 +301,7 @@ public class Daily implements TradingStrategy {
     private void buyFast(final String symbol, final double price, String quoteAsset, boolean itsAveraging) {
         if ((itsDealsAllowedPeriod(LocalTime.now()) || itsAveraging) &&
                 !(marketInfo.pairOrderIsProcessing(symbol) || thisSignalWorkedOutBefore(symbol))) {
-            log.info("[DAILY] price of {} growth more than {}%, and now equals {}.", symbol, Double.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
+            log.debug("[DAILY] price of {} growth more than {}%, and now equals {}.", symbol, Double.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
             spotTrading.placeBuyOrderFast(symbol, price, quoteAsset, accountManager);
         }
     }

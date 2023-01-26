@@ -205,7 +205,6 @@ public class MarketData {
         Optional.ofNullable(openedPositions.get(pair)).ifPresent(pos -> {
             pos.priceDecreaseFactor(priceDecreaseFactor);
             log.info("Updating price decrease factor of {} to {}. Value after updating: {}.", pair, priceDecreaseFactor, openedPositions.get(pair).priceDecreaseFactor());
-
         });
     }
 
