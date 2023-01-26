@@ -38,61 +38,9 @@ public class AccountManager implements TradingService {
     @Value("${applicationconfig.testLaunch}")
     boolean testLaunch;
 
-    @Getter
-    Closeable userDataUpdateEventsListener;
     List<AssetBalance> currentBalances;
 
     String listenKey;
-
-    @Scheduled(fixedDelayString = "${strategy.global.initializeUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.initializeUserDataUpdateStream.initialDelay}")
-    public void generalMonitoring_initializeAliveUserDataUpdateStream() {
-        if (!testLaunch) {
-            // User data stream are closing by binance after 24 hours of opening.
-            initializeUserDataUpdateStream();
-
-            if (userDataUpdateEventsListener != null) {
-                try {
-                    userDataUpdateEventsListener.close();
-                } catch (IOException e) {
-                    log.error("Error while trying to close user data update events listener:\n{}.", e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-            monitorUserDataUpdateEvents();
-        }
-    }
-
-    @Scheduled(fixedDelayString = "${strategy.global.keepAliveUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.keepAliveUserDataUpdateStream.initialDelay}")
-    public void generalMonitoring_keepAliveUserDataUpdateStream() {
-        if (!testLaunch) {
-            keepAliveUserDataUpdateStream();
-        }
-    }
-
-    /**
-     * Opens web socket stream of user data update events and monitors trade events.
-     * If it was "buy" event, then add pair from this event to monitoring,
-     * if it was "sell" event - removes from monitoring.
-     */
-    public void monitorUserDataUpdateEvents() {
-        userDataUpdateEventsListener = listenUserDataUpdateEvents(callback -> {
-            if (callback.getEventType() == UserDataUpdateEvent.UserDataUpdateEventType.ORDER_TRADE_UPDATE
-                    && callback.getOrderTradeUpdateEvent().getExecutionType() == ExecutionType.TRADE) {
-                OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();
-
-                switch (event.getSide()) {
-                    case BUY -> {
-                        tradingStrategies.values().forEach(strategy -> strategy.handleBuying(event));
-                    }
-                    case SELL -> {
-                        tradingStrategies.values().forEach(strategy -> strategy.handleSelling(event));
-                    }
-                }
-
-                refreshAccountBalances();
-            }
-        });
-    }
 
     public void initializeUserDataUpdateStream() {
         if (listenKey == null || listenKey.isEmpty()) { // get current user stream listen key.
