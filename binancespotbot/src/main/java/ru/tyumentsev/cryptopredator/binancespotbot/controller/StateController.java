@@ -2,6 +2,7 @@ package ru.tyumentsev.cryptopredator.binancespotbot.controller;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.binance.api.client.domain.event.CandlestickEvent;
 import lombok.experimental.NonFinal;
@@ -129,8 +130,10 @@ public class StateController {
     }
 
     @GetMapping("/daily/sellJournal")
-    public Map<String, SellRecord> getDailySellJournal() {
-        return daily.getSellJournal();
+    public List<SellRecord> getDailySellJournal() {
+        return daily.getSellJournal().values().stream()
+                .sorted(Comparator.comparing(SellRecord::sellTime).reversed())
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/daily/candleStickEventsStreams")
