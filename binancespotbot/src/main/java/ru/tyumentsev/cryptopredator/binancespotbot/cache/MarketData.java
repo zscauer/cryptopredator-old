@@ -148,8 +148,9 @@ public class MarketData {
             pos.qty(newQty);
             pos.priceDecreaseFactor(priceDecreaseFactor);
         }, () -> {
-            var pos = OpenedPosition.of(pair);
-            pos.maxPrice(price)
+            var pos = new OpenedPosition();
+            pos.symbol(pair)
+                .maxPrice(price)
                 .avgPrice(price) // TODO: how to define avg at application initializing? connect db?
                 .qty(qty)
                 .priceDecreaseFactor(priceDecreaseFactor)
@@ -174,8 +175,9 @@ public class MarketData {
             }
             //pos.qty(qty);
         }, () -> {
-            var pos = OpenedPosition.of(pair);
+            var pos = new OpenedPosition();
 //            pos.maxPrice(price);
+            pos.symbol(pair);
             pos.avgPrice(price); // TODO: how to define avg at application initializing? connect db?
             pos.qty(qty);
             log.info("{} not found in opened short positions, adding new one - '{}'.", pair, pos);
@@ -202,7 +204,8 @@ public class MarketData {
     public void updatePriceDecreaseFactor(final String pair, double priceDecreaseFactor, Map<String, OpenedPosition> openedPositions) {
         Optional.ofNullable(openedPositions.get(pair)).ifPresent(pos -> {
             pos.priceDecreaseFactor(priceDecreaseFactor);
-            log.info("Updating price decrease factor of {} to {}. Value after updating: {}.", pair, priceDecreaseFactor, pos.priceDecreaseFactor());
+            log.info("Updating price decrease factor of {} to {}. Value after updating: {}.", pair, priceDecreaseFactor, openedPositions.get(pair).priceDecreaseFactor());
+
         });
     }
 

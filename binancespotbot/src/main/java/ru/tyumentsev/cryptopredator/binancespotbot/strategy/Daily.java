@@ -18,6 +18,7 @@ import ru.tyumentsev.cryptopredator.binancespotbot.domain.PreviousCandleData;
 import ru.tyumentsev.cryptopredator.binancespotbot.domain.SellRecord;
 import ru.tyumentsev.cryptopredator.binancespotbot.mapping.CandlestickToEventMapper;
 import ru.tyumentsev.cryptopredator.binancespotbot.service.AccountManager;
+import ru.tyumentsev.cryptopredator.binancespotbot.service.CacheService;
 import ru.tyumentsev.cryptopredator.binancespotbot.service.DataService;
 import ru.tyumentsev.cryptopredator.binancespotbot.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.binancespotbot.service.SpotTrading;
@@ -32,8 +33,8 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +46,7 @@ public class Daily implements TradingStrategy {
     final MarketData marketData;
     final SpotTrading spotTrading;
     final AccountManager accountManager;
+    final CacheService cacheService;
     final DataService dataService;
 
     CandlestickInterval candlestickInterval;
@@ -136,7 +138,7 @@ public class Daily implements TradingStrategy {
     private void restoreCachedCandlestickEvents() {
         int yesterdayDayOfYear = LocalDateTime.now().minusDays(1L).getDayOfYear();
 
-        List<PreviousCandleData> dailyCachedCandleData = StreamSupport.stream(dataService.findAllPreviousCandleData().spliterator(), false).filter(data -> data.id().startsWith("Daily")).toList();
+        List<PreviousCandleData> dailyCachedCandleData = dataService.findAllPreviousCandleData().stream().filter(data -> data.id().startsWith("Daily")).toList();
         log.debug("[DAILY] size of empty cached candlestick events before restoring from cache is: {}.",
                 cachedCandlestickEvents.entrySet().stream().filter(entry -> entry.getValue().isEmpty()).collect(Collectors.toSet()).size());
 
@@ -218,14 +220,21 @@ public class Daily implements TradingStrategy {
     public void startCandlstickEventsCacheUpdating(String asset, CandlestickInterval interval) {
         candlestickInterval = interval;
         closeOpenedWebSocketStreams();
+        AtomicInteger marketMonitoringThreadsCounter = new AtomicInteger();
+        AtomicInteger longMonitoringThreadsCounter = new AtomicInteger();
 
-        marketData.getCheapPairsExcludeOpenedPositions(asset)
-                .forEach(ticker ->
-                        candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
-                                marketMonitoringCallback(ticker))));
-        marketData.getLongPositions().forEach((ticker, openedPosition) ->
-                candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
-                        longPositionMonitoringCallback(ticker))));
+        marketData.getCheapPairsExcludeOpenedPositions(asset).forEach(ticker -> {
+            candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
+                    marketMonitoringCallback(ticker)));
+            marketMonitoringThreadsCounter.getAndIncrement();
+        });
+        marketData.getLongPositions().forEach((ticker, openedPosition) -> {
+            candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
+                    longPositionMonitoringCallback(ticker)));
+            longMonitoringThreadsCounter.getAndIncrement();
+        });
+
+        log.info("Runned {} market monitoring threads and {} long monitoring threads.", marketMonitoringThreadsCounter, longMonitoringThreadsCounter);
     }
 
     private BinanceApiCallback<CandlestickEvent> marketMonitoringCallback(String ticker) {
@@ -291,7 +300,7 @@ public class Daily implements TradingStrategy {
     private void buyFast(final String symbol, final double price, String quoteAsset, boolean itsAveraging) {
         if ((itsDealsAllowedPeriod(LocalTime.now()) || itsAveraging) &&
                 !(marketInfo.pairOrderIsProcessing(symbol) || thisSignalWorkedOutBefore(symbol))) {
-            log.debug("[DAILY] price of {} growth more than {}%, and now equals {}.", symbol, Double.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
+            log.info("[DAILY] price of {} growth more than {}%, and now equals {}.", symbol, Double.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
             spotTrading.placeBuyOrderFast(symbol, price, quoteAsset, accountManager);
         }
     }

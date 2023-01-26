@@ -12,7 +12,7 @@ import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.cryptopredator.binancespotbot.cache.MarketData;
 import ru.tyumentsev.cryptopredator.binancespotbot.service.AccountManager;
-import ru.tyumentsev.cryptopredator.binancespotbot.service.DataService;
+import ru.tyumentsev.cryptopredator.binancespotbot.service.CacheService;
 import ru.tyumentsev.cryptopredator.binancespotbot.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.binancespotbot.strategy.TradingStrategy;
 
@@ -30,7 +30,7 @@ public class ApplicationInitializer implements ApplicationRunner {
     MarketInfo marketInfo;
     AccountManager accountManager;
     Map<String, TradingStrategy> tradingStrategies;
-    DataService dataService;
+    CacheService cacheService;
 
     @NonFinal
     @Value("${applicationconfig.testLaunch}")

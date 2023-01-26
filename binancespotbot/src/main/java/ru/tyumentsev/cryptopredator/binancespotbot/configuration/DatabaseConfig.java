@@ -6,10 +6,15 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Scope;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+
+import java.util.Collections;
 
 @Setter
 @Getter
@@ -20,6 +25,8 @@ public class DatabaseConfig {
     String redisHost;
     int redisPort;
     String redisPassword;
+    String dataKeeperAddress;
+    String dataKeeperPort;
 
     @Bean(name = "jedisConnectionFactory")
     JedisConnectionFactory jedisConnectionFactory() {
@@ -38,4 +45,15 @@ public class DatabaseConfig {
         template.setConnectionFactory(jedisConnectionFactory());
         return template;
     }
+
+//    @Bean(name = "dataKeeperWebClient")
+//    @Scope("Prototype")
+//    public WebClient dataKeeperWebClient() {
+//        return WebClient.builder()
+//                .baseUrl(String.format("http://%s:%s", dataKeeperAddress, dataKeeperPort))
+////                .defaultCookie("cookieKey", "cookieValue")
+//                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+//                .defaultUriVariables(Collections.singletonMap("url", String.format("http://%s:%s", dataKeeperAddress, dataKeeperPort)))
+//                .build();
+//    }
 }

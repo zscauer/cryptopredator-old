@@ -1,4 +1,4 @@
-package ru.tyumentsev.cryptopredator.binancespotbot.domain;
+package ru.tyumentsev.cryptopredator.datakeeper.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,13 +26,13 @@ public class OpenedPosition implements Serializable {
     @JsonProperty
     boolean rocketCandidate;
     @JsonProperty
-    double qty;
+    Double qty;
     @JsonProperty
-    double avgPrice;
+    Double avgPrice;
     @JsonProperty
-    double lastPrice;
+    Double lastPrice;
     @JsonProperty
-    double maxPrice;
+    Double maxPrice;
     @JsonProperty
     double priceDecreaseFactor;
 
