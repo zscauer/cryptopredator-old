@@ -26,13 +26,13 @@ public class OpenedPosition implements Serializable {
     @JsonProperty
     boolean rocketCandidate;
     @JsonProperty
-    Double qty;
+    double qty;
     @JsonProperty
-    Double avgPrice;
+    double avgPrice;
     @JsonProperty
-    Double lastPrice;
+    double lastPrice;
     @JsonProperty
-    Double maxPrice;
+    double maxPrice;
     @JsonProperty
     double priceDecreaseFactor;
 
