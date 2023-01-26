@@ -33,7 +33,7 @@ public class DataService {
         ParameterizedTypeReference<List<SellRecord>> typeRef = new ParameterizedTypeReference<List<SellRecord>>(){};
         HttpHeaders headers = new HttpHeaders();
         headers.set("bot-id", botId);
-        HttpEntity<List<SellRecord>> request = new HttpEntity<>(new ArrayList<>(sellRecords), headers);
+        HttpEntity<List<SellRecord>> request = new HttpEntity<>(new ArrayList<>(sellRecords));
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/sellRecord", HttpMethod.POST, request, typeRef);
         log.debug("Next sell records saved:\n{}", response);
 
@@ -45,7 +45,7 @@ public class DataService {
         ParameterizedTypeReference<List<SellRecord>> typeRef = new ParameterizedTypeReference<List<SellRecord>>(){};
         HttpHeaders headers = new HttpHeaders();
         headers.set("bot-id", botId);
-        HttpEntity<List<SellRecord>> request = new HttpEntity<>(new ArrayList<>(), headers);
+        HttpEntity<List<SellRecord>> request = new HttpEntity<>(new ArrayList<>());
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/sellRecord", HttpMethod.GET, request, typeRef);
         log.debug("Get next sell records:\n{}", response);
 
@@ -56,7 +56,7 @@ public class DataService {
 //        RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.set("bot-id", botId);
-        restTemplate.delete(dataKeeperURL + cacheEndpoint + "/sellRecord", headers);
+        restTemplate.delete(dataKeeperURL + cacheEndpoint + "/sellRecord");
     }
 
     public List<PreviousCandleData> saveAllPreviousCandleData(Collection<PreviousCandleData> previousCandleData) {
@@ -64,7 +64,7 @@ public class DataService {
         ParameterizedTypeReference<List<PreviousCandleData>> typeRef = new ParameterizedTypeReference<List<PreviousCandleData>>(){};
         HttpHeaders headers = new HttpHeaders();
         headers.set("bot-id", botId);
-        HttpEntity<List<PreviousCandleData>> request = new HttpEntity<>(new ArrayList<>(previousCandleData), headers);
+        HttpEntity<List<PreviousCandleData>> request = new HttpEntity<>(new ArrayList<>(previousCandleData));
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/previousCandleData", HttpMethod.POST, request, typeRef);
         log.debug("Next previous candle data saved:\n{}", response.getBody());
 
@@ -77,7 +77,7 @@ public class DataService {
         HttpHeaders headers = new HttpHeaders();
         headers.set("bot-id", botId);
         log.info("dataKeeperURL: {}, cacheEndpoint: {}. Result path: {}.", dataKeeperURL, cacheEndpoint, dataKeeperURL + cacheEndpoint + "/previousCandleData");
-        HttpEntity<List<PreviousCandleData>> request = new HttpEntity<>(new ArrayList<>(), headers);
+        HttpEntity<List<PreviousCandleData>> request = new HttpEntity<>(new ArrayList<>());
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/previousCandleData", HttpMethod.GET, request, typeRef);
         log.debug("Get next previous candle data:\n{}", response.getBody());
 
@@ -90,7 +90,7 @@ public class DataService {
         ParameterizedTypeReference<List<PreviousCandleData>> typeRef = new ParameterizedTypeReference<List<PreviousCandleData>>(){};
         HttpHeaders headers = new HttpHeaders();
         headers.set("bot-id", botId);
-        HttpEntity<List<String>> request = new HttpEntity<>((previousCandleData.stream().map(PreviousCandleData::id)).collect(Collectors.toList()), headers);
+        HttpEntity<List<String>> request = new HttpEntity<>((previousCandleData.stream().map(PreviousCandleData::id)).collect(Collectors.toList()));
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/previousCandleData/delete", HttpMethod.POST, request, typeRef);
         log.debug("Deleted next previous candle data:\n{}", response.getBody());
     }
@@ -101,7 +101,7 @@ public class DataService {
         ParameterizedTypeReference<List<OpenedPosition>> typeRef = new ParameterizedTypeReference<List<OpenedPosition>>(){};
         HttpHeaders headers = new HttpHeaders();
         headers.set("bot-id", botId);
-        HttpEntity<List<OpenedPosition>> request = new HttpEntity<>(new ArrayList<>(openedPositions), headers);
+        HttpEntity<List<OpenedPosition>> request = new HttpEntity<>(new ArrayList<>(openedPositions));
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/openedPosition", HttpMethod.POST, request, typeRef);
         log.debug("Next opened positions saved:\n{}", response.getBody());
 
@@ -114,7 +114,7 @@ public class DataService {
         ParameterizedTypeReference<List<OpenedPosition>> typeRef = new ParameterizedTypeReference<List<OpenedPosition>>(){};
         HttpHeaders headers = new HttpHeaders();
         headers.set("bot-id", botId);
-        HttpEntity<List<OpenedPosition>> request = new HttpEntity<>(new ArrayList<>(), headers);
+        HttpEntity<List<OpenedPosition>> request = new HttpEntity<>(new ArrayList<>());
         var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/openedPosition", HttpMethod.GET, request, typeRef);
         log.debug("Get next opened positions:\n{}", response.getBody());
 
@@ -125,6 +125,6 @@ public class DataService {
 //        RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.set("bot-id", botId);
-        restTemplate.delete(dataKeeperURL + cacheEndpoint + "/openedPosition", headers);
+        restTemplate.delete(dataKeeperURL + cacheEndpoint + "/openedPosition");
     }
 }
