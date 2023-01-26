@@ -3,25 +3,25 @@
 
 services:
 
-  binancespotbot:
-    image: binancespotbot
-    container_name: binancespotbot
+  dailyvolumesbot:
+    image: dailyvolumesbot
+    container_name: dailyvolumesbot
     depends_on:
       - datakeeper
     env_file:
-      - binancespotbot/.env
+      - dailyvolumesbot/.env
     ports:
       - 85:8080
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - ./binancespotbot/metrics/logs:/tmp/logs
+      - ./dailyvolumesbot/metrics/logs:/tmp/logs
 
   datakeeper:
     image: datakeeper
     container_name: datakeeper
     depends_on:
-      - redis
+      - redis_binance
       - postgres
     env_file:
       - datakeeper/.env
@@ -32,9 +32,9 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ./datakeeper/metrics/logs:/tmp/logs
 
-  redis:
+  redis_binance:
     image: redis:7.0.7-alpine
-    container_name: redis_binancetradebot
+    container_name: redis_binance
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -46,7 +46,7 @@ services:
 
   postgres:
     image: postgres:15.1-alpine
-    container_name: postgres_binancetradebot
+    container_name: postgres
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
@@ -74,6 +74,8 @@ services:
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin4
+    depends_on:
+      - postgres
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
@@ -94,7 +96,7 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - ./binancespotbot/metrics/prometheus.yaml:/etc/prometheus.yaml
+      - ./dailyvolumesbot/metrics/prometheus.yaml:/etc/prometheus.yaml
     command: [
       "--config.file=/etc/prometheus.yaml" 
       # "--enable-feature=exemplar-storage",
@@ -115,8 +117,8 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - ./binancespotbot/metrics/grafana:/var/lib/grafana
-      - ./binancespotbot/metrics/grafana-dashboards:/etc/grafana/provisioning/dashboards
-      - ./binancespotbot/metrics/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./dailyvolumesbot/metrics/grafana:/var/lib/grafana
+      - ./dailyvolumesbot/metrics/grafana-dashboards:/etc/grafana/provisioning/dashboards
+      - ./dailyvolumesbot/metrics/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
     env_file:
       - .env
