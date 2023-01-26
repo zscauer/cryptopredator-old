@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 public class DataService {
 
     RestTemplate restTemplate = new RestTemplate();
-//    @Value("${databaseconfig.dataKeeperURL}")
-    String dataKeeperURL = "http://datakeeper:8080";
+    @Value("${databaseconfig.dataKeeperURL}")
+    String dataKeeperURL;
     String cacheEndpoint = "/api/cache/v1";
     final String botId = "binancespotbot";
 
