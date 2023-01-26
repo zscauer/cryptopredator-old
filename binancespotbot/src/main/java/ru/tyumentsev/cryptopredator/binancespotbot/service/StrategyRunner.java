@@ -85,6 +85,9 @@ public class StrategyRunner {
     public void daily_startCandlstickEventsCacheUpdating() {
         if (dailyEnabled && !testLaunch) {
             daily.startCandlstickEventsCacheUpdating(tradingAsset, CandlestickInterval.DAILY);
+            Thread.getAllStackTraces().keySet().stream().filter(Thread::isAlive).forEach(thread -> {
+                log.info("Thread {} name: {} group: {}.", thread.getId(), thread.getName(), thread.getThreadGroup());
+            });
         }
     }
 
