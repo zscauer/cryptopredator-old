@@ -38,7 +38,6 @@ public class StateController {
     BinanceApiRestClient restClient;
     MarketData marketData;
     MarketInfo marketInfo;
-    SpotTrading spotTrading;
     Daily daily;
 
     @NonFinal
