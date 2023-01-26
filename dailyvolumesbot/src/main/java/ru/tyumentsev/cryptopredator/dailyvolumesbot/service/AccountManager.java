@@ -33,7 +33,6 @@ public class AccountManager implements TradingService {
 
     final BinanceApiRestClient restClient;
     final BinanceApiWebSocketClient webSocketClient;
-    final Map<String, TradingStrategy> tradingStrategies;
 
     @Value("${applicationconfig.testLaunch}")
     boolean testLaunch;
