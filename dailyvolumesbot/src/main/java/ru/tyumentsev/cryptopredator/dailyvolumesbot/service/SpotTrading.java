@@ -38,7 +38,7 @@ public class SpotTrading implements TradingService {
         return accountManager.getAccountBalances();
     }
 
-    public void placeBuyOrderFast(final String symbol, final double price, String quoteAsset) {
+    public void placeBuyOrderFast(final String symbol, final float price, String quoteAsset) {
         if (Thread.holdsLock(this)) {
             log.info("placeBuyOrderFast({}) object monitor already locked by the current thread {} ({}).", symbol, Thread.currentThread().getName(), Thread.currentThread().getId());
             return;
@@ -57,7 +57,7 @@ public class SpotTrading implements TradingService {
         }
     }
 
-    public void placeSellOrderFast(final String symbol, final Double qty) {
+    public void placeSellOrderFast(final String symbol, final float qty) {
         if (Thread.holdsLock(this)) {
             log.info("placeSellOrderFast({}) object monitor already locked by the current thread {} ({}).", symbol, Thread.currentThread().getName(), Thread.currentThread().getId());
             return;
@@ -68,7 +68,7 @@ public class SpotTrading implements TradingService {
         }
     }
 
-    public void placeLimitBuyOrderAtLastMarketPrice(String symbol, Double quantity) {
+    public void placeLimitBuyOrderAtLastMarketPrice(String symbol, float quantity) {
 //        log.debug("Try to place LIMIT BUY order: {} for {}.", symbol, quantity);
         asyncRestClient.getOrderBook(symbol, 1, orderBookResponse -> {
             placeLimitBuyOrder(symbol, String.valueOf(Math.ceil(quantity)),
@@ -76,7 +76,7 @@ public class SpotTrading implements TradingService {
         });
     }
 
-    public void placeLimitSellOrderAtLastMarketPrice(String symbol, Double quantity) {
+    public void placeLimitSellOrderAtLastMarketPrice(String symbol, float quantity) {
 //        log.debug("Try to place LIMIT SELL order: {} for {}.", symbol, quantity);
         asyncRestClient.getOrderBook(symbol, 1, orderBookResponse -> {
             placeLimitSellOrder(symbol, String.valueOf(quantity),
@@ -99,21 +99,21 @@ public class SpotTrading implements TradingService {
         });
     }
 
-    public void placeMarketBuyOrder(String symbol, double quantity) {
+    public void placeMarketBuyOrder(String symbol, float quantity) {
         asyncRestClient.newOrder(NewOrder.marketBuy(symbol, String.valueOf(Math.ceil(quantity))),
             marketBuyOrderCallback -> {
                 log.debug("Async MARKET BUY order placed: {}", marketBuyOrderCallback);
             });
     }
 
-    public void placeMarketSellOrder(String symbol, double quantity) {
+    public void placeMarketSellOrder(String symbol, float quantity) {
         asyncRestClient.newOrder(NewOrder.marketSell(symbol, String.valueOf(quantity)),
             marketSellOrderCallback -> {
                 log.debug("Async MARKET SELL order placed: {}", marketSellOrderCallback);
             });
     }
 
-    public void closePostitions(Map<String, Double> positionsToClose) {
+    public void closePostitions(Map<String, Float> positionsToClose) {
         log.debug("Start to go out at last price from {} positions to close:\n{}", positionsToClose.size(), positionsToClose);
         positionsToClose.forEach(this::placeLimitSellOrderAtLastMarketPrice);
     }

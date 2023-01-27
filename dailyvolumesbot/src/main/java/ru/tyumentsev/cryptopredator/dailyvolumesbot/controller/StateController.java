@@ -44,8 +44,8 @@ public class StateController {
     public List<AssetBalance> accountBalance() {
         Account account = restClient.getAccount();
         return account.getBalances().stream()
-                .filter(balance -> Double.parseDouble(balance.getFree()) > 0
-                        || Double.parseDouble(balance.getLocked()) > 0)
+                .filter(balance -> Float.parseFloat(balance.getFree()) > 0
+                        || Float.parseFloat(balance.getLocked()) > 0)
                 .sorted(Comparator.comparing(AssetBalance::getAsset))
                 .toList();
     }

@@ -61,7 +61,7 @@ public class ApplicationInitializer implements ApplicationRunner {
 
         activeStrategies.forEach((name, implementation) -> implementation.prepareData());
 
-        log.info("Application initialization complete.\nActive strategies: {}.", activeStrategies.keySet());
+        log.info("Application initialization complete. Active strategies: {}.", activeStrategies.keySet());
     }
 
     @Scheduled(fixedDelayString = "${strategy.global.initializeUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.initializeUserDataUpdateStream.initialDelay}")

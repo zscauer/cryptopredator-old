@@ -66,13 +66,13 @@ public class AccountManager implements TradingService {
         restClient.keepAliveUserDataStream(listenKey);
     }
 
-    public Double getFreeAssetBalance(String asset) {
-        return Double.parseDouble(restClient.getAccount().getAssetBalance(asset).getFree());
+    public Float getFreeAssetBalance(String asset) {
+        return Float.parseFloat(restClient.getAccount().getAssetBalance(asset).getFree());
     }
 
     public AccountManager refreshAccountBalances() {
         currentBalances = restClient.getAccount().getBalances().stream()
-                .filter(balance -> Double.parseDouble(balance.getFree()) > 0).toList();
+                .filter(balance -> Float.parseFloat(balance.getFree()) > 0).toList();
         return this;
     }
 

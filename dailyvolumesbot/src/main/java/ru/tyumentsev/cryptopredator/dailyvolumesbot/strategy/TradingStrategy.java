@@ -4,11 +4,11 @@ import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 
 public interface TradingStrategy {
 
-    default double parsedDouble(String stringToParse) {
-        return Double.parseDouble(stringToParse);
+    default float parsedFloat(String stringToParse) {
+        return Float.parseFloat(stringToParse);
     }
 
-    default double percentageDifference(double bigger, double smaller) {
+    default float percentageDifference(float bigger, float smaller) {
         return 100 * (bigger - smaller) / bigger;
     }
 

@@ -50,7 +50,7 @@ public class MarketData {
 
     @NonFinal
     @Value("${strategy.global.maximalPairPrice}")
-    double maximalPairPrice;
+    float maximalPairPrice;
     @NonFinal
     @Value("${strategy.global.candlestickEventsCacheSize}")
     int candlestickEventsCacheSize;
@@ -65,7 +65,7 @@ public class MarketData {
         List<String> filteredPairs = marketInfo
                 .getLastTickersPrices(
                         combinePairsToRequestString(pairs))
-                .stream().filter(tickerPrice -> Double.parseDouble(tickerPrice.getPrice()) < maximalPairPrice)
+                .stream().filter(tickerPrice -> Float.parseFloat(tickerPrice.getPrice()) < maximalPairPrice)
                 .map(TickerPrice::getSymbol).collect(Collectors.toCollection(ArrayList::new));
         log.info("Filtered {} cheap tickers.", filteredPairs.size());
 
@@ -94,8 +94,8 @@ public class MarketData {
                 .getAccountBalances().stream()
                 .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
                 .forEach(balance -> putLongPositionToPriceMonitoring(balance.getAsset() + tradingAsset,
-                        Double.parseDouble(marketInfo.getLastTickerPrice(balance.getAsset() + tradingAsset).getPrice()),
-                        Double.parseDouble(balance.getFree()), 1D, false));
+                        Float.parseFloat(marketInfo.getLastTickerPrice(balance.getAsset() + tradingAsset).getPrice()),
+                        Float.parseFloat(balance.getFree()), 1F, false));
 
         log.info("{} pair(s) initialized from account manager to opened long positions price monitoring: {}",
                 longPositions.size(), longPositions);
@@ -131,7 +131,7 @@ public class MarketData {
         return pairs;
     }
 
-    public void putLongPositionToPriceMonitoring(String pair, Double price, Double qty, Double priceDecreaseFactor, Boolean rocketCandidate) {
+    public void putLongPositionToPriceMonitoring(String pair, float price, float qty, float priceDecreaseFactor, Boolean rocketCandidate) {
         Optional.ofNullable(longPositions.get(pair)).ifPresentOrElse(pos -> {
             var newQty = pos.qty() + qty;
             pos.avgPrice((pos.avgPrice() * pos.qty() + price * qty) / newQty);
@@ -153,7 +153,7 @@ public class MarketData {
         }
     }
 
-    public void updateOpenedPosition(String pair, Double lastPrice, Map<String, OpenedPosition> openedPositions) {
+    public void updateOpenedPosition(String pair, float lastPrice, Map<String, OpenedPosition> openedPositions) {
         Optional.ofNullable(openedPositions.get(pair)).ifPresent(pos -> {
             pos.lastPrice(lastPrice);
             if (lastPrice > pos.maxPrice()) {
@@ -162,7 +162,7 @@ public class MarketData {
         });
     }
 
-    public void updatePriceDecreaseFactor(final String pair, double priceDecreaseFactor, Map<String, OpenedPosition> openedPositions) {
+    public void updatePriceDecreaseFactor(final String pair, float priceDecreaseFactor, Map<String, OpenedPosition> openedPositions) {
         Optional.ofNullable(openedPositions.get(pair)).ifPresent(pos -> {
             pos.priceDecreaseFactor(priceDecreaseFactor);
             log.info("Updating price decrease factor of {} to {}. Value after updating: {}.", pair, priceDecreaseFactor, openedPositions.get(pair).priceDecreaseFactor());
