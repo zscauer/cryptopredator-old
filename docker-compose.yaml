@@ -15,7 +15,7 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - ./dailyvolumesbot/metrics/logs:/tmp/logs
+      - ./metrics/logs/dailyvolumesbot:/tmp/logs
 
   datakeeper:
     image: datakeeper
@@ -30,7 +30,7 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - ./datakeeper/metrics/logs:/tmp/logs
+      - ./metrics/logs/datakeeper:/tmp/logs
 
   redis_binance:
     image: redis:7.0.7-alpine
@@ -71,20 +71,20 @@ services:
 #    ports:
 #      - "9181:9187"
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin4
-    depends_on:
-      - postgres
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    env_file:
-      - .env
-    ports:
-      - 5050:80
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
+#  pgadmin:
+#    image: dpage/pgadmin4
+#    container_name: pgadmin4
+#    depends_on:
+#      - postgres
+#    extra_hosts:
+#      - "host.docker.internal:host-gateway"
+#    env_file:
+#      - .env
+#    ports:
+#      - 5050:80
+#    volumes:
+#      - /etc/timezone:/etc/timezone:ro
+#      - /etc/localtime:/etc/localtime:ro
 
   prometheus:
     image: prom/prometheus
@@ -96,7 +96,7 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - ./dailyvolumesbot/metrics/prometheus.yaml:/etc/prometheus.yaml
+      - ./metrics/prometheus.yaml:/etc/prometheus.yaml
     command: [
       "--config.file=/etc/prometheus.yaml" 
       # "--enable-feature=exemplar-storage",
@@ -117,8 +117,8 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - ./dailyvolumesbot/metrics/grafana:/var/lib/grafana
-      - ./dailyvolumesbot/metrics/grafana-dashboards:/etc/grafana/provisioning/dashboards
-      - ./dailyvolumesbot/metrics/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./metrics/grafana:/var/lib/grafana
+      - ./metrics/grafana-dashboards:/etc/grafana/provisioning/dashboards
+      - ./metrics/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
     env_file:
       - .env

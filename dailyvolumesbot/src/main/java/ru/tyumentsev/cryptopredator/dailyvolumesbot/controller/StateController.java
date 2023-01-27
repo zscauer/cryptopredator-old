@@ -40,10 +40,6 @@ public class StateController {
     MarketInfo marketInfo;
     Daily daily;
 
-    @NonFinal
-    @Value("${strategy.global.tradingAsset}")
-    String tradingAsset;
-
     @GetMapping("/accountBalance")
     public List<AssetBalance> accountBalance() {
         Account account = restClient.getAccount();
@@ -79,30 +75,20 @@ public class StateController {
         marketData.getLongPositions().remove(pair.toUpperCase());
     }
 
-    @GetMapping("/volumeCatcher/getCheapPairsWithoutOpenedPositions")
-    public List<String> getCheapPairsWithoutOpenedPositions(@RequestParam String asset) {
-        return marketData.getCheapPairsExcludeOpenedPositions(asset);
-    }
-
     @GetMapping("/sellJournal")
-    public Map<String, LocalDateTime> getSellJournal() {
-        return marketData.getSellJournal();
-    }
-
-    @GetMapping("/daily/sellJournal")
-    public List<SellRecord> getDailySellJournal() {
-        return daily.getSellJournal().values().stream()
+    public List<SellRecord> getSellJournal() {
+        return marketData.getSellJournal().values().stream()
                 .sorted(Comparator.comparing(SellRecord::sellTime).reversed())
                 .collect(Collectors.toList());
     }
 
-    @GetMapping("/daily/candleStickEventsStreams")
+    @GetMapping("/candleStickEventsStreams")
     public Set<String> getDailyCandleStickEventsStreams() {
         return daily.getCandleStickEventsStreams().keySet();
     }
 
-    @GetMapping("/daily/getCachedCandleStickEvents")
+    @GetMapping("/cachedCandleStickEvents")
     public Map<String, Deque<CandlestickEvent>> getDailyCachedCandleStickEvents() {
-        return daily.getCachedCandlestickEvents();
+        return marketData.getCachedCandlestickEvents();
     }
 }

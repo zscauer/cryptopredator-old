@@ -21,6 +21,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.cryptopredator.dailyvolumesbot.domain.Interest;
 import ru.tyumentsev.cryptopredator.dailyvolumesbot.domain.OpenedPosition;
+import ru.tyumentsev.cryptopredator.dailyvolumesbot.domain.SellRecord;
 import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.AccountManager;
 import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.MarketInfo;
 
@@ -31,18 +32,19 @@ import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.MarketInfo;
 public class MarketData {
     // key - quote asset, value - available pairs to this asset.
     Map<String, List<String>> availablePairs = new HashMap<>();
+    @Getter
+    Map<String, List<String>> cheapPairs = new ConcurrentHashMap<>();
+    @Getter
+    final Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents = new ConcurrentHashMap<>();
     // monitoring last maximum price of opened positions. key - pair, value - last price.
     @Getter
     Map<String, OpenedPosition> longPositions = new ConcurrentHashMap<>();
     @Getter
     Map<String, OpenedPosition> shortPositions = new ConcurrentHashMap<>();
 
-    @Getter
-    Map<String, List<String>> cheapPairs = new ConcurrentHashMap<>();
-
     // stores time of last selling to avoid repeated buy signals.
     @Getter
-    Map<String, LocalDateTime> sellJournal = new ConcurrentHashMap<>();
+    Map<String, SellRecord> sellJournal = new ConcurrentHashMap<>();
 
     String QUERY_SYMBOLS_BEGIN = "[\"", DELIMITER = "\",\"", QUERY_SYMBOLS_END = "\"]"; // required format is "["BTCUSDT","BNBUSDT"]".
 
@@ -71,7 +73,7 @@ public class MarketData {
         putCheapPairs(asset, filteredPairs);
     }
 
-    public void constructCandleStickEventsCache(String asset, Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents) {
+    public void constructCandleStickEventsCache(String asset) {
         Optional.ofNullable(cheapPairs.get(asset)).ifPresentOrElse(list -> {
             list.forEach(pair -> {
                 cachedCandlestickEvents.put(pair, new LinkedList<>());
@@ -171,7 +173,7 @@ public class MarketData {
         longPositions.remove(pair);
     }
 
-    public void addCandlestickEventToCache(String ticker, CandlestickEvent candlestickEvent, Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents) {
+    public void addCandlestickEventToCache(String ticker, CandlestickEvent candlestickEvent) {
         Deque<CandlestickEvent> eventsQueue = Optional.ofNullable(cachedCandlestickEvents.get(ticker)).orElseGet(() -> {
             cachedCandlestickEvents.put(ticker, new LinkedList<>());
             return cachedCandlestickEvents.get(ticker);
@@ -187,19 +189,18 @@ public class MarketData {
             eventsQueue.removeFirst();
         }
     }
-
     public void addSellRecordToJournal(String pair) {
-        sellJournal.put(pair, LocalDateTime.now());
+        sellJournal.put(pair, new SellRecord(pair, LocalDateTime.now()));
     }
 
-    public boolean thisSignalWorkedOutBefore (String pair, long minutesDifference) {
+    public boolean thisSignalWorkedOutBefore(final String pair) {
         AtomicBoolean ignoreSignal = new AtomicBoolean(false);
 
-        Optional.ofNullable(sellJournal.get(pair)).ifPresent(dealTime -> {
-            if (LocalDateTime.now().isBefore(dealTime.plusMinutes(minutesDifference))) {
+        Optional.ofNullable(sellJournal.get(pair)).ifPresent(sellRecord -> {
+            if (sellRecord.sellTime().getDayOfYear() == LocalDateTime.now().getDayOfYear()) {
                 ignoreSignal.set(true);
             } else {
-//                log.info("Period of signal ignoring for {} expired, remove pair from sell journal.", pair);
+                log.info("[DAILY] Period of signal ignoring for {} expired, remove pair from sell journal.", pair);
                 sellJournal.remove(pair);
             }
         });
