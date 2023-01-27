@@ -5,7 +5,7 @@ plugins {
     id 'maven-publish'
 }
 
-def artifactVersion = '0.2.3'
+def artifactVersion = '0.3.0'
 def springBootVersion = '2.7.7'
 def prometheusVersion = '0.16.0'
 

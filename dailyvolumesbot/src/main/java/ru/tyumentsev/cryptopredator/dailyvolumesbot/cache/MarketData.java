@@ -200,7 +200,7 @@ public class MarketData {
             if (sellRecord.sellTime().getDayOfYear() == LocalDateTime.now().getDayOfYear()) {
                 ignoreSignal.set(true);
             } else {
-                log.info("[DAILY] Period of signal ignoring for {} expired, remove pair from sell journal.", pair);
+                log.debug("Period of signal ignoring for {} expired, remove pair from sell journal.", pair);
                 sellJournal.remove(pair);
             }
         });
