@@ -46,6 +46,7 @@ public class StateController {
         return account.getBalances().stream()
                 .filter(balance -> Double.parseDouble(balance.getFree()) > 0
                         || Double.parseDouble(balance.getLocked()) > 0)
+                .sorted(Comparator.comparing(AssetBalance::getAsset))
                 .toList();
     }
 
@@ -61,13 +62,17 @@ public class StateController {
     }
 
     @GetMapping("/openedPositions/long")
-    public Map<String, OpenedPosition> getOpenedLongPositions() {
-        return marketData.getLongPositions();
+    public List<OpenedPosition> getOpenedLongPositions() {
+        return marketData.getLongPositions().values().stream()
+                .sorted(Comparator.comparing(OpenedPosition::symbol))
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/openedPositions/short")
-    public Map<String, OpenedPosition> getOpenedShortPositions() {
-        return marketData.getShortPositions();
+    public List<OpenedPosition> getOpenedShortPositions() {
+        return marketData.getShortPositions().values().stream()
+                .sorted(Comparator.comparing(OpenedPosition::symbol))
+                .collect(Collectors.toList());
     }
 
     @DeleteMapping("/openedPositions/long/{pair}")
@@ -83,8 +88,10 @@ public class StateController {
     }
 
     @GetMapping("/candleStickEventsStreams")
-    public Set<String> getDailyCandleStickEventsStreams() {
-        return daily.getCandleStickEventsStreams().keySet();
+    public List<String> getDailyCandleStickEventsStreams() {
+        return daily.getCandleStickEventsStreams().keySet().stream()
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/cachedCandleStickEvents")
