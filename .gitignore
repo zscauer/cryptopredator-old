@@ -2,3 +2,5 @@
 data/*
 .idea
 .java-version
+metrics/logs/
+metrics/grafana/
