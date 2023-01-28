@@ -15,12 +15,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.tyumentsev.cryptopredator.dailyvolumesbot.cache.MarketData;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.domain.OpenedPosition;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.domain.PreviousCandleData;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.mapping.CandlestickToEventMapper;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.CacheService;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.DataService;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.MarketInfo;
+import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
+import ru.tyumentsev.cryptopredator.commons.domain.PreviousCandleData;
+import ru.tyumentsev.cryptopredator.commons.mapping.CandlestickToEventMapper;
+//import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.CacheService;
+import ru.tyumentsev.cryptopredator.commons.service.DataService;
+import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.SpotTrading;
 
 import javax.annotation.PreDestroy;
@@ -44,7 +44,7 @@ public class Daily implements TradingStrategy {
     final MarketInfo marketInfo;
     final MarketData marketData;
     final SpotTrading spotTrading;
-    final CacheService cacheService;
+//    final CacheService cacheService;
     final DataService dataService;
 
     CandlestickInterval candlestickInterval;
@@ -112,11 +112,11 @@ public class Daily implements TradingStrategy {
 
         log.info("Prepared candlestick events of {} pairs.", cachedCandlestickEvents.values().stream().filter(value -> !value.isEmpty()).count());
 
-        restoreSellJournalFromBackup();
+        restoreSellJournalFromCache();
         prepareOpenedLongPositions();
     }
 
-    private void restoreSellJournalFromBackup() {
+    private void restoreSellJournalFromCache() {
         var sellJournal = marketData.getSellJournal();
         dataService.findAllSellRecords().forEach(record -> sellJournal.put(record.symbol(), record));
         dataService.deleteAllSellRecords();
@@ -283,11 +283,10 @@ public class Daily implements TradingStrategy {
                 marketData.updateOpenedPosition(ticker, currentPrice, marketData.getLongPositions());
 
                 if (currentPrice > openedPosition.avgPrice() * pairTakeProfitFactor) {
-                    log.info("Current price decrease factor of {} is {}.", openedPosition.symbol(), openedPosition.priceDecreaseFactor());
-                    marketData.updatePriceDecreaseFactor(ticker, takeProfitPriceDecreaseFactor, marketData.getLongPositions());
-//                    openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
+                    log.debug("Current price decrease factor of {} is {}.", openedPosition.symbol(), openedPosition.priceDecreaseFactor());
+//                    marketData.updatePriceDecreaseFactor(ticker, takeProfitPriceDecreaseFactor, marketData.getLongPositions());
+                    openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
                     if (averagingEnabled) {
-                        log.info("Avergaing enabled, try to buy fast {} with price decrease factor {}.", ticker, openedPosition.priceDecreaseFactor());
                         buyFast(ticker, currentPrice, tradingAsset, true);
                     }
                 }

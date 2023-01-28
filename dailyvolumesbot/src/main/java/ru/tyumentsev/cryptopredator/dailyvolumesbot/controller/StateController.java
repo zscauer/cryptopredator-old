@@ -23,10 +23,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import ru.tyumentsev.cryptopredator.dailyvolumesbot.cache.MarketData;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.domain.OpenedPosition;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.domain.SellRecord;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.MarketInfo;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.SpotTrading;
+import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
+import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
+import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.dailyvolumesbot.strategy.Daily;
 
 @RestController

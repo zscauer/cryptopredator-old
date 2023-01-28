@@ -18,6 +18,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
+import ru.tyumentsev.cryptopredator.commons.service.DataService;
+import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 
 @Getter
 @Setter
@@ -56,6 +59,25 @@ public class ApplicationConfig {
         return binanceApiClientFactory().newWebSocketClient();
     }
     // ---------- Binance functionality
+
+    // ++++++++++ Cryptopredator commons
+    @Bean
+    @DependsOn("binanceApiWebSocketClient")
+    public MarketInfo marketInfo() {
+        return new MarketInfo(binanceApiRestClient(), binanceApiWebSocketClient());
+    }
+
+    @Bean
+    @DependsOn("binanceApiWebSocketClient")
+    public AccountManager accountManager() {
+        return new AccountManager(binanceApiRestClient(), binanceApiWebSocketClient());
+    }
+
+    @Bean
+    public DataService dataService() {
+        return new DataService();
+    }
+    // ---------- Cryptopredator commons
 
     @Bean
 	public ServletRegistrationBean<MetricsServlet> metricsServlet() {

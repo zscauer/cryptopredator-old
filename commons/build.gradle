@@ -1,0 +1,51 @@
+plugins {
+    id 'java'
+    id 'io.freefair.lombok' version '6.6.1'
+    id 'maven-publish'
+}
+def artifactVersion = '0.1'
+
+group 'ru.tyumentsev.cryptopredator'
+version = artifactVersion
+description = 'cryptopredator commons'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation "com.binance.api:binance-api-client:1.2.0"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    implementation "org.projectlombok:lombok:1.18.24"
+    implementation "org.springframework.data:spring-data-redis:2.7.6"
+    implementation 'org.springframework:spring-web:5.3.24'
+//    implementation "redis.clients:jedis:3.8.0"
+}
+
+jar {
+    project.version = artifactVersion
+    setArchivesBaseName('commons')
+    setProperty('version', artifactVersion)
+//    setProperty('classifier', '') // build jar without "-plain" suffix
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'ru.tyumentsev.cryptopredator'
+            artifactId = 'commons'
+            version = artifactVersion
+
+            from components.java
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
+
+test {
+    useJUnitPlatform()
+}

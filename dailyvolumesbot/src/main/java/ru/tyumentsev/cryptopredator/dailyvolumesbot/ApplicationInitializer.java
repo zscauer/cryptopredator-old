@@ -13,17 +13,14 @@ import org.springframework.stereotype.Component;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.cryptopredator.dailyvolumesbot.cache.MarketData;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.AccountManager;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.CacheService;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.MarketInfo;
+import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
+import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.dailyvolumesbot.strategy.TradingStrategy;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
 

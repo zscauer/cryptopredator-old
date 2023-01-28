@@ -12,18 +12,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import com.binance.api.client.domain.event.CandlestickEvent;
-import com.binance.api.client.domain.market.Candlestick;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.domain.Interest;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.domain.OpenedPosition;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.domain.SellRecord;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.AccountManager;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.MarketInfo;
+import ru.tyumentsev.cryptopredator.commons.domain.Interest;
+import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
+import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
+import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
+import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 
 @Repository
 @RequiredArgsConstructor
