@@ -9,13 +9,18 @@ global:
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.
 scrape_configs:
-  - job_name: 'dailyvolumesbot monitoring prometheus job'
-    scrape_interval: 5s
-    metrics_path: '/actuator/prometheus'
-    static_configs:
-      - targets: ['host.docker.internal:85']
   - job_name: 'datakeeper monitoring prometheus job'
     scrape_interval: 5s
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['host.docker.internal:86']
+      - targets: ['host.docker.internal:100', 'host.docker.internal:101', 'host.docker.internal:102']
+#  - job_name: 'dailyvolumesbot monitoring prometheus job'
+#    scrape_interval: 5s
+#    metrics_path: '/actuator/prometheus'
+#    static_configs:
+#      - targets: ['host.docker.internal:101']
+#  - job_name: 'multitimeframe monitoring prometheus job'
+#    scrape_interval: 5s
+#    metrics_path: '/actuator/prometheus'
+#    static_configs:
+#      - targets: ['host.docker.internal:102']

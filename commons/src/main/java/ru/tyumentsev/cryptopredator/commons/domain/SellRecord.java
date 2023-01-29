@@ -4,5 +4,6 @@ import java.time.LocalDateTime;
 
 public record SellRecord(
         String symbol,
-        LocalDateTime sellTime) {
-}
+        LocalDateTime sellTime,
+        String strategy
+) {}

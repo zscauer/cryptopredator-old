@@ -8,5 +8,6 @@ import java.time.LocalDateTime;
 @RedisHash("SellRecord")
 public record SellRecord(
         @Id String symbol,
-        LocalDateTime sellTime
+        LocalDateTime sellTime,
+        String strategy
 ) {}

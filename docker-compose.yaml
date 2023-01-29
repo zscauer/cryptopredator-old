@@ -11,11 +11,25 @@ services:
     env_file:
       - dailyvolumesbot/.env
     ports:
-      - 85:8080
+      - 101:8080
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./metrics/logs/dailyvolumesbot:/tmp/logs
+
+  multitimeframebot:
+    image: multitimeframebot
+    container_name: multitimeframebot
+    depends_on:
+      - datakeeper
+    env_file:
+      - multitimeframebot/.env
+    ports:
+      - 102:8080
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./metrics/logs/multitimeframebot:/tmp/logs
 
   datakeeper:
     image: datakeeper
@@ -26,7 +40,7 @@ services:
     env_file:
       - datakeeper/.env
     ports:
-      - 86:8080
+      - 100:8080
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro

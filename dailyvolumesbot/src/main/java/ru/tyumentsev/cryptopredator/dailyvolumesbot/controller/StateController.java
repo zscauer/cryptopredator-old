@@ -1,31 +1,26 @@
 package ru.tyumentsev.cryptopredator.dailyvolumesbot.controller;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import com.binance.api.client.domain.event.CandlestickEvent;
-import lombok.experimental.NonFinal;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.domain.account.Account;
 import com.binance.api.client.domain.account.AssetBalance;
-import com.binance.api.client.domain.market.Candlestick;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.cache.MarketData;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
+import ru.tyumentsev.cryptopredator.dailyvolumesbot.cache.DailyVolumesStrategyCondition;
 import ru.tyumentsev.cryptopredator.dailyvolumesbot.strategy.Daily;
 
 @RestController
@@ -35,7 +30,7 @@ import ru.tyumentsev.cryptopredator.dailyvolumesbot.strategy.Daily;
 public class StateController {
 
     BinanceApiRestClient restClient;
-    MarketData marketData;
+    DailyVolumesStrategyCondition dailyVolumesStrategyCondition;
     MarketInfo marketInfo;
     Daily daily;
 
@@ -62,26 +57,26 @@ public class StateController {
 
     @GetMapping("/openedPositions/long")
     public List<OpenedPosition> getOpenedLongPositions() {
-        return marketData.getLongPositions().values().stream()
+        return dailyVolumesStrategyCondition.getLongPositions().values().stream()
                 .sorted(Comparator.comparing(OpenedPosition::symbol))
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/openedPositions/short")
     public List<OpenedPosition> getOpenedShortPositions() {
-        return marketData.getShortPositions().values().stream()
+        return dailyVolumesStrategyCondition.getShortPositions().values().stream()
                 .sorted(Comparator.comparing(OpenedPosition::symbol))
                 .collect(Collectors.toList());
     }
 
     @DeleteMapping("/openedPositions/long/{pair}")
     public void deletePairFromOpenedLongPositionsCache(@PathVariable String pair) {
-        marketData.getLongPositions().remove(pair.toUpperCase());
+        dailyVolumesStrategyCondition.getLongPositions().remove(pair.toUpperCase());
     }
 
     @GetMapping("/sellJournal")
     public List<SellRecord> getSellJournal() {
-        return marketData.getSellJournal().values().stream()
+        return dailyVolumesStrategyCondition.getSellJournal().values().stream()
                 .sorted(Comparator.comparing(SellRecord::sellTime).reversed())
                 .collect(Collectors.toList());
     }
@@ -95,6 +90,6 @@ public class StateController {
 
     @GetMapping("/cachedCandleStickEvents")
     public Map<String, Deque<CandlestickEvent>> getDailyCachedCandleStickEvents() {
-        return marketData.getCachedCandlestickEvents();
+        return daily.getCachedCandlestickEvents();
     }
 }

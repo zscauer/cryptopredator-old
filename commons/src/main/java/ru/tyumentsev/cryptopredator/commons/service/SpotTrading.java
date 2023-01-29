@@ -2,6 +2,7 @@ package ru.tyumentsev.cryptopredator.commons.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.binance.api.client.domain.account.AssetBalance;
 import org.springframework.beans.factory.annotation.Value;
@@ -106,6 +107,13 @@ public class SpotTrading implements TradingService {
                 marketSellOrderCallback -> {
                     log.debug("Async MARKET SELL order placed: {}", marketSellOrderCallback);
                 });
+    }
+
+    public List<AssetBalance> recieveOpenedLongPositionsFromMarket() {
+        return accountManager.refreshAccountBalances()
+                .getAccountBalances().stream()
+                .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
+                .collect(Collectors.toList());
     }
 
     public void closePostitions(Map<String, Float> positionsToClose) {

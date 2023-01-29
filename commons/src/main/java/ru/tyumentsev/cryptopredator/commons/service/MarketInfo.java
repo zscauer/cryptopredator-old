@@ -1,9 +1,13 @@
 package ru.tyumentsev.cryptopredator.commons.service;
 
 import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -37,14 +41,54 @@ public class MarketInfo implements TradingService {
      */
     @Getter
     Map<String, Boolean> processedOrders = new ConcurrentHashMap<>();
+    Map<String, List<String>> availablePairs = new HashMap<>();
+    @Getter
+    Map<String, List<String>> cheapPairs = new ConcurrentHashMap<>();
+
+    String QUERY_SYMBOLS_BEGIN = "[\"", DELIMITER = "\",\"", QUERY_SYMBOLS_END = "\"]"; // required format is "["BTCUSDT","BNBUSDT"]".
 
     public List<String> getAvailableTradePairs(final String quoteAsset) {
-        return restClient.getExchangeInfo().getSymbols().stream()
+        List<String> pairs = restClient.getExchangeInfo().getSymbols().stream()
                 .filter(symbolInfo -> symbolInfo.getStatus() == SymbolStatus.TRADING
                         && symbolInfo.getQuoteAsset().equalsIgnoreCase(quoteAsset)
                         && symbolInfo.isSpotTradingAllowed())
                 .map(SymbolInfo::getSymbol)
                 .collect(Collectors.toList());
+        availablePairs.put(quoteAsset, pairs);
+        return pairs;
+    }
+
+    /**
+     * Get all pairs, that trades against asset and return only cheaper than maximalPairPrice.
+     *
+     * @param asset
+     * @return
+     */
+    public void fillCheapPairs(String asset, float maximalPairPrice) {
+        List<String> filteredPairs = getLastTickersPrices(
+                        combinePairsToRequestString(availablePairs.get(asset)))
+                .stream().filter(tickerPrice -> Float.parseFloat(tickerPrice.getPrice()) < maximalPairPrice)
+                .map(TickerPrice::getSymbol).collect(Collectors.toCollection(ArrayList::new));
+        log.info("Filtered {} cheap tickers.", filteredPairs.size());
+        cheapPairs.put(asset, filteredPairs);
+    }
+
+    public String combinePairsToRequestString(List<String> pairs) {
+        return pairs.stream()
+                .collect(Collectors.joining(DELIMITER, QUERY_SYMBOLS_BEGIN, QUERY_SYMBOLS_END));
+    }
+
+    /**
+     *
+     * @param asset
+     * @return list of cheap pairs, exclude pairs of opened positions.
+     */
+    public List<String> getCheapPairsExcludeOpenedPositions(String asset, Set<String> longPositions, Set<String> shortPositions) {
+        List<String> pairs = cheapPairs.getOrDefault(asset, Collections.emptyList());
+        pairs.removeAll(longPositions);
+        pairs.removeAll(shortPositions);
+
+        return pairs;
     }
 
     public TickerPrice getLastTickerPrice(String symbol) {

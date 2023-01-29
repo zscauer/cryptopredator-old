@@ -4,6 +4,7 @@ import com.binance.api.client.domain.ExecutionType;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.event.UserDataUpdateEvent;
 import lombok.Getter;
+import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -14,10 +15,11 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.cache.MarketData;
+import ru.tyumentsev.cryptopredator.commons.TradingStrategy;
+import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
+import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
 import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.strategy.TradingStrategy;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -30,7 +32,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ApplicationInitializer implements ApplicationRunner {
 
-    final MarketData marketData;
+    final StrategyCondition strategyCondition;
     final MarketInfo marketInfo;
     final AccountManager accountManager;
     final Map<String, TradingStrategy> tradingStrategies;
@@ -41,6 +43,9 @@ public class ApplicationInitializer implements ApplicationRunner {
     boolean testLaunch;
     @Value("${strategy.global.tradingAsset}")
     String tradingAsset;
+    @NonFinal
+    @Value("${strategy.global.maximalPairPrice}")
+    float maximalPairPrice;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
@@ -48,9 +53,9 @@ public class ApplicationInitializer implements ApplicationRunner {
             log.warn("Application launched in test mode. Deals functionality disabled.");
         }
 
-        marketData.addAvailablePairs(tradingAsset, marketInfo.getAvailableTradePairs(tradingAsset));
-        marketData.initializeOpenedLongPositionsFromMarket(marketInfo, accountManager);
-        marketData.fillCheapPairs(tradingAsset, marketInfo);
+        marketInfo.getAvailableTradePairs(tradingAsset);
+//        marketData.initializeOpenedLongPositionsFromMarket(marketInfo, accountManager);
+        marketInfo.fillCheapPairs(tradingAsset, maximalPairPrice);
 
         Map<String, TradingStrategy> activeStrategies = tradingStrategies.entrySet().stream()
                 .filter(entry -> entry.getValue().isEnabled())

@@ -3,6 +3,7 @@ package ru.tyumentsev.cryptopredator.datakeeper.service;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.tyumentsev.cryptopredator.datakeeper.cache.OpenedPositionRepository;
 import ru.tyumentsev.cryptopredator.datakeeper.cache.PreviousCandleDataRepository;
@@ -19,6 +20,7 @@ import java.util.stream.StreamSupport;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
 public class CacheService {
 
     OpenedPositionRepository openedPositionRepository;
@@ -41,8 +43,8 @@ public class CacheService {
         sellRecordRepository.deleteAllById(id);
     }
 
-    public void deleteAllSellRecords() {
-        sellRecordRepository.deleteAll();
+    public void deleteAllSellRecords(Collection<SellRecord> sellRecords) {
+        sellRecordRepository.deleteAll(sellRecords);
     }
 
     public List<OpenedPosition> saveAllOpenedPositions(Collection<OpenedPosition> openedPositions) {
@@ -61,8 +63,8 @@ public class CacheService {
         openedPositionRepository.deleteAllById(ids);
     }
 
-    public void deleteAllOpenedPositions() {
-        openedPositionRepository.deleteAll();
+    public void deleteAllOpenedPositions(Collection<OpenedPosition> openedPositions) {
+        openedPositionRepository.deleteAll(openedPositions);
     }
 
     public List<PreviousCandleData> saveAllPreviousCandleData(Collection<PreviousCandleData> previousCandleData) {

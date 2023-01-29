@@ -47,16 +47,16 @@ public class CacheController {
         return cacheService.saveAllSellRecords(records);
     }
 
-    @PostMapping("/sellRecord/delete")
-    public void deleteAllSellRecordsById(@RequestBody List<String> ids) {
-//        log.info("deleteAllSellRecordsById({}) call from {}.", ids, headers.map().get("bot-id"));
-        cacheService.deleteAllSellRecordsById(ids);
-    }
+//    @PostMapping("/sellRecord/delete")
+//    public void deleteAllSellRecordsById(@RequestBody List<String> ids) {
+////        log.info("deleteAllSellRecordsById({}) call from {}.", ids, headers.map().get("bot-id"));
+//        cacheService.deleteAllSellRecordsById(ids);
+//    }
 
-    @DeleteMapping("/sellRecord")
-    public void deleteAllSellRecords() {
+    @PostMapping("/sellRecord/delete")
+    public void deleteAllSellRecords(@RequestBody List<SellRecord> records) {
 //        log.info("deleteAllSellRecords() call from {}.", headers.map().get("bot-id"));
-        cacheService.deleteAllSellRecords();
+        cacheService.deleteAllSellRecords(records);
     }
 
     @GetMapping("/previousCandleData")
@@ -101,15 +101,15 @@ public class CacheController {
         return cacheService.saveAllOpenedPositions(openedPositions);
     }
 
-    @DeleteMapping("/openedPosition")
-    public void deleteAllOpenedPositions() {
-//        log.info("deleteAllOpenedPositions() call from {}.", headers.map().get("bot-id"));
-        cacheService.deleteAllOpenedPositions();
-    }
+//    @DeleteMapping("/openedPosition")
+//    public void deleteAllOpenedPositions() {
+////        log.info("deleteAllOpenedPositions() call from {}.", headers.map().get("bot-id"));
+//        cacheService.deleteAllOpenedPositions();
+//    }
 
     @PostMapping("/openedPosition/delete")
-    public void deleteAllOpenedPositionsById(@RequestBody List<String> ids) {
+    public void deleteAllOpenedPositionsById(@RequestBody List<OpenedPosition> openedPositions) {
 //        log.info("deleteAllOpenedPositionsById({}) call from {}.", ids, headers.map().get("bot-id"));
-        cacheService.deleteAllOpenedPositionsById(ids);
+        cacheService.deleteAllOpenedPositions(openedPositions);
     }
 }

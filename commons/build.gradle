@@ -7,7 +7,8 @@ def artifactVersion = '0.2'
 
 group 'ru.tyumentsev.cryptopredator'
 version = artifactVersion
-description = 'cryptopredator commons'
+sourceCompatibility = '17'
+description = 'Cryptopredator commons'
 
 repositories {
     mavenLocal()

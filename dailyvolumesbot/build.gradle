@@ -1,16 +1,17 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.7.7'
+    id 'org.springframework.boot' version '2.7.8'
     id 'io.freefair.lombok' version '6.6.1'
     id 'maven-publish'
 }
 
-def artifactVersion = '0.3.0'
-def springBootVersion = '2.7.7'
+def artifactVersion = '0.4'
+def springBootVersion = '2.7.8'
 def prometheusVersion = '0.16.0'
 
 group = 'ru.tyumentsev.cryptopredator'
 version = artifactVersion
+sourceCompatibility = '17'
 description = 'dailyvolumesbot'
 
 configurations {

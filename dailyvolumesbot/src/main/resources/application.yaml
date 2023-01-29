@@ -33,13 +33,6 @@ spring:
     # mvc:
     #     pathmatch:
     #         matching-strategy: ant-path-matcher
-#    datasource:
-#        url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-#        driver-class-name: org.postgresql.Driver
-#        username: ${POSTGRES_USER}
-#        password: ${POSTGRES_PASSWORD}
-#    jpa:
-#        database-platform: org.hibernate.dialecgrat.PostgreSQLDialect
 
 management:
     endpoint:
