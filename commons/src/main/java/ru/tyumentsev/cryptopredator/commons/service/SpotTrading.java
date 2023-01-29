@@ -1,11 +1,10 @@
-package ru.tyumentsev.cryptopredator.dailyvolumesbot.service;
+package ru.tyumentsev.cryptopredator.commons.service;
 
 import java.util.List;
 import java.util.Map;
 
 import com.binance.api.client.domain.account.AssetBalance;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import com.binance.api.client.BinanceApiAsyncRestClient;
 import com.binance.api.client.domain.TimeInForce;
@@ -15,11 +14,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
-import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
-import ru.tyumentsev.cryptopredator.commons.service.TradingService;
 
-@Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
@@ -101,16 +96,16 @@ public class SpotTrading implements TradingService {
 
     public void placeMarketBuyOrder(String symbol, float quantity) {
         asyncRestClient.newOrder(NewOrder.marketBuy(symbol, String.valueOf(Math.ceil(quantity))),
-            marketBuyOrderCallback -> {
-                log.debug("Async MARKET BUY order placed: {}", marketBuyOrderCallback);
-            });
+                marketBuyOrderCallback -> {
+                    log.debug("Async MARKET BUY order placed: {}", marketBuyOrderCallback);
+                });
     }
 
     public void placeMarketSellOrder(String symbol, float quantity) {
         asyncRestClient.newOrder(NewOrder.marketSell(symbol, String.valueOf(quantity)),
-            marketSellOrderCallback -> {
-                log.debug("Async MARKET SELL order placed: {}", marketSellOrderCallback);
-            });
+                marketSellOrderCallback -> {
+                    log.debug("Async MARKET SELL order placed: {}", marketSellOrderCallback);
+                });
     }
 
     public void closePostitions(Map<String, Float> positionsToClose) {
@@ -118,3 +113,4 @@ public class SpotTrading implements TradingService {
         positionsToClose.forEach(this::placeLimitSellOrderAtLastMarketPrice);
     }
 }
+

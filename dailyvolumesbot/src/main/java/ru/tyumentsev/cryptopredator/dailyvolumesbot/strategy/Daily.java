@@ -21,7 +21,7 @@ import ru.tyumentsev.cryptopredator.commons.mapping.CandlestickToEventMapper;
 //import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.CacheService;
 import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
-import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.SpotTrading;
+import ru.tyumentsev.cryptopredator.commons.service.SpotTrading;
 
 import javax.annotation.PreDestroy;
 import java.io.Closeable;
