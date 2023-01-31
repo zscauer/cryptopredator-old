@@ -1,10 +1,10 @@
-package ru.tyumentsev.cryptopredator.multitimeframebot;
+package ru.tyumentsev.cryptopredator.indicatorvirginbot;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class MultitimeframebotApplicationTests {
+class IndicatorVirginApplicationTests {
 
 	@Test
 	void contextLoads() {

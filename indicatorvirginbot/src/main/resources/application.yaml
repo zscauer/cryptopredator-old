@@ -77,5 +77,5 @@ strategy:
     keepAliveUserDataUpdateStream:
       initialDelay: ${STRATEGY_GLOBAL_KEEP_ALIVE_USERDATA_UPDATE_STREAM_INITIAL_DELAY}
       fixedDelay: ${STRATEGY_GLOBAL_KEEP_ALIVE_USERDATA_UPDATE_STREAM_FIXED_DELAY}
-  multitimeframe:
-    enabled: ${MULTITIMEFRAME_ENABLED}
+  indicatorVirgin:
+    enabled: ${INDICATORVIRGIN_ENABLED}

@@ -87,11 +87,16 @@ public class Daily implements TradingStrategy {
     @Scheduled(fixedDelayString = "${strategy.daily.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.daily.startCandlstickEventsCacheUpdating.initialDelay}")
     public void daily_startCandlstickEventsCacheUpdating() {
         if (dailyEnabled && !testLaunch) {
-            startCandlstickEventsCacheUpdating(tradingAsset, CandlestickInterval.DAILY);
+            startCandlstickEventsCacheUpdating(CandlestickInterval.DAILY);
 //            Thread.getAllStackTraces().keySet().stream().filter(Thread::isAlive).forEach(thread -> {
 //                log.info("Thread {} name: {} group: {}.", thread.getId(), thread.getName(), thread.getThreadGroup());
 //            });
         }
+    }
+
+    @Override
+    public String getName() {
+        return STRATEGY_NAME;
     }
 
     @Override
@@ -137,7 +142,7 @@ public class Daily implements TradingStrategy {
     private void restoreSellJournalFromCache() {
         var sellJournal = dailyVolumesStrategyCondition.getSellJournal();
         dataService.findAllSellRecords().stream()
-                .filter(sellRecord -> sellRecord.strategy().equalsIgnoreCase(STRATEGY_NAME))
+                .filter(sellRecord -> sellRecord.strategy().equalsIgnoreCase(getName()))
                 .forEach(record -> sellJournal.put(record.symbol(), record));
         dataService.deleteAllSellRecords(sellJournal.values());
     }
@@ -146,7 +151,7 @@ public class Daily implements TradingStrategy {
         List<String> accountPositions = spotTrading.recieveOpenedLongPositionsFromMarket().stream()
                 .map(assetBalance -> assetBalance.getAsset() + tradingAsset).toList();
         dataService.findAllOpenedPositions().stream()
-                .filter(pos -> pos.strategy().equalsIgnoreCase(STRATEGY_NAME))
+                .filter(pos -> pos.strategy().equalsIgnoreCase(getName()))
                 .forEach(pos -> {
                     if (accountPositions.contains(pos.symbol())) {
                         dailyVolumesStrategyCondition.getLongPositions().put(pos.symbol(), pos);
@@ -215,13 +220,13 @@ public class Daily implements TradingStrategy {
             log.info("BUY {} {} at {}.",
                     buyEvent.getAccumulatedQuantity(), symbol, dealPrice);
             dailyVolumesStrategyCondition.putLongPositionToPriceMonitoring(symbol, dealPrice, parsedFloat(buyEvent.getAccumulatedQuantity()),
-                    priceDecreaseFactor, Optional.ofNullable(rocketCandidates.remove(symbol)).orElse(false), STRATEGY_NAME
+                    priceDecreaseFactor, Optional.ofNullable(rocketCandidates.remove(symbol)).orElse(false), getName()
             );
 
             candleStickEventsStreams.put(symbol, marketInfo.openCandleStickEventsStream(symbol.toLowerCase(), candlestickInterval,
                     longPositionMonitoringCallback(symbol)));
 
-            marketInfo.pairOrderFilled(symbol);
+            marketInfo.pairOrderFilled(symbol, getName());
         }
     }
 
@@ -247,22 +252,22 @@ public class Daily implements TradingStrategy {
                     sellEvent.getOriginalQuantity(), sellEvent.getSymbol(), dealPrice);
 
             dailyVolumesStrategyCondition.removeLongPositionFromPriceMonitoring(sellEvent.getSymbol());
-            dailyVolumesStrategyCondition.addSellRecordToJournal(sellEvent.getSymbol(), STRATEGY_NAME);
+            dailyVolumesStrategyCondition.addSellRecordToJournal(sellEvent.getSymbol(), getName());
 
             candleStickEventsStreams.put(sellEvent.getSymbol(), marketInfo.openCandleStickEventsStream(sellEvent.getSymbol().toLowerCase(), candlestickInterval,
                     marketMonitoringCallback(sellEvent.getSymbol())));
 
-            marketInfo.pairOrderFilled(sellEvent.getSymbol());
+            marketInfo.pairOrderFilled(sellEvent.getSymbol(), getName());
         }
     }
 
-    public void startCandlstickEventsCacheUpdating(String asset, CandlestickInterval interval) {
+    public void startCandlstickEventsCacheUpdating(CandlestickInterval interval) {
         candlestickInterval = interval;
         closeOpenedWebSocketStreams();
         AtomicInteger marketMonitoringThreadsCounter = new AtomicInteger();
         AtomicInteger longMonitoringThreadsCounter = new AtomicInteger();
 
-        marketInfo.getCheapPairsExcludeOpenedPositions(asset, dailyVolumesStrategyCondition.getLongPositions().keySet(), dailyVolumesStrategyCondition.getShortPositions().keySet()).forEach(ticker -> {
+        marketInfo.getCheapPairsExcludeOpenedPositions(tradingAsset, dailyVolumesStrategyCondition.getLongPositions().keySet(), dailyVolumesStrategyCondition.getShortPositions().keySet()).forEach(ticker -> {
             candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
                     marketMonitoringCallback(ticker)));
             marketMonitoringThreadsCounter.getAndIncrement();
@@ -341,15 +346,15 @@ public class Daily implements TradingStrategy {
 
     private void buyFast(final String symbol, final float price, String quoteAsset, boolean itsAveraging) {
         if ((itsDealsAllowedPeriod(LocalTime.now()) || itsAveraging) &&
-                !(marketInfo.pairOrderIsProcessing(symbol) || dailyVolumesStrategyCondition.thisSignalWorkedOutBefore(symbol))) {
+                !(marketInfo.pairOrderIsProcessing(symbol, getName()) || dailyVolumesStrategyCondition.thisSignalWorkedOutBefore(symbol))) {
             log.debug("Price of {} growth more than {}%, and now equals {}.", symbol, Float.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
-            spotTrading.placeBuyOrderFast(symbol, price, quoteAsset);
+            spotTrading.placeBuyOrderFast(symbol, getName(), price, quoteAsset);
         }
     }
 
     private void sellFast(String symbol, float qty, String quoteAsset) {
-        if (!marketInfo.pairOrderIsProcessing(symbol)) {
-            spotTrading.placeSellOrderFast(symbol, qty);
+        if (!marketInfo.pairOrderIsProcessing(symbol, getName())) {
+            spotTrading.placeSellOrderFast(symbol, getName(), qty);
         }
 
 //        if (matchTrend) {

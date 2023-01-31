@@ -88,8 +88,7 @@ public class StrategyCondition {
         Optional.ofNullable(longPositions.get(pair)).ifPresentOrElse(pos -> {
             var newQty = pos.qty() + qty;
             pos.avgPrice((pos.avgPrice() * pos.qty() + price * qty) / newQty)
-                    .qty(newQty)
-                    .strategy(strategy);
+                    .qty(newQty);
         }, () -> {
             var pos = new OpenedPosition();
             pos.symbol(pair)

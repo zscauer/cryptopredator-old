@@ -3,7 +3,7 @@ plugins {
     id 'io.freefair.lombok' version '6.6.1'
     id 'maven-publish'
 }
-def artifactVersion = '0.2'
+def artifactVersion = '0.3'
 
 group 'ru.tyumentsev.cryptopredator'
 version = artifactVersion
@@ -17,6 +17,7 @@ repositories {
 
 dependencies {
     implementation "com.binance.api:binance-api-client:1.2.0"
+    implementation "org.ta4j:ta4j-core:0.16-SNAPSHOT"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
     implementation 'org.springframework:spring-web:5.3.24'

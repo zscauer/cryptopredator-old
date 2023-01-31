@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import com.binance.api.client.BinanceApiCallback;
 import com.binance.api.client.BinanceApiWebSocketClient;
+import com.binance.api.client.domain.OrderSide;
 import com.binance.api.client.domain.event.CandlestickEvent;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ import com.binance.api.client.domain.market.TickerPrice;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import ru.tyumentsev.cryptopredator.commons.domain.PlacedOrder;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -40,7 +42,7 @@ public class MarketInfo implements TradingService {
      * Store flags, which indicates that order already placed.
      */
     @Getter
-    Map<String, Boolean> processedOrders = new ConcurrentHashMap<>();
+    Map<String, PlacedOrder> placedOrders = new ConcurrentHashMap<>();
     Map<String, List<String>> availablePairs = new HashMap<>();
     @Getter
     Map<String, List<String>> cheapPairs = new ConcurrentHashMap<>();
@@ -117,18 +119,24 @@ public class MarketInfo implements TradingService {
         return binanceApiWebSocketClient.onCandlestickEvent(asset, interval, callback);
     }
 
-    public boolean pairOrderIsProcessing(String symbol) {
-        return Optional.ofNullable(processedOrders.get(symbol)).orElse(false);
+    public boolean pairOrderIsProcessing(String symbol, String strategyName) {
+        return Optional.ofNullable(placedOrders.get(symbol))
+                .map(order -> order.strategyName().equals(strategyName))
+                .orElse(false);
     }
 
-    public void pairOrderPlaced(String symbol) {
-        processedOrders.put(symbol, true);
+    public void pairOrderPlaced(String symbol, final String strategyName, float qty, final OrderSide side) {
+        placedOrders.put(symbol, new PlacedOrder(symbol, strategyName, qty, side));
         log.debug("Add {} to processed orders.", symbol);
 
     }
 
-    public void pairOrderFilled(String symbol) {
-        processedOrders.remove(symbol);
+    public void pairOrderFilled(String symbol, String strategyName) {
+        Optional.ofNullable(placedOrders.get(symbol)).ifPresent(order -> {
+            if (order.strategyName().equals(strategyName)) {
+                placedOrders.remove(symbol);
+            }
+        });
         log.debug("Remove {} from processed orders.", symbol);
     }
 }

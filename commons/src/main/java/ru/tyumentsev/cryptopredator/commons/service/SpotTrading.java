@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.binance.api.client.domain.OrderSide;
 import com.binance.api.client.domain.account.AssetBalance;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -34,12 +35,12 @@ public class SpotTrading implements TradingService {
         return accountManager.getAccountBalances();
     }
 
-    public void placeBuyOrderFast(final String symbol, final float price, String quoteAsset) {
+    public void placeBuyOrderFast(final String symbol, final String strategyName, final float price, String quoteAsset) {
         if (Thread.holdsLock(this)) {
             log.warn("placeBuyOrderFast({}) object monitor already locked by the current thread {} ({}).", symbol, Thread.currentThread().getName(), Thread.currentThread().getId());
             return;
         }
-        marketInfo.pairOrderPlaced(symbol);
+        marketInfo.pairOrderPlaced(symbol, strategyName, baseOrderVolume / price, OrderSide.BUY);
         synchronized (this) {
             int availableOrdersCount = accountManager.getFreeAssetBalance(quoteAsset).intValue() / minimalAssetBalance;
             if (availableOrdersCount > 1) {
@@ -47,50 +48,50 @@ public class SpotTrading implements TradingService {
 //            placeLimitBuyOrderAtLastMarketPrice(symbol, baseOrderVolume / price);
                 placeMarketBuyOrder(symbol, baseOrderVolume / price);
             } else {
-                marketInfo.pairOrderFilled(symbol);
+                marketInfo.pairOrderFilled(symbol, strategyName);
                 log.debug("NOT enough balance to buy {}.", symbol);
             }
         }
     }
 
-    public void placeSellOrderFast(final String symbol, final float qty) {
+    public void placeSellOrderFast(final String symbol, final String strategyName, final float qty) {
         if (Thread.holdsLock(this)) {
             log.info("placeSellOrderFast({}) object monitor already locked by the current thread {} ({}).", symbol, Thread.currentThread().getName(), Thread.currentThread().getId());
             return;
         }
-        marketInfo.pairOrderPlaced(symbol);
+        marketInfo.pairOrderPlaced(symbol, strategyName, qty, OrderSide.SELL);
         synchronized (this) {
             placeMarketSellOrder(symbol, qty);
         }
     }
 
-    public void placeLimitBuyOrderAtLastMarketPrice(String symbol, float quantity) {
+    public void placeLimitBuyOrderAtLastMarketPrice(String symbol, String strategyName,float quantity) {
 //        log.debug("Try to place LIMIT BUY order: {} for {}.", symbol, quantity);
         asyncRestClient.getOrderBook(symbol, 1, orderBookResponse -> {
-            placeLimitBuyOrder(symbol, String.valueOf(Math.ceil(quantity)),
+            placeLimitBuyOrder(symbol, strategyName, (float)Math.ceil(quantity),
                     orderBookResponse.getBids().get(0).getPrice());
         });
     }
 
-    public void placeLimitSellOrderAtLastMarketPrice(String symbol, float quantity) {
+    public void placeLimitSellOrderAtLastMarketPrice(String symbol, String strategyName, float quantity) {
 //        log.debug("Try to place LIMIT SELL order: {} for {}.", symbol, quantity);
         asyncRestClient.getOrderBook(symbol, 1, orderBookResponse -> {
-            placeLimitSellOrder(symbol, String.valueOf(quantity),
+            placeLimitSellOrder(symbol, strategyName, quantity,
                     orderBookResponse.getAsks().get(0).getPrice());
         });
     }
 
-    public void placeLimitBuyOrder(String symbol, String quantity, String price) {
+    public void placeLimitBuyOrder(String symbol, String strategyName, float quantity, String price) {
         log.debug("Sending async request to place new limit order to buy {} {} at {}.", quantity, symbol, price);
-        asyncRestClient.newOrder(NewOrder.limitBuy(symbol, TimeInForce.GTC, quantity, price), limitBuyResponse -> {
-            marketInfo.pairOrderPlaced(symbol);
+        asyncRestClient.newOrder(NewOrder.limitBuy(symbol, TimeInForce.GTC, Float.toString(quantity), price), limitBuyResponse -> {
+            marketInfo.pairOrderPlaced(symbol, strategyName, quantity, OrderSide.BUY);
             log.debug("Async LIMIT BUY order placed: {}", limitBuyResponse);
         });
     }
 
-    public void placeLimitSellOrder(String symbol, String quantity, String price) {
-        asyncRestClient.newOrder(NewOrder.limitSell(symbol, TimeInForce.GTC, quantity, price), limitSellResponse -> {
-            marketInfo.pairOrderPlaced(symbol);
+    public void placeLimitSellOrder(String symbol, String strategyName, float quantity, String price) {
+        asyncRestClient.newOrder(NewOrder.limitSell(symbol, TimeInForce.GTC, Float.toString(quantity), price), limitSellResponse -> {
+            marketInfo.pairOrderPlaced(symbol, strategyName, quantity, OrderSide.SELL);
             log.debug("Async LIMIT SELL order placed: {}", limitSellResponse);
         });
     }
@@ -118,7 +119,7 @@ public class SpotTrading implements TradingService {
 
     public void closePostitions(Map<String, Float> positionsToClose) {
         log.debug("Start to go out at last price from {} positions to close:\n{}", positionsToClose.size(), positionsToClose);
-        positionsToClose.forEach(this::placeLimitSellOrderAtLastMarketPrice);
+        positionsToClose.forEach(this::placeMarketSellOrder);
     }
 }
 

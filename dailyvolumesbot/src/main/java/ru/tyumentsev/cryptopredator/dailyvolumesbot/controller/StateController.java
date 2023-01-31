@@ -18,6 +18,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
+import ru.tyumentsev.cryptopredator.commons.domain.PlacedOrder;
 import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.dailyvolumesbot.cache.DailyVolumesStrategyCondition;
@@ -50,9 +51,9 @@ public class StateController {
         return account.getAssetBalance(ticker.toUpperCase());
     }
 
-    @GetMapping("/processedOrders")
-    public Map<String, Boolean> getProcessedOrders() {
-        return marketInfo.getProcessedOrders();
+    @GetMapping("/placedOrders")
+    public Map<String, PlacedOrder> getPlacedOrders() {
+        return marketInfo.getPlacedOrders();
     }
 
     @GetMapping("/openedPositions/long")

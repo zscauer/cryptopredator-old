@@ -12,6 +12,8 @@ public interface TradingStrategy {
         return 100 * (bigger - smaller) / bigger;
     }
 
+    String getName();
+
     /**
      * Active status of strategy.
      * @return true if straregy enabled.

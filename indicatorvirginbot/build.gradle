@@ -25,8 +25,9 @@ repositories {
 }
 
 dependencies {
+	implementation "ru.tyumentsev.cryptopredator:commons:0.3"
 	implementation "com.binance.api:binance-api-client:1.2.0"
-	implementation "ru.tyumentsev.cryptopredator:commons:0.2"
+	implementation "org.ta4j:ta4j-core:0.16-SNAPSHOT"
 	runtimeOnly "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
 	implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
 	implementation "org.springframework.boot:spring-boot-configuration-processor:${springBootVersion}"
@@ -40,7 +41,7 @@ dependencies {
 
 jar {
 	project.version = ''
-	setArchivesBaseName('multitimeframebot')
+	setArchivesBaseName('indicatorvirginbot')
 	setProperty('version', artifactVersion)
 //    setProperty('classifier', '') // build jar without "-plain" suffix
 }
@@ -53,7 +54,7 @@ publishing {
 	publications {
 		maven(MavenPublication) {
 			groupId = 'ru.tyumentsev.cryptopredator'
-			artifactId = 'multitimeframebot'
+			artifactId = 'indicatorvirginbot'
 			version = artifactVersion
 
 			from components.java
