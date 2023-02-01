@@ -16,7 +16,7 @@ repositories {
 }
 
 dependencies {
-    implementation "com.binance.api:binance-api-client:1.2.0"
+    implementation "com.binance.api:binance-api-client:1.2.1"
     implementation "org.ta4j:ta4j-core:0.16-SNAPSHOT"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'

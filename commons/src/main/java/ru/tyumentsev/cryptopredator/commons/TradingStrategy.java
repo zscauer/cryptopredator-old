@@ -14,6 +14,8 @@ public interface TradingStrategy {
 
     String getName();
 
+    Integer getId();
+
     /**
      * Active status of strategy.
      * @return true if straregy enabled.

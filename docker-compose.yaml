@@ -17,19 +17,19 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ./metrics/logs/dailyvolumesbot:/tmp/logs
 
-  indicatorvirginbot:
-    image: indicatorvirginbot
-    container_name: indicatorvirginbot
-    depends_on:
-      - datakeeper
-    env_file:
-      - indicatorvirgin/.env
-    ports:
-      - 102:8080
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - ./metrics/logs/indicatorvirginbot:/tmp/logs
+#  indicatorvirginbot:
+#    image: indicatorvirginbot
+#    container_name: indicatorvirginbot
+#    depends_on:
+#      - datakeeper
+#    env_file:
+#      - indicatorvirgin/.env
+#    ports:
+#      - 102:8080
+#    volumes:
+#      - /etc/timezone:/etc/timezone:ro
+#      - /etc/localtime:/etc/localtime:ro
+#      - ./metrics/logs/indicatorvirginbot:/tmp/logs
 
   datakeeper:
     image: datakeeper

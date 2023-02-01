@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class IndicatorVirginApplication {
+public class IndicatorVirginbotApplication {
 	public static void main(String[] args) {
-		SpringApplication.run(IndicatorVirginApplication.class, args);
+		SpringApplication.run(IndicatorVirginbotApplication.class, args);
 	}
 }

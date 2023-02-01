@@ -58,6 +58,7 @@ public class Daily implements TradingStrategy {
     final LocalTime eveningStopTime = LocalTime.of(22, 0), nightStopTime = LocalTime.of(3, 5);
 
     final static String STRATEGY_NAME = "dailyvolumes";
+    final static Integer STRATEGY_ID = 1001;
 
     @Value("${applicationconfig.testLaunch}")
     boolean testLaunch;
@@ -97,6 +98,11 @@ public class Daily implements TradingStrategy {
     @Override
     public String getName() {
         return STRATEGY_NAME;
+    }
+
+    @Override
+    public Integer getId() {
+        return STRATEGY_ID;
     }
 
     @Override
@@ -199,7 +205,8 @@ public class Daily implements TradingStrategy {
 
     @Override
     public void handleBuying(final OrderTradeUpdateEvent buyEvent) {
-        if (dailyEnabled
+            log.info("Get buy event with strategy id {}", buyEvent.getStrategyId());
+        if (dailyEnabled && getId().equals(buyEvent.getStrategyId())
                 && parsedFloat(buyEvent.getAccumulatedQuantity()) == parsedFloat(buyEvent.getOriginalQuantity())) {
             final String symbol = buyEvent.getSymbol();
 
@@ -232,7 +239,8 @@ public class Daily implements TradingStrategy {
 
     @Override
     public void handleSelling(final OrderTradeUpdateEvent sellEvent) {
-        if (dailyEnabled
+            log.info("Get buy event with strategy id {}", sellEvent.getStrategyId());
+        if (dailyEnabled && getId().equals(sellEvent.getStrategyId())
                 && parsedFloat(sellEvent.getAccumulatedQuantity()) == (parsedFloat(sellEvent.getOriginalQuantity()))) {
             Optional.ofNullable(candleStickEventsStreams.remove(sellEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
                 try {
@@ -348,13 +356,13 @@ public class Daily implements TradingStrategy {
         if ((itsDealsAllowedPeriod(LocalTime.now()) || itsAveraging) &&
                 !(marketInfo.pairOrderIsProcessing(symbol, getName()) || dailyVolumesStrategyCondition.thisSignalWorkedOutBefore(symbol))) {
             log.debug("Price of {} growth more than {}%, and now equals {}.", symbol, Float.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
-            spotTrading.placeBuyOrderFast(symbol, getName(), price, quoteAsset);
+            spotTrading.placeBuyOrderFast(symbol, getName(), getId(), price, quoteAsset);
         }
     }
 
     private void sellFast(String symbol, float qty, String quoteAsset) {
         if (!marketInfo.pairOrderIsProcessing(symbol, getName())) {
-            spotTrading.placeSellOrderFast(symbol, getName(), qty);
+            spotTrading.placeSellOrderFast(symbol, getName(), getId(), qty);
         }
 
 //        if (matchTrend) {
