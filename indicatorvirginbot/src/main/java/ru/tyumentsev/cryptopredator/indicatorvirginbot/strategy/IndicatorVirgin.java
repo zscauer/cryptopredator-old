@@ -46,6 +46,7 @@ public class IndicatorVirgin implements TradingStrategy {
     final Map<String, Closeable> candleStickEventsStreams = new ConcurrentHashMap<>();
 
     final static String STRATEGY_NAME = "indicatorvirgin";
+    final static Integer STRATEGY_ID = 1001;
 
     @Value("${applicationconfig.testLaunch}")
     boolean testLaunch;
@@ -63,6 +64,16 @@ public class IndicatorVirgin implements TradingStrategy {
 //                log.info("Thread {} name: {} group: {}.", thread.getId(), thread.getName(), thread.getThreadGroup());
 //            });
         }
+    }
+
+    @Override
+    public String getName() {
+        return STRATEGY_NAME;
+    }
+
+    @Override
+    public Integer getId() {
+        return STRATEGY_ID;
     }
 
     @Override

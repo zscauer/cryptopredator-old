@@ -65,7 +65,7 @@ public class ApplicationInitializer implements ApplicationRunner {
 
     @Scheduled(fixedDelayString = "${strategy.global.initializeUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.initializeUserDataUpdateStream.initialDelay}")
     public void generalMonitoring_initializeAliveUserDataUpdateStream() {
-        if (!testLaunch) {
+        if (!testLaunch && tradingStrategies.values().stream().anyMatch(TradingStrategy::isEnabled)) {
             // User data stream are closing by binance after 24 hours of opening.
             accountManager.initializeUserDataUpdateStream();
 

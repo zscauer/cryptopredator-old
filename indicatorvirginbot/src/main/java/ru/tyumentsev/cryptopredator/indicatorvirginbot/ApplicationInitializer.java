@@ -53,10 +53,6 @@ public class ApplicationInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        if (testLaunch) {
-            log.warn("Application launched in test mode. Deals functionality disabled.");
-            runTest();
-        }
 
         Map<String, TradingStrategy> activeStrategies = tradingStrategies.entrySet().stream()
                 .filter(entry -> entry.getValue().isEnabled())
@@ -66,6 +62,10 @@ public class ApplicationInitializer implements ApplicationRunner {
 
         log.info("Application initialization complete. Active strategies: {}.", activeStrategies.keySet());
 
+        if (testLaunch) {
+            log.warn("Application launched in test mode. Deals functionality disabled.");
+            runTest();
+        }
     }
 
     private void runTest() {
@@ -90,7 +90,7 @@ public class ApplicationInitializer implements ApplicationRunner {
 
     @Scheduled(fixedDelayString = "${strategy.global.initializeUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.initializeUserDataUpdateStream.initialDelay}")
     public void generalMonitoring_initializeAliveUserDataUpdateStream() {
-        if (!testLaunch) {
+        if (!testLaunch && tradingStrategies.values().stream().anyMatch(TradingStrategy::isEnabled)) {
             // User data stream are closing by binance after 24 hours of opening.
             accountManager.initializeUserDataUpdateStream();
 

@@ -51,7 +51,7 @@ public class MarketInfo implements TradingService {
 
     public List<String> getAvailableTradePairs(final String quoteAsset) {
         List<String> pairs = restClient.getExchangeInfo().getSymbols().stream()
-                .filter(symbolInfo -> symbolInfo.getStatus() == SymbolStatus.TRADING
+                .filter(symbolInfo -> SymbolStatus.TRADING.equals(symbolInfo.getStatus())
                         && symbolInfo.getQuoteAsset().equalsIgnoreCase(quoteAsset)
                         && symbolInfo.isSpotTradingAllowed())
                 .map(SymbolInfo::getSymbol)
@@ -66,7 +66,7 @@ public class MarketInfo implements TradingService {
      * @param asset
      * @return
      */
-    public void fillCheapPairs(String asset, float maximalPairPrice) {
+    public void fillCheapPairs(final String asset, final float maximalPairPrice) {
         List<String> filteredPairs = getLastTickersPrices(
                         combinePairsToRequestString(availablePairs.get(asset)))
                 .stream().filter(tickerPrice -> Float.parseFloat(tickerPrice.getPrice()) < maximalPairPrice)
@@ -97,7 +97,7 @@ public class MarketInfo implements TradingService {
         return restClient.getPrice(symbol);
     }
 
-    public List<TickerPrice> getLastTickersPrices(String symbols) {
+    public List<TickerPrice> getLastTickersPrices(final String symbols) {
         return restClient.getPrices(symbols);
     }
 
