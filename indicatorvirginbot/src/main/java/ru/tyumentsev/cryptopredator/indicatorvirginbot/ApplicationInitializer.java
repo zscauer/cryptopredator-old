@@ -54,9 +54,12 @@ public class ApplicationInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
 
-        Map<String, TradingStrategy> activeStrategies = tradingStrategies.entrySet().stream()
-                .filter(entry -> entry.getValue().isEnabled())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        marketInfo.getAvailableTradePairs(tradingAsset);
+        marketInfo.fillCheapPairs(tradingAsset, maximalPairPrice);
+
+        Map<String, TradingStrategy> activeStrategies = tradingStrategies.values().stream()
+                .filter(TradingStrategy::isEnabled)
+                .collect(Collectors.toMap(value -> String.format("%s (id: %s)", value.getName(), value.getId()), value -> value));
 
         activeStrategies.forEach((name, implementation) -> implementation.prepareData());
 
@@ -64,7 +67,7 @@ public class ApplicationInitializer implements ApplicationRunner {
 
         if (testLaunch) {
             log.warn("Application launched in test mode. Deals functionality disabled.");
-            runTest();
+//            runTest();
         }
     }
 
@@ -76,7 +79,7 @@ public class ApplicationInitializer implements ApplicationRunner {
         log.info("Bars list: {}", barsList);
         BaseBarSeriesBuilder barSeriesBuilder = new BaseBarSeriesBuilder();
         barSeriesBuilder.withBars(barsList);
-        barSeriesBuilder.withMaxBarCount(20);
+        barSeriesBuilder.withMaxBarCount(26);
         barSeriesBuilder.withNumTypeOf(DoubleNum::valueOf);
         BaseBarSeries series = barSeriesBuilder.build();
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);

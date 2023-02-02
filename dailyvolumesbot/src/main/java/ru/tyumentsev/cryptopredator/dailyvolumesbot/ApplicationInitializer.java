@@ -54,9 +54,9 @@ public class ApplicationInitializer implements ApplicationRunner {
         marketInfo.getAvailableTradePairs(tradingAsset);
         marketInfo.fillCheapPairs(tradingAsset, maximalPairPrice);
 
-        Map<String, TradingStrategy> activeStrategies = tradingStrategies.entrySet().stream()
-                .filter(entry -> entry.getValue().isEnabled())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<String, TradingStrategy> activeStrategies = tradingStrategies.values().stream()
+                .filter(TradingStrategy::isEnabled)
+                .collect(Collectors.toMap(value -> String.format("%s (id: %s)", value.getName(), value.getId()), value -> value));
 
         activeStrategies.forEach((name, implementation) -> implementation.prepareData());
 
