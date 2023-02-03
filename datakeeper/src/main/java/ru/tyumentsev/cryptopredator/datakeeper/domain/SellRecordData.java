@@ -2,12 +2,11 @@ package ru.tyumentsev.cryptopredator.datakeeper.domain;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
-
-import java.time.LocalDateTime;
+import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
 
 @RedisHash("SellRecord")
-public record SellRecord(
-        @Id String symbol,
-        LocalDateTime sellTime,
-        String strategy
+public record SellRecordData (
+        @Id
+        String id,
+        SellRecord sellRecord
 ) {}

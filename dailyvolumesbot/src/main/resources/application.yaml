@@ -60,9 +60,6 @@ applicationconfig:
     secret: ${BINANCE_SECRET_KEY}
 
 databaseconfig:
-    redisHost: ${REDIS_HOST}
-    redisPort: ${REDIS_PORT}
-    redisPassword: ${REDIS_PASSWORD}
     dataKeeperURL: http://${DATAKEEPER_HOST}:${DATAKEEPER_PORT}
 
 strategy:

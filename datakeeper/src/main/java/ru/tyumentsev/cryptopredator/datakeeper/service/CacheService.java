@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 import ru.tyumentsev.cryptopredator.datakeeper.cache.OpenedPositionRepository;
 import ru.tyumentsev.cryptopredator.datakeeper.cache.PreviousCandleDataRepository;
 import ru.tyumentsev.cryptopredator.datakeeper.cache.SellRecordRepository;
-import ru.tyumentsev.cryptopredator.datakeeper.domain.OpenedPosition;
+import ru.tyumentsev.cryptopredator.datakeeper.domain.OpenedPositionData;
 import ru.tyumentsev.cryptopredator.datakeeper.domain.PreviousCandleData;
-import ru.tyumentsev.cryptopredator.datakeeper.domain.SellRecord;
+import ru.tyumentsev.cryptopredator.datakeeper.domain.SellRecordData;
 
 import java.util.Collection;
 import java.util.List;
@@ -27,15 +27,15 @@ public class CacheService {
     SellRecordRepository sellRecordRepository;
     PreviousCandleDataRepository previousCandleDataRepository;
 
-    public List<SellRecord> saveAllSellRecords(Collection<SellRecord> sellRecords) {
+    public List<SellRecordData> saveAllSellRecords(Collection<SellRecordData> sellRecords) {
         return StreamSupport.stream(sellRecordRepository.saveAll(sellRecords).spliterator(), false).toList();
     }
 
-    public Optional<SellRecord> findSellRecord(String id) {
+    public Optional<SellRecordData> findSellRecord(String id) {
         return sellRecordRepository.findById(id);
     }
 
-    public List<SellRecord> findAllSellRecords() {
+    public List<SellRecordData> findAllSellRecords() {
         return StreamSupport.stream(sellRecordRepository.findAll().spliterator(), false).toList();
     }
 
@@ -43,19 +43,19 @@ public class CacheService {
         sellRecordRepository.deleteAllById(id);
     }
 
-    public void deleteAllSellRecords(Collection<SellRecord> sellRecords) {
+    public void deleteAllSellRecords(Collection<SellRecordData> sellRecords) {
         sellRecordRepository.deleteAll(sellRecords);
     }
 
-    public List<OpenedPosition> saveAllOpenedPositions(Collection<OpenedPosition> openedPositions) {
+    public List<OpenedPositionData> saveAllOpenedPositions(Collection<OpenedPositionData> openedPositions) {
         return StreamSupport.stream(openedPositionRepository.saveAll(openedPositions).spliterator(), false).toList();
     }
 
-    public Optional<OpenedPosition> findOpenedPosition(String id) {
+    public Optional<OpenedPositionData> findOpenedPositionsById(String id) {
         return openedPositionRepository.findById(id);
     }
 
-    public List<OpenedPosition> findAllOpenedPositions() {
+    public List<OpenedPositionData> findAllOpenedPositions() {
         return StreamSupport.stream(openedPositionRepository.findAll().spliterator(), false).toList();
     }
 
@@ -63,7 +63,7 @@ public class CacheService {
         openedPositionRepository.deleteAllById(ids);
     }
 
-    public void deleteAllOpenedPositions(Collection<OpenedPosition> openedPositions) {
+    public void deleteAllOpenedPositions(Collection<OpenedPositionData> openedPositions) {
         openedPositionRepository.deleteAll(openedPositions);
     }
 

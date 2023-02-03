@@ -4,20 +4,17 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.tyumentsev.cryptopredator.datakeeper.domain.OpenedPosition;
+import ru.tyumentsev.cryptopredator.datakeeper.domain.OpenedPositionData;
 import ru.tyumentsev.cryptopredator.datakeeper.domain.PreviousCandleData;
-import ru.tyumentsev.cryptopredator.datakeeper.domain.SellRecord;
+import ru.tyumentsev.cryptopredator.datakeeper.domain.SellRecordData;
 import ru.tyumentsev.cryptopredator.datakeeper.service.CacheService;
 
-import java.net.http.HttpHeaders;
 import java.util.List;
 
 @RestController
@@ -30,75 +27,82 @@ public class CacheController {
     CacheService cacheService;
 
     @GetMapping("/sellRecord")
-    public List<SellRecord> getSellRecords() {
+    public List<SellRecordData> getSellRecords() {
 //        log.info("getSellRecords() call from {}.", headers.map().get("bot-id"));
         return cacheService.findAllSellRecords();
     }
 
     @GetMapping("/sellRecord/{id}")
-    public SellRecord getSellRecord(@PathVariable String id) {
+    public SellRecordData getSellRecord(@PathVariable String id) {
 //        log.info("getSellRecord({}) call from {}.", id, headers.map().get("bot-id"));
         return cacheService.findSellRecord(id).orElseThrow();
     }
 
     @PostMapping("/sellRecord")
-    public List<SellRecord> saveSellRecordsCache(@RequestBody List<SellRecord> records) {
-//        log.info("saveSellRecordsCache({}) call from {}.", records, headers.map().get("bot-id"));
-        return cacheService.saveAllSellRecords(records);
+    public List<SellRecordData> saveSellRecordsCache(@RequestBody List<SellRecordData> sellRecords) {
+        log.info("Request to save sell records: {}", sellRecords);
+        List<SellRecordData> savedRecords = cacheService.saveAllSellRecords(sellRecords);
+        log.info("Saved sell records: {}", savedRecords);
+        return savedRecords;
+    }
+
+    @PostMapping("/sellRecord/delete")
+    public void deleteAllSellRecordsById(@RequestBody List<String> ids) {
+//        log.info("deleteAllSellRecordsById({}) call from {}.", ids, headers.map().get("bot-id"));
+        cacheService.deleteAllSellRecordsById(ids);
     }
 
 //    @PostMapping("/sellRecord/delete")
-//    public void deleteAllSellRecordsById(@RequestBody List<String> ids) {
-////        log.info("deleteAllSellRecordsById({}) call from {}.", ids, headers.map().get("bot-id"));
-//        cacheService.deleteAllSellRecordsById(ids);
+//    public void deleteAllSellRecords(@RequestBody List<SellRecord> records) {
+////        log.info("deleteAllSellRecords() call from {}.", headers.map().get("bot-id"));
+//        cacheService.deleteAllSellRecords(records);
 //    }
 
-    @PostMapping("/sellRecord/delete")
-    public void deleteAllSellRecords(@RequestBody List<SellRecord> records) {
-//        log.info("deleteAllSellRecords() call from {}.", headers.map().get("bot-id"));
-        cacheService.deleteAllSellRecords(records);
-    }
-
-    @GetMapping("/previousCandleData")
+    @GetMapping("/previousCandleContainer")
     public List<PreviousCandleData> getPreviousCandlesData() {
 //        log.info("getPreviousCandlesData() call from {}.", headers.map().get("bot-id"));
         return cacheService.findAllPreviousCandleData();
     }
 
-    @GetMapping("/previousCandleData/{id}")
+    @GetMapping("/previousCandleContainer/{id}")
     public PreviousCandleData getPreviousCandleData(@PathVariable String id) {
 //        log.info("getPreviousCandleData({}) call from {}.", id, headers.map().get("bot-id"));
         return cacheService.findPreviousCandleData(id).orElseThrow();
     }
 
-    @PostMapping("/previousCandleData")
+    @PostMapping("/previousCandleContainer")
     public List<PreviousCandleData> savePreviousCandleDataCache(@RequestBody List<PreviousCandleData> previousCandleData) {
-//        log.info("savePreviousCandleDataCache({}) call from {}.", previousCandleData, headers.map().get("bot-id"));
-        return cacheService.saveAllPreviousCandleData(previousCandleData);
+        log.debug("Request to save previous cande data: {}", previousCandleData);
+        List<PreviousCandleData> savedCandles = cacheService.saveAllPreviousCandleData(previousCandleData);
+        log.debug("Saved candles: {}", savedCandles);
+        return savedCandles;
     }
 
-    @PostMapping("/previousCandleData/delete")
+    @PostMapping("/previousCandleContainer/delete")
     public void deleteAllPreviousCandlesDataById(@RequestBody List<String> ids) {
 //        log.info("deleteAllPreviousCandlesDataById({}) call from {}.", ids, headers.map().get("bot-id"));
         cacheService.deleteAllPreviousCandleDataById(ids);
     }
 
     @GetMapping("/openedPosition")
-    public List<OpenedPosition> getOpenedPositions() {
+    public List<OpenedPositionData> getOpenedPositions() {
 //        log.info("getOpenedPositions() call from {}.", headers.map().get("bot-id"));
         return cacheService.findAllOpenedPositions();
     }
 
     @GetMapping("/openedPosition/{id}")
-    public OpenedPosition getOpenedPosition(@PathVariable String id) {
+    public OpenedPositionData getOpenedPosition(@PathVariable String id) {
 //        log.info("getOpenedPosition({}) call from {}.", id, headers.map().get("bot-id"));
-        return cacheService.findOpenedPosition(id).orElseThrow();
+        return cacheService.findOpenedPositionsById(id).orElse(null);
     }
 
     @PostMapping("/openedPosition")
-    public List<OpenedPosition> saveOpenedPositionsCache(@RequestBody List<OpenedPosition> openedPositions) {
+    public List<OpenedPositionData> saveOpenedPositionsCache(@RequestBody List<OpenedPositionData> openedPositions) {
 //        log.info("saveOpenedPositionsCache({}) call from {}.", openedPositions, headers.map().get("bot-id"));
-        return cacheService.saveAllOpenedPositions(openedPositions);
+        log.info("Request to save openend positions: {}", openedPositions);
+        List<OpenedPositionData> openedPositionList = cacheService.saveAllOpenedPositions(openedPositions);
+        log.info("Saved positions: {}", openedPositionList);
+        return openedPositionList;
     }
 
 //    @DeleteMapping("/openedPosition")
@@ -108,8 +112,8 @@ public class CacheController {
 //    }
 
     @PostMapping("/openedPosition/delete")
-    public void deleteAllOpenedPositionsById(@RequestBody List<OpenedPosition> openedPositions) {
+    public void deleteAllOpenedPositionsById(@RequestBody List<String> openedPositionsIds) {
 //        log.info("deleteAllOpenedPositionsById({}) call from {}.", ids, headers.map().get("bot-id"));
-        cacheService.deleteAllOpenedPositions(openedPositions);
+        cacheService.deleteAllOpenedPositionsById(openedPositionsIds);
     }
 }

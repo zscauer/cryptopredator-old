@@ -14,10 +14,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.tyumentsev.cryptopredator.commons.TradingStrategy;
-import ru.tyumentsev.cryptopredator.commons.domain.PreviousCandleData;
+import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
+import ru.tyumentsev.cryptopredator.commons.domain.PreviousCandleContainer;
 import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
 import ru.tyumentsev.cryptopredator.commons.mapping.CandlestickToEventMapper;
-//import ru.tyumentsev.cryptopredator.dailyvolumesbot.service.CacheService;
 import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.commons.service.SpotTrading;
@@ -44,10 +44,9 @@ public class Daily implements TradingStrategy {
     final MarketInfo marketInfo;
     final DailyVolumesStrategyCondition dailyVolumesStrategyCondition;
     final SpotTrading spotTrading;
-    //    final CacheService cacheService;
     final DataService dataService;
 
-    CandlestickInterval candlestickInterval;
+    final CandlestickInterval candlestickInterval = CandlestickInterval.DAILY;
     @Getter
     final Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents = new ConcurrentHashMap<>();
     @Getter
@@ -69,6 +68,10 @@ public class Daily implements TradingStrategy {
     boolean averagingEnabled;
     @Value("${strategy.global.tradingAsset}")
     String tradingAsset;
+    @Value("${strategy.global.minimalAssetBalance}")
+    int minimalAssetBalance;
+    @Value("${strategy.global.baseOrderVolume}")
+    int baseOrderVolume;
     @Value("${strategy.daily.volumeGrowthFactor}")
     float volumeGrowthFactor;
     @Value("${strategy.daily.priceGrowthFactor}")
@@ -81,13 +84,11 @@ public class Daily implements TradingStrategy {
     float takeProfitPriceDecreaseFactor;
     @Value("${strategy.daily.averagingTriggerFactor}")
     float averagingTriggerFactor;
-    @Value("${strategy.daily.rocketCandidatePercentageGrowth}")
-    float rocketCandidatePercentageGrowth;
 
     @Scheduled(fixedDelayString = "${strategy.daily.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.daily.startCandlstickEventsCacheUpdating.initialDelay}")
     public void daily_startCandlstickEventsCacheUpdating() {
         if (dailyEnabled && !testLaunch) {
-            startCandlstickEventsCacheUpdating(CandlestickInterval.DAILY);
+            startCandlstickEventsCacheUpdating();
 //            Thread.getAllStackTraces().keySet().stream().filter(Thread::isAlive).forEach(thread -> {
 //                log.info("Thread {} name: {} group: {}.", thread.getId(), thread.getName(), thread.getThreadGroup());
 //            });
@@ -114,7 +115,11 @@ public class Daily implements TradingStrategy {
 
         constructCandleStickEventsCache();
 
-        restoreCachedCandlestickEvents("DAILY");
+        try {
+            restoreCachedCandlestickEvents("DAILY");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 //        var cachedCandlestickEvents = marketData.getCachedCandlestickEvents();
 
         cachedCandlestickEvents.entrySet().stream()
@@ -129,8 +134,8 @@ public class Daily implements TradingStrategy {
 
         log.info("Prepared candlestick events of {} pairs.", cachedCandlestickEvents.values().stream().filter(value -> !value.isEmpty()).count());
 
-        restoreSellJournalFromCache();
-        prepareOpenedLongPositions();
+            restoreSellJournalFromCache();
+            prepareOpenedLongPositions();
     }
 
     private void constructCandleStickEventsCache() {
@@ -146,31 +151,31 @@ public class Daily implements TradingStrategy {
 
     private void restoreSellJournalFromCache() {
         var sellJournal = dailyVolumesStrategyCondition.getSellJournal();
-        dataService.findAllSellRecords().stream()
-                .filter(sellRecord -> sellRecord.strategy().equalsIgnoreCase(getName()))
+        dataService.findAllSellRecords(this)
                 .forEach(record -> sellJournal.put(record.symbol(), record));
-        dataService.deleteAllSellRecords(sellJournal.values());
+        dataService.deleteAllSellRecords(sellJournal.values(), this);
     }
 
     private void prepareOpenedLongPositions() {
         List<String> accountPositions = spotTrading.recieveOpenedLongPositionsFromMarket().stream()
                 .map(assetBalance -> assetBalance.getAsset() + tradingAsset).toList();
-        dataService.findAllOpenedPositions().stream()
-                .filter(pos -> pos.strategy().equalsIgnoreCase(getName()))
-                .forEach(pos -> {
+
+        List<OpenedPosition> cachedOpenedPositions =  dataService.findAllOpenedPositions(this);
+        log.debug("Found next cached opened positions: {}", cachedOpenedPositions);
+                cachedOpenedPositions.forEach(pos -> {
                     if (accountPositions.contains(pos.symbol())) {
                         dailyVolumesStrategyCondition.getLongPositions().put(pos.symbol(), pos);
                     }
                 });
 
-        dataService.deleteAllOpenedPositions(dailyVolumesStrategyCondition.getLongPositions().values());
+        dataService.deleteAllOpenedPositions(dailyVolumesStrategyCondition.getLongPositions().values(), this);
     }
 
-    private void restoreCachedCandlestickEvents(String interval) {
+    private void restoreCachedCandlestickEvents(String interval) throws IOException {
         int yesterdayDayOfYear = LocalDateTime.now().minusDays(1L).getDayOfYear();
 //        var cachedCandlestickEvents = marketData.getCachedCandlestickEvents();
 
-        List<PreviousCandleData> dailyCachedCandleData = dataService.findAllPreviousCandleData().stream().filter(data -> data.id().startsWith(interval)).toList();
+        List<PreviousCandleContainer> dailyCachedCandleData = dataService.findAllPreviousCandleContainers().stream().filter(data -> data.id().startsWith(interval)).toList();
         log.debug("Size of empty cached candlestick events before restoring from cache is: {}.",
                 cachedCandlestickEvents.entrySet().stream().filter(entry -> entry.getValue().isEmpty()).collect(Collectors.toSet()).size());
 
@@ -182,7 +187,7 @@ public class Daily implements TradingStrategy {
         log.debug("Size of empty cached candlestick events after restoring from cache is: {} ({}).",
                 emptyCachedCandlestickEvents.size(), emptyCachedCandlestickEvents);
 
-        dataService.deleteAllPreviousCandleData(dailyCachedCandleData);
+        dataService.deleteAllPreviousCandleContainers(new ArrayList<>(dailyCachedCandleData));
     }
 
     public void addCandlestickEventToCache(String ticker, CandlestickEvent candlestickEvent) {
@@ -239,7 +244,7 @@ public class Daily implements TradingStrategy {
     @Override
     public void handleSelling(final OrderTradeUpdateEvent sellEvent) {
         log.debug("Get sell event of {} with strategy id {}.", sellEvent.getSymbol(), sellEvent.getStrategyId());
-        if (dailyEnabled && getId().equals(sellEvent.getStrategyId())
+        if (dailyEnabled && (getId().equals(Optional.ofNullable(sellEvent.getStrategyId()).orElse(getId())))
                 && parsedFloat(sellEvent.getAccumulatedQuantity()) == (parsedFloat(sellEvent.getOriginalQuantity()))) {
             Optional.ofNullable(candleStickEventsStreams.remove(sellEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
                 try {
@@ -268,8 +273,7 @@ public class Daily implements TradingStrategy {
         }
     }
 
-    public void startCandlstickEventsCacheUpdating(CandlestickInterval interval) {
-        candlestickInterval = interval;
+    public void startCandlstickEventsCacheUpdating() {
         closeOpenedWebSocketStreams();
         AtomicInteger marketMonitoringThreadsCounter = new AtomicInteger();
         AtomicInteger longMonitoringThreadsCounter = new AtomicInteger();
@@ -300,12 +304,11 @@ public class Daily implements TradingStrategy {
             var openPrice = parsedFloat(event.getOpen());
 
             if (closePrice > openPrice * priceGrowthFactor
-                    && (parsedFloat(currentEvent.getVolume()) > parsedFloat(previousEvent.getVolume()) * volumeGrowthFactor
-                    || percentageDifference(closePrice, openPrice) > rocketCandidatePercentageGrowth) // if price grown a lot without volume, it might be a rocket.
+                    && (parsedFloat(currentEvent.getVolume()) > parsedFloat(previousEvent.getVolume()) * volumeGrowthFactor)
                     && percentageDifference(parsedFloat(event.getHigh()), closePrice) < 4) { // candle's max price not much higher than current.
                 buyFast(ticker, closePrice, tradingAsset, false);
-                rocketCandidates.put(ticker, percentageDifference(closePrice, openPrice) > rocketCandidatePercentageGrowth
-                        && !(parsedFloat(currentEvent.getVolume()) > parsedFloat(previousEvent.getVolume()) * volumeGrowthFactor));
+//                rocketCandidates.put(ticker, percentageDifference(closePrice, openPrice) > rocketCandidatePercentageGrowth
+//                        && !(parsedFloat(currentEvent.getVolume()) > parsedFloat(previousEvent.getVolume()) * volumeGrowthFactor));
             }
         };
     }
@@ -351,7 +354,7 @@ public class Daily implements TradingStrategy {
         if ((itsDealsAllowedPeriod(LocalTime.now()) || itsAveraging) &&
                 !(marketInfo.pairOrderIsProcessing(symbol, getName()) || dailyVolumesStrategyCondition.thisSignalWorkedOutBefore(symbol))) {
             log.debug("Price of {} growth more than {}%, and now equals {}.", symbol, Float.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
-            spotTrading.placeBuyOrderFast(symbol, getName(), getId(), price, quoteAsset);
+            spotTrading.placeBuyOrderFast(symbol, getName(), getId(), price, quoteAsset, minimalAssetBalance, baseOrderVolume);
         }
     }
 
@@ -396,29 +399,33 @@ public class Daily implements TradingStrategy {
     }
 
     private void backupSellRecords() {
-        dataService.saveAllSellRecords(dailyVolumesStrategyCondition.getSellJournal().values());
+        dataService.saveAllSellRecords(dailyVolumesStrategyCondition.getSellJournal().values(), this);
     }
 
     private void backupOpenedPositions() {
-        dataService.saveAllOpenedPositions(dailyVolumesStrategyCondition.getLongPositions().values());
+        List<OpenedPosition> savedPositions = dataService.saveAllOpenedPositions(dailyVolumesStrategyCondition.getLongPositions().values(), this);
     }
 
-    private void backupPreviousCandleData() {
-        dataService.saveAllPreviousCandleData(cachedCandlestickEvents.values().stream()
+    private void backupPreviousCandleContainers() {
+        dataService.saveAllPreviousCandleContainers(cachedCandlestickEvents.values().stream()
                 .map(deque -> Optional.ofNullable(deque.peekFirst()))
                 .filter(Optional::isPresent)
                 .map(optional -> {
                     var prevEvent = optional.get();
-                    return new PreviousCandleData("DAILY:" + prevEvent.getSymbol(), prevEvent);
+                    return new PreviousCandleContainer("DAILY:" + prevEvent.getSymbol(), prevEvent);
                 }).collect(Collectors.toSet())
         );
     }
 
     @PreDestroy
     public void destroy() {
-        closeOpenedWebSocketStreams();
-        backupSellRecords();
-        backupOpenedPositions();
-        backupPreviousCandleData();
+        try {
+            closeOpenedWebSocketStreams();
+            backupPreviousCandleContainers();
+            backupOpenedPositions();
+            backupSellRecords();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

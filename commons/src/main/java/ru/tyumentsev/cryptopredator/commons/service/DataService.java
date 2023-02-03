@@ -1,131 +1,131 @@
 package ru.tyumentsev.cryptopredator.commons.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.web.client.RestTemplate;
+import ru.tyumentsev.cryptopredator.commons.TradingStrategy;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
-import ru.tyumentsev.cryptopredator.commons.domain.PreviousCandleData;
+import ru.tyumentsev.cryptopredator.commons.domain.OpenedPositionContainer;
+import ru.tyumentsev.cryptopredator.commons.domain.PreviousCandleContainer;
 import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
+import ru.tyumentsev.cryptopredator.commons.domain.SellRecordContainer;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
+@RequiredArgsConstructor
 public class DataService {
 
-    //    RestTemplate restTemplate = new RestTemplate();
-    @Value("${databaseconfig.dataKeeperURL}")
-    String dataKeeperURL;
-    String cacheEndpoint = "/api/cache/v1";
-    final String botId = "dailyvolumesbot";
+    final CacheServiceClient cacheServiceClient;
 
-    public List<SellRecord> saveAllSellRecords(Collection<SellRecord> sellRecords) {
-        RestTemplate restTemplate = new RestTemplate();
-        ParameterizedTypeReference<List<SellRecord>> typeRef = new ParameterizedTypeReference<List<SellRecord>>(){};
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("bot-id", botId);
-        HttpEntity<List<SellRecord>> request = new HttpEntity<>(new ArrayList<>(sellRecords));
-        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/sellRecord", HttpMethod.POST, request, typeRef);
-        log.debug("Next sell records saved:\n{}", response);
-
-        return response.getBody();
+    public List<SellRecord> saveAllSellRecords(Collection<SellRecord> sellRecords, TradingStrategy strategy) {
+        try {
+            return Optional.ofNullable(cacheServiceClient.saveAllSellRecords(sellRecords.stream()
+                                    .map(record -> new SellRecordContainer(String.format("%s:%s", strategy.getId(), record.symbol()), record))
+                                    .collect(Collectors.toList()))
+                            .execute().body())
+                    .map(containers -> containers.stream()
+                            .map(SellRecordContainer::sellRecord)
+                            .collect(Collectors.toList()))
+                    .orElseGet(ArrayList::new);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public List<SellRecord> findAllSellRecords() {
-        RestTemplate restTemplate = new RestTemplate();
-        ParameterizedTypeReference<List<SellRecord>> typeRef = new ParameterizedTypeReference<List<SellRecord>>(){};
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("bot-id", botId);
-        HttpEntity<List<SellRecord>> request = new HttpEntity<>(new ArrayList<>());
-        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/sellRecord", HttpMethod.GET, request, typeRef);
-        log.debug("Get next sell records:\n{}", response);
-
-        return response.getBody();
+    public List<SellRecord> findAllSellRecords(TradingStrategy strategy) {
+        try {
+            return Optional.ofNullable(cacheServiceClient.findAllSellRecords()
+                            .execute().body())
+                    .map(containers -> containers.stream()
+                            .map(SellRecordContainer::sellRecord)
+                            .filter(sellRecord -> sellRecord.strategy().equals(strategy.getName()))
+                            .collect(Collectors.toList()))
+                    .orElseGet(ArrayList::new);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void deleteAllSellRecords(Collection<SellRecord> sellRecords) {
-        RestTemplate restTemplate = new RestTemplate();
-
-        ParameterizedTypeReference<List<SellRecord>> typeRef = new ParameterizedTypeReference<List<SellRecord>>(){};
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("bot-id", botId);
-        HttpEntity<List<SellRecord>> request = new HttpEntity<>(new ArrayList<>(sellRecords));
-        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/sellRecord/delete", HttpMethod.POST, request, typeRef);
+    public void deleteAllSellRecords(Collection<SellRecord> sellRecords, TradingStrategy strategy) {
+        try {
+            cacheServiceClient.deleteAllSellRecordsById(sellRecords.stream()
+                    .map(record -> String.format("%s:%s", strategy.getId(), record.symbol()))
+                    .collect(Collectors.toList())).execute();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public List<PreviousCandleData> saveAllPreviousCandleData(Collection<PreviousCandleData> previousCandleData) {
-        RestTemplate restTemplate = new RestTemplate();
-        ParameterizedTypeReference<List<PreviousCandleData>> typeRef = new ParameterizedTypeReference<List<PreviousCandleData>>(){};
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("bot-id", botId);
-        HttpEntity<List<PreviousCandleData>> request = new HttpEntity<>(new ArrayList<>(previousCandleData));
-        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/previousCandleData", HttpMethod.POST, request, typeRef);
-        log.debug("Next previous candle data saved:\n{}", response.getBody());
-
-        return response.getBody();
+    public List<PreviousCandleContainer> saveAllPreviousCandleContainers(Collection<PreviousCandleContainer> previousCandleContainers) {
+        try {
+            return Optional.ofNullable(cacheServiceClient.saveAllPreviousCandleContainers(previousCandleContainers).execute().body())
+                    .orElseGet(ArrayList::new);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public List<PreviousCandleData> findAllPreviousCandleData() {
-        RestTemplate restTemplate = new RestTemplate();
-        ParameterizedTypeReference<List<PreviousCandleData>> typeRef = new ParameterizedTypeReference<List<PreviousCandleData>>(){};
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("bot-id", botId);
-        HttpEntity<List<PreviousCandleData>> request = new HttpEntity<>(new ArrayList<>());
-        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/previousCandleData", HttpMethod.GET, request, typeRef);
-        log.debug("Get next previous candle data:\n{}", response.getBody());
-
-        return response.getBody();
+    public List<PreviousCandleContainer> findAllPreviousCandleContainers() {
+        try {
+            return Optional.ofNullable(cacheServiceClient.findAllPreviousCandleContainers().execute().body())
+                    .orElseGet(ArrayList::new);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void deleteAllPreviousCandleData(Collection<PreviousCandleData> previousCandleData) {
-        RestTemplate restTemplate = new RestTemplate();
-
-        ParameterizedTypeReference<List<PreviousCandleData>> typeRef = new ParameterizedTypeReference<List<PreviousCandleData>>(){};
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("bot-id", botId);
-        HttpEntity<List<String>> request = new HttpEntity<>((previousCandleData.stream().map(PreviousCandleData::id)).collect(Collectors.toList()));
-        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/previousCandleData/delete", HttpMethod.POST, request, typeRef);
+    public void deleteAllPreviousCandleContainers(Collection<PreviousCandleContainer> previousCandleContainers) {
+        try {
+            cacheServiceClient.deleteAllPreviousCandleContainersById(previousCandleContainers.stream()
+                            .map(PreviousCandleContainer::id)
+                            .collect(Collectors.toList()))
+                    .execute();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public List<OpenedPosition> saveAllOpenedPositions(Collection<OpenedPosition> openedPositions) {
-        RestTemplate restTemplate = new RestTemplate();
-
-        ParameterizedTypeReference<List<OpenedPosition>> typeRef = new ParameterizedTypeReference<List<OpenedPosition>>(){};
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("bot-id", botId);
-        HttpEntity<List<OpenedPosition>> request = new HttpEntity<>(new ArrayList<>(openedPositions));
-        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/openedPosition", HttpMethod.POST, request, typeRef);
-        log.debug("Next opened positions saved:\n{}", response.getBody());
-
-        return response.getBody();
+    public List<OpenedPosition> saveAllOpenedPositions(Collection<OpenedPosition> openedPositions, TradingStrategy strategy) {
+        try {
+            return Optional.ofNullable(cacheServiceClient.saveAllOpenedPositions(openedPositions.stream()
+                                    .map(record -> new OpenedPositionContainer(String.format("%s:%s", strategy.getId(), record.symbol()), record))
+                                    .collect(Collectors.toList()))
+                            .execute().body())
+                    .map(containers -> containers.stream()
+                            .map(OpenedPositionContainer::openedPosition)
+                            .collect(Collectors.toList()))
+                    .orElseGet(ArrayList::new);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public List<OpenedPosition> findAllOpenedPositions() {
-        RestTemplate restTemplate = new RestTemplate();
-
-        ParameterizedTypeReference<List<OpenedPosition>> typeRef = new ParameterizedTypeReference<List<OpenedPosition>>(){};
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("bot-id", botId);
-        HttpEntity<List<OpenedPosition>> request = new HttpEntity<>(new ArrayList<>());
-        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/openedPosition", HttpMethod.GET, request, typeRef);
-        log.debug("Get next opened positions:\n{}", response.getBody());
-
-        return response.getBody();
+    public List<OpenedPosition> findAllOpenedPositions(TradingStrategy tradingStrategy) {
+        try {
+            return Optional.ofNullable(cacheServiceClient.findAllOpenedPositions()
+                            .execute().body())
+                    .map(containers -> containers.stream()
+                            .map(OpenedPositionContainer::openedPosition)
+                            .filter(openedPosition -> openedPosition.strategy().equals(tradingStrategy.getName()))
+                            .collect(Collectors.toList()))
+                    .orElseGet(ArrayList::new);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void deleteAllOpenedPositions(Collection<OpenedPosition> openedPositions) {
-        RestTemplate restTemplate = new RestTemplate();
-
-        ParameterizedTypeReference<List<OpenedPosition>> typeRef = new ParameterizedTypeReference<List<OpenedPosition>>(){};
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("bot-id", botId);
-        HttpEntity<List<OpenedPosition>> request = new HttpEntity<>(new ArrayList<>(openedPositions));
-        var response = restTemplate.exchange(dataKeeperURL + cacheEndpoint + "/openedPosition/delete", HttpMethod.POST, request, typeRef);
+    public void deleteAllOpenedPositions(Collection<OpenedPosition> openedPositions, TradingStrategy strategy) {
+        try {
+            cacheServiceClient.deleteAllOpenedPositionsById(openedPositions.stream()
+                    .map(record -> String.format("%s:%s", strategy.getId(), record.symbol()))
+                    .collect(Collectors.toList())).execute();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

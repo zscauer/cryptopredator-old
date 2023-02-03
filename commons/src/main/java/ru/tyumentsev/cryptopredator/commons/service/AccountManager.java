@@ -3,8 +3,6 @@ package ru.tyumentsev.cryptopredator.commons.service;
 import java.io.Closeable;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
-
 import com.binance.api.client.BinanceApiCallback;
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.BinanceApiWebSocketClient;
@@ -23,11 +21,7 @@ public class AccountManager implements TradingService {
 
     final BinanceApiRestClient restClient;
     final BinanceApiWebSocketClient webSocketClient;
-
-    @Value("${applicationconfig.testLaunch}")
-    boolean testLaunch;
-
-    List<AssetBalance> currentBalances;
+    volatile List<AssetBalance> currentBalances;
 
     String listenKey;
 

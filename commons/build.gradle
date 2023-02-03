@@ -3,7 +3,7 @@ plugins {
     id 'io.freefair.lombok' version '6.6.1'
     id 'maven-publish'
 }
-def artifactVersion = '0.3'
+def artifactVersion = '0.4'
 
 group 'ru.tyumentsev.cryptopredator'
 version = artifactVersion
@@ -20,9 +20,6 @@ dependencies {
     implementation "org.ta4j:ta4j-core:0.16-SNAPSHOT"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
-    implementation 'org.springframework:spring-web:5.3.24'
-    implementation "org.springframework.data:spring-data-redis:2.7.6"
-//    implementation "redis.clients:jedis:3.8.0"
 }
 
 jar {
@@ -47,6 +44,6 @@ publishing {
     }
 }
 
-test {
-    useJUnitPlatform()
-}
+//test {
+//    useJUnitPlatform()
+//}

@@ -1,5 +1,8 @@
 package ru.tyumentsev.cryptopredator.indicatorvirginbot.configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import okhttp3.OkHttpClient;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +18,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+import retrofit2.Retrofit;
+import retrofit2.converter.jackson.JacksonConverterFactory;
 import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
+import ru.tyumentsev.cryptopredator.commons.service.CacheServiceClient;
 import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.commons.service.SpotTrading;
@@ -32,6 +38,8 @@ public class ApplicationConfig {
     String secret;
     boolean useTestnet;
     boolean useTestnetStreaming;
+    String dataKeeperURL;
+
 
     // ++++++++++ Binance functionality
     @Bean(name = "binanceApiClientFactory")
@@ -75,11 +83,6 @@ public class ApplicationConfig {
     @DependsOn("accountManager")
     public SpotTrading spotTrading() {
         return new SpotTrading(accountManager(), binanceApiAsyncRestClient(), marketInfo());
-    }
-
-    @Bean
-    public DataService dataService() {
-        return new DataService();
     }
     // ---------- Cryptopredator commons
 }

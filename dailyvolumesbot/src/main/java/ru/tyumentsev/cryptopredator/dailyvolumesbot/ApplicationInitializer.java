@@ -1,5 +1,6 @@
 package ru.tyumentsev.cryptopredator.dailyvolumesbot;
 
+import com.binance.api.client.BinanceApiCallback;
 import com.binance.api.client.domain.ExecutionType;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.event.UserDataUpdateEvent;
@@ -37,7 +38,7 @@ public class ApplicationInitializer implements ApplicationRunner {
     final Map<String, TradingStrategy> tradingStrategies;
 
     @Getter
-    Closeable userDataUpdateEventsListener;
+    volatile Closeable userDataUpdateEventsListener;
     @Value("${applicationconfig.testLaunch}")
     boolean testLaunch;
     @Value("${strategy.global.tradingAsset}")
@@ -65,7 +66,8 @@ public class ApplicationInitializer implements ApplicationRunner {
 
     @Scheduled(fixedDelayString = "${strategy.global.initializeUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.initializeUserDataUpdateStream.initialDelay}")
     public void generalMonitoring_initializeAliveUserDataUpdateStream() {
-        if (!testLaunch && tradingStrategies.values().stream().anyMatch(TradingStrategy::isEnabled)) {
+        if (//!testLaunch &&
+                tradingStrategies.values().stream().anyMatch(TradingStrategy::isEnabled)) {
             // User data stream are closing by binance after 24 hours of opening.
             accountManager.initializeUserDataUpdateStream();
 
@@ -94,22 +96,31 @@ public class ApplicationInitializer implements ApplicationRunner {
      * if it was "sell" event - removes from monitoring.
      */
     public void monitorUserDataUpdateEvents() {
-        userDataUpdateEventsListener = accountManager.listenUserDataUpdateEvents(callback -> {
-            if (callback.getEventType() == UserDataUpdateEvent.UserDataUpdateEventType.ORDER_TRADE_UPDATE
-                    && callback.getOrderTradeUpdateEvent().getExecutionType() == ExecutionType.TRADE) {
-                OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();
+        userDataUpdateEventsListener = accountManager.listenUserDataUpdateEvents(new BinanceApiCallback<UserDataUpdateEvent>() {
+            @Override
+            public void onResponse(UserDataUpdateEvent callback) {
+                if (callback.getEventType() == UserDataUpdateEvent.UserDataUpdateEventType.ORDER_TRADE_UPDATE
+                        && callback.getOrderTradeUpdateEvent().getExecutionType() == ExecutionType.TRADE) {
+                    OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();
 
-                switch (event.getSide()) {
-                    case BUY -> {
-                        tradingStrategies.values().forEach(strategy -> strategy.handleBuying(event));
+                    switch (event.getSide()) {
+                        case BUY -> {
+                            tradingStrategies.values().forEach(strategy -> strategy.handleBuying(event));
+                        }
+                        case SELL -> {
+                            tradingStrategies.values().forEach(strategy -> strategy.handleSelling(event));
+                        }
                     }
-                    case SELL -> {
-                        tradingStrategies.values().forEach(strategy -> strategy.handleSelling(event));
-                    }
+                    accountManager.refreshAccountBalances();
                 }
-                accountManager.refreshAccountBalances();
+            }
+
+            @Override
+            public void onFailure(Throwable cause) {
+                BinanceApiCallback.super.onFailure(cause);
+                log.error("Binance API callback failure: {}", cause.getMessage());
             }
         });
-    }
 
+    }
 }

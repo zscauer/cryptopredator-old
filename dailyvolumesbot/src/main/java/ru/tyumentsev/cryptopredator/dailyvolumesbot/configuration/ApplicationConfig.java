@@ -19,7 +19,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
-import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.commons.service.SpotTrading;
 
@@ -78,11 +77,6 @@ public class ApplicationConfig {
     @DependsOn("accountManager")
     public SpotTrading spotTrading() {
         return new SpotTrading(accountManager(), binanceApiAsyncRestClient(), marketInfo());
-    }
-
-    @Bean
-    public DataService dataService() {
-        return new DataService();
     }
     // ---------- Cryptopredator commons
 

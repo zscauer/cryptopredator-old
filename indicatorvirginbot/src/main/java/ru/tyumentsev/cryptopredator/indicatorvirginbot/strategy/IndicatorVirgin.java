@@ -20,6 +20,7 @@ import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.num.DoubleNum;
 import ru.tyumentsev.cryptopredator.commons.TradingStrategy;
+import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.commons.mapping.CandlestickToBaseBarMapper;
 import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
@@ -47,7 +48,7 @@ public class IndicatorVirgin implements TradingStrategy {
     final SpotTrading spotTrading;
     final DataService dataService;
 
-    CandlestickInterval candlestickInterval;
+    final CandlestickInterval candlestickInterval = CandlestickInterval.FIFTEEN_MINUTES;
     final int baseBarSeriesLimit = 26;
     @Getter
     final Map<String, Closeable> candleStickEventsStreams = new ConcurrentHashMap<>();
@@ -81,7 +82,7 @@ public class IndicatorVirgin implements TradingStrategy {
     @Scheduled(fixedDelayString = "${strategy.indicatorVirgin.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.indicatorVirgin.startCandlstickEventsCacheUpdating.initialDelay}")
     public void indicatorVirgin_startCandlstickEventsCacheUpdating() {
         if (indicatorVirginEnabled) { //&& !testLaunch) {
-            startCandlstickEventsCacheUpdating(CandlestickInterval.FIFTEEN_MINUTES);
+            startCandlstickEventsCacheUpdating();
 //            Thread.getAllStackTraces().keySet().stream().filter(Thread::isAlive).forEach(thread -> {
 //                log.info("Thread {} name: {} group: {}.", thread.getId(), thread.getName(), thread.getThreadGroup());
 //            });
@@ -120,24 +121,24 @@ public class IndicatorVirgin implements TradingStrategy {
 
     private void restoreSellJournalFromCache() {
         var sellJournal = indicatorVirginStrategyCondition.getSellJournal();
-        dataService.findAllSellRecords().stream()
-                .filter(sellRecord -> sellRecord.strategy().equalsIgnoreCase(getName()))
+        dataService.findAllSellRecords(this)
                 .forEach(record -> sellJournal.put(record.symbol(), record));
-        dataService.deleteAllSellRecords(sellJournal.values());
+        dataService.deleteAllSellRecords(sellJournal.values(), this);
     }
 
     private void prepareOpenedLongPositions() {
         List<String> accountPositions = spotTrading.recieveOpenedLongPositionsFromMarket().stream()
                 .map(assetBalance -> assetBalance.getAsset() + tradingAsset).toList();
-        dataService.findAllOpenedPositions().stream()
-                .filter(pos -> pos.strategy().equalsIgnoreCase(getName()))
-                .forEach(pos -> {
-                    if (accountPositions.contains(pos.symbol())) {
-                        indicatorVirginStrategyCondition.getLongPositions().put(pos.symbol(), pos);
-                    }
-                });
 
-        dataService.deleteAllOpenedPositions(indicatorVirginStrategyCondition.getLongPositions().values());
+        List<OpenedPosition> cachedOpenedPositions =  dataService.findAllOpenedPositions(this);
+        log.debug("Found next cached opened positions: {}", cachedOpenedPositions);
+        cachedOpenedPositions.forEach(pos -> {
+            if (accountPositions.contains(pos.symbol())) {
+                indicatorVirginStrategyCondition.getLongPositions().put(pos.symbol(), pos);
+            }
+        });
+
+        dataService.deleteAllOpenedPositions(indicatorVirginStrategyCondition.getLongPositions().values(), this);
     }
 
     @Override
@@ -150,8 +151,7 @@ public class IndicatorVirgin implements TradingStrategy {
 
     }
 
-    public void startCandlstickEventsCacheUpdating(CandlestickInterval interval) {
-        candlestickInterval = interval;
+    public void startCandlstickEventsCacheUpdating() {
         closeOpenedWebSocketStreams();
         AtomicInteger marketMonitoringThreadsCounter = new AtomicInteger();
         AtomicInteger longMonitoringThreadsCounter = new AtomicInteger();

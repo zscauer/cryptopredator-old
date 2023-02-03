@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import com.binance.api.client.domain.OrderSide;
 import com.binance.api.client.domain.account.AssetBalance;
-import org.springframework.beans.factory.annotation.Value;
 
 import com.binance.api.client.BinanceApiAsyncRestClient;
 import com.binance.api.client.domain.TimeInForce;
@@ -26,16 +25,11 @@ public class SpotTrading implements TradingService {
     final BinanceApiAsyncRestClient asyncRestClient;
     final MarketInfo marketInfo;
 
-    @Value("${strategy.global.minimalAssetBalance}")
-    int minimalAssetBalance;
-    @Value("${strategy.global.baseOrderVolume}")
-    int baseOrderVolume;
-
     public List<AssetBalance> getAccountBalances() {
         return accountManager.getAccountBalances();
     }
 
-    public void placeBuyOrderFast(final String symbol, final String strategyName, final int strategyId, final float price, String quoteAsset) {
+    public void placeBuyOrderFast(final String symbol, final String strategyName, final int strategyId, final float price, String quoteAsset, final int minimalAssetBalance, final int baseOrderVolume) {
         if (Thread.holdsLock(this)) {
             log.warn("placeBuyOrderFast({}) object monitor already locked by the current thread {} ({}).", symbol, Thread.currentThread().getName(), Thread.currentThread().getId());
             return;
