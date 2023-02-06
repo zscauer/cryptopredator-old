@@ -9,6 +9,7 @@ import com.binance.api.client.BinanceApiWebSocketClient;
 import com.binance.api.client.domain.account.AssetBalance;
 import com.binance.api.client.domain.event.UserDataUpdateEvent;
 
+import com.binance.api.client.exception.BinanceApiException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -47,7 +48,16 @@ public class AccountManager implements TradingService {
      */
     public void keepAliveUserDataUpdateStream() {
         log.debug("Sending signal to keep alive user data update stream.");
-        restClient.keepAliveUserDataStream(listenKey);
+        try {
+            restClient.keepAliveUserDataStream(listenKey);
+        } catch (BinanceApiException binanceApiException) {
+            log.error("Catch BinanceApiException with error {}", binanceApiException.getError());
+            if (binanceApiException.getMessage().toLowerCase().contains("listenKey does not exist".toLowerCase())) {
+                closeCurrentUserDataStream();
+                listenKey = restClient.startUserDataStream();
+                log.info("Get new listenKey ({}).", listenKey);
+            }
+        }
     }
 
     public Float getFreeAssetBalance(String asset) {
