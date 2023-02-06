@@ -214,14 +214,14 @@ public class Daily implements TradingStrategy {
                 && parsedFloat(buyEvent.getAccumulatedQuantity()) == parsedFloat(buyEvent.getOriginalQuantity())) {
             final String symbol = buyEvent.getSymbol();
 
-            Optional.ofNullable(candleStickEventsStreams.remove(symbol)).ifPresent(candlestickEventsStream -> {
-                try {
-                    candlestickEventsStream.close();
-                    log.debug("Candlestick events stream of {} closed in handle buying.", symbol);
-                } catch (IOException e) {
-                    log.error("Error while trying to close candlestick events stream of '{}':\n{}", symbol, e.getMessage());
-                }
-            });
+//            Optional.ofNullable(candleStickEventsStreams.remove(symbol)).ifPresent(candlestickEventsStream -> {
+//                try {
+//                    candlestickEventsStream.close();
+//                    log.debug("Candlestick events stream of {} closed in handle buying.", symbol);
+//                } catch (IOException e) {
+//                    log.error("Error while trying to close candlestick events stream of '{}':\n{}", symbol, e.getMessage());
+//                }
+//            });
 
             // if price == 0 most likely it was market order, use last market price.
             float dealPrice = parsedFloat(buyEvent.getPrice()) == 0
@@ -234,8 +234,8 @@ public class Daily implements TradingStrategy {
                     priceDecreaseFactor, Optional.ofNullable(rocketCandidates.remove(symbol)).orElse(false), getName()
             );
 
-            candleStickEventsStreams.put(symbol, marketInfo.openCandleStickEventsStream(symbol.toLowerCase(), candlestickInterval,
-                    longPositionMonitoringCallback(symbol)));
+//            candleStickEventsStreams.put(symbol, marketInfo.openCandleStickEventsStream(symbol.toLowerCase(), candlestickInterval,
+//                    longPositionMonitoringCallback()));
 
             marketInfo.pairOrderFilled(symbol, getName());
         }
@@ -246,14 +246,14 @@ public class Daily implements TradingStrategy {
         log.debug("Get sell event of {} with strategy id {}.", sellEvent.getSymbol(), sellEvent.getStrategyId());
         if (dailyEnabled && (getId().equals(Optional.ofNullable(sellEvent.getStrategyId()).orElse(getId())))
                 && parsedFloat(sellEvent.getAccumulatedQuantity()) == (parsedFloat(sellEvent.getOriginalQuantity()))) {
-            Optional.ofNullable(candleStickEventsStreams.remove(sellEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
-                try {
-                    candlestickEventsStream.close();
-                    log.debug("Candlestick events stream of {} closed in handle selling.", sellEvent.getSymbol());
-                } catch (IOException e) {
-                    log.error("Error while trying to close candlestick event stream of '{}':\n{}", sellEvent.getSymbol(), e.getMessage());
-                }
-            });
+//            Optional.ofNullable(candleStickEventsStreams.remove(sellEvent.getSymbol())).ifPresent(candlestickEventsStream -> {
+//                try {
+//                    candlestickEventsStream.close();
+//                    log.debug("Candlestick events stream of {} closed in handle selling.", sellEvent.getSymbol());
+//                } catch (IOException e) {
+//                    log.error("Error while trying to close candlestick event stream of '{}':\n{}", sellEvent.getSymbol(), e.getMessage());
+//                }
+//            });
 
             // if price == 0 most likely it was market order, use last market price.
             float dealPrice = parsedFloat(sellEvent.getPrice()) == 0
@@ -266,8 +266,8 @@ public class Daily implements TradingStrategy {
             dailyVolumesStrategyCondition.removeLongPositionFromPriceMonitoring(sellEvent.getSymbol());
             dailyVolumesStrategyCondition.addSellRecordToJournal(sellEvent.getSymbol(), getName());
 
-            candleStickEventsStreams.put(sellEvent.getSymbol(), marketInfo.openCandleStickEventsStream(sellEvent.getSymbol().toLowerCase(), candlestickInterval,
-                    marketMonitoringCallback()));
+//            candleStickEventsStreams.put(sellEvent.getSymbol(), marketInfo.openCandleStickEventsStream(sellEvent.getSymbol().toLowerCase(), candlestickInterval,
+//                    marketMonitoringCallback()));
 
             marketInfo.pairOrderFilled(sellEvent.getSymbol(), getName());
         }
@@ -276,78 +276,108 @@ public class Daily implements TradingStrategy {
     public void startCandlstickEventsCacheUpdating() {
         closeOpenedWebSocketStreams();
         AtomicInteger marketMonitoringThreadsCounter = new AtomicInteger();
-        AtomicInteger longMonitoringThreadsCounter = new AtomicInteger();
+//        AtomicInteger longMonitoringThreadsCounter = new AtomicInteger();
 
-        marketInfo.getCheapPairsExcludeOpenedPositions(tradingAsset, dailyVolumesStrategyCondition.getLongPositions().keySet(), dailyVolumesStrategyCondition.getShortPositions().keySet()).forEach(ticker -> {
+        marketInfo.getCheapPairs().getOrDefault(tradingAsset, Collections.emptyList()).forEach(ticker -> {
             candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
                     marketMonitoringCallback()));
             marketMonitoringThreadsCounter.getAndIncrement();
         });
-        dailyVolumesStrategyCondition.getLongPositions().forEach((ticker, openedPosition) -> {
-            candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
-                    longPositionMonitoringCallback(ticker)));
-            longMonitoringThreadsCounter.getAndIncrement();
-        });
 
-        log.info("Runned {} market monitoring threads and {} long monitoring threads.", marketMonitoringThreadsCounter, longMonitoringThreadsCounter);
+//        marketInfo.getCheapPairsExcludeOpenedPositions(tradingAsset, dailyVolumesStrategyCondition.getLongPositions().keySet(), dailyVolumesStrategyCondition.getShortPositions().keySet()).forEach(ticker -> {
+//            candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
+//                    marketMonitoringCallback()));
+//            marketMonitoringThreadsCounter.getAndIncrement();
+//        });
+//        dailyVolumesStrategyCondition.getLongPositions().forEach((ticker, openedPosition) -> {
+//            candleStickEventsStreams.put(ticker, marketInfo.openCandleStickEventsStream(ticker.toLowerCase(), candlestickInterval,
+//                    longPositionMonitoringCallback()));
+//            longMonitoringThreadsCounter.getAndIncrement();
+//        });
+
+        log.info("Runned {} market monitoring threads.", marketMonitoringThreadsCounter);
     }
+
+//    private BinanceApiCallback<CandlestickEvent> marketMonitoringCallback() {
+//        return event -> {
+//            final String ticker = event.getSymbol();
+//            addCandlestickEventToCache(ticker, event);
+//
+//            var currentEvent = cachedCandlestickEvents.get(ticker).getLast();
+//            var previousEvent = cachedCandlestickEvents.get(ticker).getFirst();
+//
+//            var closePrice = parsedFloat(event.getClose());
+//            var openPrice = parsedFloat(event.getOpen());
+//
+//            if (closePrice > openPrice * priceGrowthFactor
+//                    && (parsedFloat(currentEvent.getVolume()) > parsedFloat(previousEvent.getVolume()) * volumeGrowthFactor)
+//                    && percentageDifference(parsedFloat(event.getHigh()), closePrice) < 4) { // candle's max price not much higher than current.
+//                buyFast(ticker, closePrice, tradingAsset, false);
+////                rocketCandidates.put(ticker, percentageDifference(closePrice, openPrice) > rocketCandidatePercentageGrowth
+////                        && !(parsedFloat(currentEvent.getVolume()) > parsedFloat(previousEvent.getVolume()) * volumeGrowthFactor));
+//            }
+//        };
+//    }
 
     private BinanceApiCallback<CandlestickEvent> marketMonitoringCallback() {
         return event -> {
-            final String ticker = event.getSymbol();
-            addCandlestickEventToCache(ticker, event);
+            addCandlestickEventToCache(event.getSymbol(), event);
 
-            var currentEvent = cachedCandlestickEvents.get(ticker).getLast();
-            var previousEvent = cachedCandlestickEvents.get(ticker).getFirst();
+//            List<AssetBalance> currentBalances = spotTrading.getAccountBalances().stream()
+//                    .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB"))).toList();
 
-            var closePrice = parsedFloat(event.getClose());
-            var openPrice = parsedFloat(event.getOpen());
+//            if (currentBalances.isEmpty()) {
+//                log.warn("No available trading assets found on binance account, but long position monitoring for '{}' is still executing.", event.getSymbol());
+//                return;
+//            }
 
-            if (closePrice > openPrice * priceGrowthFactor
-                    && (parsedFloat(currentEvent.getVolume()) > parsedFloat(previousEvent.getVolume()) * volumeGrowthFactor)
-                    && percentageDifference(parsedFloat(event.getHigh()), closePrice) < 4) { // candle's max price not much higher than current.
-                buyFast(ticker, closePrice, tradingAsset, false);
-//                rocketCandidates.put(ticker, percentageDifference(closePrice, openPrice) > rocketCandidatePercentageGrowth
-//                        && !(parsedFloat(currentEvent.getVolume()) > parsedFloat(previousEvent.getVolume()) * volumeGrowthFactor));
-            }
+            Optional.ofNullable(dailyVolumesStrategyCondition.getLongPositions().get(event.getSymbol())).ifPresentOrElse(
+                    openedPosition -> analizeOpenedPosition(event, openedPosition),
+                    () -> analizeMarketPosition(event));
         };
     }
 
-    private BinanceApiCallback<CandlestickEvent> longPositionMonitoringCallback(String ticker) {
-        return event -> {
-            addCandlestickEventToCache(ticker, event);
+    private void analizeMarketPosition(final CandlestickEvent event) {
+        final String ticker = event.getSymbol();
+        addCandlestickEventToCache(ticker, event);
 
-            List<AssetBalance> currentBalances = spotTrading.getAccountBalances().stream()
-                    .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB"))).toList();
+        var currentEvent = cachedCandlestickEvents.get(ticker).getLast();
+        var previousEvent = cachedCandlestickEvents.get(ticker).getFirst();
 
-            if (currentBalances.isEmpty()) {
-                log.warn("No available trading assets found on binance account, but long position monitoring for '{}' is still executing.", ticker);
-                return;
+        var closePrice = parsedFloat(event.getClose());
+        var openPrice = parsedFloat(event.getOpen());
+
+        if (closePrice > openPrice * priceGrowthFactor
+                && (parsedFloat(currentEvent.getVolume()) > parsedFloat(previousEvent.getVolume()) * volumeGrowthFactor)
+                && percentageDifference(parsedFloat(event.getHigh()), closePrice) < 4) { // candle's max price not much higher than current.
+            buyFast(ticker, closePrice, tradingAsset, false);
+//                rocketCandidates.put(ticker, percentageDifference(closePrice, openPrice) > rocketCandidatePercentageGrowth
+//                        && !(parsedFloat(currentEvent.getVolume()) > parsedFloat(previousEvent.getVolume()) * volumeGrowthFactor));
+        }
+    }
+
+    private void analizeOpenedPosition(final CandlestickEvent event, final OpenedPosition openedPosition) {
+        final String ticker = event.getSymbol();
+        var currentPrice = parsedFloat(event.getClose());
+
+        dailyVolumesStrategyCondition.updateOpenedPositionLastPrice(ticker, currentPrice, dailyVolumesStrategyCondition.getLongPositions());
+
+        if (currentPrice > openedPosition.avgPrice() * pairTakeProfitFactor) {
+            log.debug("Current price decrease factor of {} is {}.", openedPosition.symbol(), dailyVolumesStrategyCondition.getLongPositions().get(openedPosition.symbol()).priceDecreaseFactor());
+            openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
+            log.debug("Price decrease factor of {} after changing is {}.", openedPosition.symbol(), dailyVolumesStrategyCondition.getLongPositions().get(openedPosition.symbol()).priceDecreaseFactor());
+
+            if (averagingEnabled) {
+                buyFast(ticker, currentPrice, tradingAsset, true);
             }
+        }
+        float stopTriggerValue = openedPosition.priceDecreaseFactor() == takeProfitPriceDecreaseFactor ? openedPosition.maxPrice() : openedPosition.avgPrice();
 
-            Optional.ofNullable(dailyVolumesStrategyCondition.getLongPositions().get(ticker)).ifPresent(openedPosition -> {
-                var currentPrice = parsedFloat(event.getClose());
-
-                dailyVolumesStrategyCondition.updateOpenedPositionLastPrice(ticker, currentPrice, dailyVolumesStrategyCondition.getLongPositions());
-
-                if (currentPrice > openedPosition.avgPrice() * pairTakeProfitFactor) {
-                    log.debug("Current price decrease factor of {} is {}.", openedPosition.symbol(), dailyVolumesStrategyCondition.getLongPositions().get(openedPosition.symbol()).priceDecreaseFactor());
-                    openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
-                    log.debug("Price decrease factor of {} after changing is {}.", openedPosition.symbol(), dailyVolumesStrategyCondition.getLongPositions().get(openedPosition.symbol()).priceDecreaseFactor());
-
-                    if (averagingEnabled) {
-                        buyFast(ticker, currentPrice, tradingAsset, true);
-                    }
-                }
-                float stopTriggerValue = openedPosition.priceDecreaseFactor() == takeProfitPriceDecreaseFactor ? openedPosition.maxPrice() : openedPosition.avgPrice();
-
-                if (currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor()) {
-                    log.info("PRICE of {} DECREASED and now equals {}, price decrease factor is {} / {}.",
-                            ticker, currentPrice, openedPosition.priceDecreaseFactor(), dailyVolumesStrategyCondition.getLongPositions().get(openedPosition.symbol()).priceDecreaseFactor());
-                    sellFast(ticker, openedPosition.qty(), tradingAsset);
-                }
-            });
-        };
+        if (currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor()) {
+            log.info("PRICE of {} DECREASED and now equals {}, price decrease factor is {} / {}.",
+                    ticker, currentPrice, openedPosition.priceDecreaseFactor(), dailyVolumesStrategyCondition.getLongPositions().get(openedPosition.symbol()).priceDecreaseFactor());
+            sellFast(ticker, openedPosition.qty(), tradingAsset);
+        }
     }
 
     private void buyFast(final String symbol, final float price, String quoteAsset, boolean itsAveraging) {

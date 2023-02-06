@@ -22,6 +22,7 @@ import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
 import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 
+import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
@@ -122,5 +123,10 @@ public class ApplicationInitializer implements ApplicationRunner {
             }
         });
 
+    }
+
+    @PreDestroy
+    public void destroy() {
+        accountManager.closeCurrentUserDataStream();
     }
 }
