@@ -1,44 +1,70 @@
 package ru.tyumentsev.cryptopredator.commons.service;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import com.binance.api.client.BinanceApiCallback;
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.BinanceApiWebSocketClient;
+import com.binance.api.client.domain.ExecutionType;
 import com.binance.api.client.domain.account.AssetBalance;
+import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.event.UserDataUpdateEvent;
 
 import com.binance.api.client.exception.BinanceApiException;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PROTECTED)
 @Slf4j
 public class AccountManager implements TradingService {
 
     final BinanceApiRestClient restClient;
     final BinanceApiWebSocketClient webSocketClient;
-    volatile List<AssetBalance> currentBalances;
 
-    String listenKey;
+    @Getter
+    volatile List<AssetBalance> accountBalances;
+    volatile Closeable userDataUpdateEventsListener;
 
-    public void initializeUserDataUpdateStream() {
-        if (listenKey == null || listenKey.isEmpty()) { // get current user stream listen key.
+    @Setter
+    @Getter
+    volatile String listenKey;
+
+    public Float getFreeAssetBalance(String asset) {
+        return Float.parseFloat(restClient.getAccount().getAssetBalance(asset).getFree());
+    }
+
+    public AccountManager refreshAccountBalances() {
+        accountBalances = restClient.getAccount().getBalances().stream()
+                .filter(balance -> Float.parseFloat(balance.getFree()) > 0).toList();
+        return this;
+    }
+
+    public void initializeUserDataUpdateStream(BinanceApiCallback<UserDataUpdateEvent> callback) {
+        if (listenKey == null || listenKey.isBlank()) { // get current user stream listen key.
             listenKey = restClient.startUserDataStream();
         }
 
         closeCurrentUserDataStream(); // needs to close previous stream if it's open.
 
         listenKey = restClient.startUserDataStream();
-    }
 
-    public void closeCurrentUserDataStream() {
-        log.debug("Sending request to close user data stream with listen key {}.", listenKey);
-        restClient.closeUserDataStream(listenKey);
+        if (userDataUpdateEventsListener != null) {
+            try {
+                userDataUpdateEventsListener.close();
+            } catch (IOException e) {
+                log.error("Error while trying to close user data update events listener:\n{}.", e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        userDataUpdateEventsListener = webSocketClient.onUserDataUpdateEvent(listenKey, callback);
     }
 
     /**
@@ -60,21 +86,9 @@ public class AccountManager implements TradingService {
         }
     }
 
-    public Float getFreeAssetBalance(String asset) {
-        return Float.parseFloat(restClient.getAccount().getAssetBalance(asset).getFree());
+    public void closeCurrentUserDataStream() {
+        log.debug("Sending request to close user data stream with listen key {}.", listenKey);
+        restClient.closeUserDataStream(listenKey);
     }
 
-    public AccountManager refreshAccountBalances() {
-        currentBalances = restClient.getAccount().getBalances().stream()
-                .filter(balance -> Float.parseFloat(balance.getFree()) > 0).toList();
-        return this;
-    }
-
-    public List<AssetBalance> getAccountBalances() {
-        return currentBalances;
-    }
-
-    public Closeable listenUserDataUpdateEvents(BinanceApiCallback<UserDataUpdateEvent> callback) {
-        return webSocketClient.onUserDataUpdateEvent(listenKey, callback);
-    }
 }

@@ -34,12 +34,4 @@ public class DailyVolumesStrategyCondition extends StrategyCondition {
 
         return ignoreSignal.get();
     }
-
-    public void updatePriceDecreaseFactor(final String pair, float priceDecreaseFactor, Map<String, OpenedPosition> openedPositions) {
-        Optional.ofNullable(openedPositions.get(pair)).ifPresent(pos -> {
-            pos.priceDecreaseFactor(priceDecreaseFactor);
-            log.info("Updating price decrease factor of {} to {}. Value after updating: {}.", pair, priceDecreaseFactor, openedPositions.get(pair).priceDecreaseFactor());
-        });
-    }
-
 }

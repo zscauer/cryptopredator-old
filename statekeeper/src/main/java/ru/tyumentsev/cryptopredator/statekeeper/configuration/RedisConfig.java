@@ -1,4 +1,4 @@
-package ru.tyumentsev.cryptopredator.datakeeper.configuration;
+package ru.tyumentsev.cryptopredator.statekeeper.configuration;
 
 import lombok.Getter;
 import lombok.Setter;

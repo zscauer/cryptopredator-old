@@ -2,6 +2,8 @@ package ru.tyumentsev.cryptopredator.indicatorvirginbot.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import okhttp3.ConnectionPool;
+import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -26,25 +28,42 @@ import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.commons.service.SpotTrading;
 
+import java.util.concurrent.TimeUnit;
+
 @Getter
 @Setter
 @Configuration
 @ConfigurationProperties(prefix = "applicationconfig")
 @EnableScheduling
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@SuppressWarnings("unused")
 public class ApplicationConfig {
+
+    final OkHttpClient sharedClient;
 
     String apiKey;
     String secret;
     boolean useTestnet;
     boolean useTestnetStreaming;
-    String dataKeeperURL;
+    String stateKeeperURL;
 
+    {
+        Dispatcher dispatcher = new Dispatcher();
+        dispatcher.setMaxRequestsPerHost(300);
+        dispatcher.setMaxRequests(300);
+        sharedClient = new OkHttpClient.Builder()
+                .dispatcher(dispatcher)
+//                .pingInterval(20, TimeUnit.SECONDS)
+                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
+                .callTimeout(30, TimeUnit.SECONDS)
+                .connectionPool(new ConnectionPool())
+                .build();
+    }
 
     // ++++++++++ Binance functionality
     @Bean(name = "binanceApiClientFactory")
     public BinanceApiClientFactory binanceApiClientFactory() {
-        return BinanceApiClientFactory.newInstance(apiKey, secret, useTestnet, useTestnetStreaming);
+        return BinanceApiClientFactory.newInstance(apiKey, secret, useTestnet, useTestnetStreaming, sharedClient);
     }
 
     @Bean
@@ -85,4 +104,13 @@ public class ApplicationConfig {
         return new SpotTrading(accountManager(), binanceApiAsyncRestClient(), marketInfo());
     }
     // ---------- Cryptopredator commons
+    @Bean
+    public DataService dataService() {
+        return new DataService(new Retrofit.Builder()
+                .baseUrl(String.format(stateKeeperURL))
+                .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().registerModule(new JavaTimeModule())))
+                .client(new OkHttpClient.Builder().build())
+                .build().create(CacheServiceClient.class)
+        );
+    }
 }

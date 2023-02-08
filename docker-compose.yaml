@@ -7,8 +7,9 @@ services:
     image: dailyvolumesbot
     container_name: dailyvolumesbot
     depends_on:
-      - datakeeper
+      - statekeeper
     env_file:
+      - .env
       - dailyvolumesbot/.env
     ports:
       - 101:8080
@@ -16,13 +17,15 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./metrics/logs/dailyvolumesbot:/tmp/logs
+    mem_limit: 512m
 
   indicatorvirginbot:
     image: indicatorvirginbot
     container_name: indicatorvirginbot
     depends_on:
-      - datakeeper
+      - statekeeper
     env_file:
+      - .env
       - indicatorvirginbot/.env
     ports:
       - 102:8080
@@ -30,21 +33,24 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./metrics/logs/indicatorvirginbot:/tmp/logs
+    mem_limit: 512m
 
-  datakeeper:
-    image: datakeeper
-    container_name: datakeeper
+  statekeeper:
+    image: statekeeper
+    container_name: statekeeper
     depends_on:
       - redis_binance
       - postgres
     env_file:
-      - datakeeper/.env
+      - .env
+      - statekeeper/.env
     ports:
       - 100:8080
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-      - ./metrics/logs/datakeeper:/tmp/logs
+      - ./metrics/logs/statekeeper:/tmp/logs
+    mem_limit: 512m
 
   redis_binance:
     image: redis:7.0.7-alpine
@@ -57,6 +63,8 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./data/redis:/data
+    mem_limit: 128m
+    mem_reservation: 64m
 
   postgres:
     image: postgres:15.1-alpine
@@ -71,6 +79,8 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./data/postgres:/var/lib/postgresql/data
+    mem_limit: 512m
+    mem_reservation: 256m
 
 # https://habr.com/ru/post/578744/
 #  postgres_exporter:
@@ -111,6 +121,8 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./metrics/prometheus.yaml:/etc/prometheus.yaml
+    mem_limit: 128m
+    mem_reservation: 64m
     command: [
       "--config.file=/etc/prometheus.yaml" 
       # "--enable-feature=exemplar-storage",
@@ -127,6 +139,8 @@ services:
       - prometheus
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    env_file:
+      - .env
     ports:
       - 3003:3000
     user: ':' # it needs to avoid error of permissions for volumes
@@ -136,5 +150,5 @@ services:
       - ./metrics/grafana:/var/lib/grafana
       - ./metrics/grafana-dashboards:/etc/grafana/provisioning/dashboards
       - ./metrics/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
-    env_file:
-      - .env
+    mem_limit: 128m
+    mem_reservation: 64m

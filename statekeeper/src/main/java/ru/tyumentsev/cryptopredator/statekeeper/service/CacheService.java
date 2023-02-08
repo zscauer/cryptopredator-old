@@ -1,16 +1,16 @@
-package ru.tyumentsev.cryptopredator.datakeeper.service;
+package ru.tyumentsev.cryptopredator.statekeeper.service;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.tyumentsev.cryptopredator.datakeeper.cache.OpenedPositionRepository;
-import ru.tyumentsev.cryptopredator.datakeeper.cache.PreviousCandleDataRepository;
-import ru.tyumentsev.cryptopredator.datakeeper.cache.SellRecordRepository;
-import ru.tyumentsev.cryptopredator.datakeeper.domain.OpenedPositionData;
-import ru.tyumentsev.cryptopredator.datakeeper.domain.PreviousCandleData;
-import ru.tyumentsev.cryptopredator.datakeeper.domain.SellRecordData;
+import ru.tyumentsev.cryptopredator.statekeeper.cache.OpenedPositionRepository;
+import ru.tyumentsev.cryptopredator.statekeeper.cache.PreviousCandleDataRepository;
+import ru.tyumentsev.cryptopredator.statekeeper.cache.SellRecordRepository;
+import ru.tyumentsev.cryptopredator.statekeeper.domain.OpenedPositionData;
+import ru.tyumentsev.cryptopredator.statekeeper.domain.PreviousCandleData;
+import ru.tyumentsev.cryptopredator.statekeeper.domain.SellRecordData;
 
 import java.util.Collection;
 import java.util.List;

@@ -1,4 +1,4 @@
-package ru.tyumentsev.cryptopredator.datakeeper.controller;
+package ru.tyumentsev.cryptopredator.statekeeper.controller;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +10,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.tyumentsev.cryptopredator.datakeeper.domain.OpenedPositionData;
-import ru.tyumentsev.cryptopredator.datakeeper.domain.PreviousCandleData;
-import ru.tyumentsev.cryptopredator.datakeeper.domain.SellRecordData;
-import ru.tyumentsev.cryptopredator.datakeeper.service.CacheService;
+import ru.tyumentsev.cryptopredator.statekeeper.domain.OpenedPositionData;
+import ru.tyumentsev.cryptopredator.statekeeper.domain.PreviousCandleData;
+import ru.tyumentsev.cryptopredator.statekeeper.domain.SellRecordData;
+import ru.tyumentsev.cryptopredator.statekeeper.service.AccountService;
+import ru.tyumentsev.cryptopredator.statekeeper.service.CacheService;
 
 import java.util.List;
 
@@ -22,9 +23,11 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("unused")
 public class CacheController {
 
     CacheService cacheService;
+    AccountService accountService;
 
     @GetMapping("/sellRecord")
     public List<SellRecordData> getSellRecords() {
@@ -40,7 +43,7 @@ public class CacheController {
 
     @PostMapping("/sellRecord")
     public List<SellRecordData> saveSellRecordsCache(@RequestBody List<SellRecordData> sellRecords) {
-        log.info("Request to save sell records: {}", sellRecords);
+        log.debug("Request to save sell records: {}", sellRecords);
         List<SellRecordData> savedRecords = cacheService.saveAllSellRecords(sellRecords);
         log.info("Saved sell records: {}", savedRecords);
         return savedRecords;
@@ -99,7 +102,7 @@ public class CacheController {
     @PostMapping("/openedPosition")
     public List<OpenedPositionData> saveOpenedPositionsCache(@RequestBody List<OpenedPositionData> openedPositions) {
 //        log.info("saveOpenedPositionsCache({}) call from {}.", openedPositions, headers.map().get("bot-id"));
-        log.info("Request to save openend positions: {}", openedPositions);
+        log.debug("Request to save openend positions: {}", openedPositions);
         List<OpenedPositionData> openedPositionList = cacheService.saveAllOpenedPositions(openedPositions);
         log.info("Saved positions: {}", openedPositionList);
         return openedPositionList;

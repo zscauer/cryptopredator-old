@@ -25,6 +25,7 @@ import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;
 
 @Configuration
+@SuppressWarnings("unused")
 public class MetricsConfig {
 
     @Bean

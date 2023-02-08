@@ -13,11 +13,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
+@SuppressWarnings("unused")
 public class DataService {
 
     final CacheServiceClient cacheServiceClient;
@@ -124,6 +126,23 @@ public class DataService {
             cacheServiceClient.deleteAllOpenedPositionsById(openedPositions.stream()
                     .map(record -> String.format("%s:%s", strategy.getId(), record.symbol()))
                     .collect(Collectors.toList())).execute();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // User data streams
+    public void addActiveStrategy(Map<String, String> parameters) {
+        try {
+            cacheServiceClient.addActiveStrategy(parameters).execute();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void deleteActiveStrategy(String strategyName) {
+        try {
+            cacheServiceClient.deleteActiveStrategy(strategyName).execute();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

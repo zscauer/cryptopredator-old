@@ -1,4 +1,4 @@
-package ru.tyumentsev.cryptopredator.datakeeper.domain;
+package ru.tyumentsev.cryptopredator.statekeeper.domain;
 
 import com.binance.api.client.domain.event.CandlestickEvent;
 import org.springframework.data.annotation.Id;

@@ -58,17 +58,9 @@ applicationconfig:
     useTestnetStreaming: ${BINANCE_USE_TESTNET_STREAMING}
     apiKey: ${BINANCE_API_KEY}
     secret: ${BINANCE_SECRET_KEY}
-
-databaseconfig:
-    dataKeeperURL: http://${DATAKEEPER_HOST}:${DATAKEEPER_PORT}
+    stateKeeperURL: http://${STATEKEEPER_HOST}:${STATEKEEPER_PORT}
 
 strategy:
-    # ------------------ monitoring
-    monitoring:
-        cancelExpiredOrders:
-            initialDelay: ${MONITORING_CANCEL_EXPIRED_ORDERS_INITIAL_DELAY}
-            fixedDelay: ${MONITORING_CANCEL_EXPIRED_ORDERS_FIXED_DELAY}
-
     # ------------------ global
     global:
         tradingAsset: ${STRATEGY_GLOBAL_TRADING_ASSET}

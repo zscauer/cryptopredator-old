@@ -17,12 +17,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class IndicatorVirginStrategyCondition extends StrategyCondition {
 
+    //TODO: define parameter for signal ignoring period.
+
     @Override
     public boolean thisSignalWorkedOutBefore(final String pair) {
         AtomicBoolean ignoreSignal = new AtomicBoolean(false);
 
         Optional.ofNullable(sellJournal.get(pair)).ifPresent(sellRecord -> {
-            if (sellRecord.sellTime().isAfter(LocalDateTime.now().minusHours(2))) {
+            if (sellRecord.sellTime().isAfter(LocalDateTime.now().minusHours(3))) {
                 ignoreSignal.set(true);
             } else {
                 log.debug("Period of signal ignoring for {} expired, remove pair from sell journal.", pair);

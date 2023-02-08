@@ -5,7 +5,7 @@ plugins {
     id 'maven-publish'
 }
 
-def artifactVersion = '0.4'
+def artifactVersion = '0.5'
 def springBootVersion = '2.7.8'
 def prometheusVersion = '0.16.0'
 
@@ -27,7 +27,7 @@ repositories {
 
 dependencies {
     implementation "ru.tyumentsev.cryptopredator:commons:0.4"
-    implementation "com.binance.api:binance-api-client:1.2.1"
+    implementation "com.binance.api:binance-api-client:1.2.2"
     runtimeOnly "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-configuration-processor:${springBootVersion}"

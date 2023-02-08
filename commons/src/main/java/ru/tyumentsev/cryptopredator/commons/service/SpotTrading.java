@@ -37,7 +37,7 @@ public class SpotTrading implements TradingService {
         marketInfo.pairOrderPlaced(symbol, strategyName, baseOrderVolume / price, OrderSide.BUY);
         synchronized (this) {
             int availableOrdersCount = accountManager.getFreeAssetBalance(quoteAsset).intValue() / minimalAssetBalance;
-            if (availableOrdersCount > 1) {
+            if (availableOrdersCount > 0) {
 //            marketInfo.pairOrderPlaced(symbol);
 //            placeLimitBuyOrderAtLastMarketPrice(symbol, baseOrderVolume / price);
                 placeMarketBuyOrder(symbol, baseOrderVolume / price, strategyId);

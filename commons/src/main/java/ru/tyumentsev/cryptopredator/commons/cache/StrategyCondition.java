@@ -14,8 +14,8 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
+@SuppressWarnings("unused")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 @Slf4j
@@ -70,7 +70,7 @@ public abstract class StrategyCondition {
         sellJournal.put(pair, new SellRecord(pair, LocalDateTime.now(), strategy));
     }
 
-    public abstract boolean thisSignalWorkedOutBefore(final String pair);
+    protected abstract boolean thisSignalWorkedOutBefore(final String pair);
 
     public void removeCandlestickEventsCacheForPair(String ticker, Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents) {
         cachedCandlestickEvents.get(ticker).clear();

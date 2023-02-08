@@ -1,11 +1,11 @@
-package ru.tyumentsev.cryptopredator.datakeeper;
+package ru.tyumentsev.cryptopredator.statekeeper;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class DatakeeperApplication {
+public class StatekeeperApplication {
     public static void main(String[] args) {
-        SpringApplication.run(DatakeeperApplication.class, args);
+        SpringApplication.run(StatekeeperApplication.class, args);
     }
 }

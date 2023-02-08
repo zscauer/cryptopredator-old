@@ -33,11 +33,13 @@ import ru.tyumentsev.cryptopredator.commons.domain.PlacedOrder;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
+@SuppressWarnings("unused")
 public class MarketInfo implements TradingService {
 
     BinanceApiRestClient restClient;
     BinanceApiWebSocketClient binanceApiWebSocketClient;
 
+    List<String> fiatCurrency = List.of("EURUSDT", "AUDUSDT", "GBPUSDT", "BUSDT", "BNBUSDT");
     /**
      * Store flags, which indicates that order already placed.
      */
@@ -53,19 +55,14 @@ public class MarketInfo implements TradingService {
         List<String> pairs = restClient.getExchangeInfo().getSymbols().stream()
                 .filter(symbolInfo -> SymbolStatus.TRADING.equals(symbolInfo.getStatus())
                         && symbolInfo.getQuoteAsset().equalsIgnoreCase(quoteAsset)
-                        && symbolInfo.isSpotTradingAllowed())
+                        && symbolInfo.isSpotTradingAllowed()
+                        && !fiatCurrency.contains(symbolInfo.getSymbol()))
                 .map(SymbolInfo::getSymbol)
                 .collect(Collectors.toList());
         availablePairs.put(quoteAsset, pairs);
         return pairs;
     }
 
-    /**
-     * Get all pairs, that trades against asset and return only cheaper than maximalPairPrice.
-     *
-     * @param asset
-     * @return
-     */
     public void fillCheapPairs(final String asset, final float maximalPairPrice) {
         List<String> filteredPairs = getLastTickersPrices(
                         combinePairsToRequestString(availablePairs.get(asset)))
@@ -80,11 +77,6 @@ public class MarketInfo implements TradingService {
                 .collect(Collectors.joining(DELIMITER, QUERY_SYMBOLS_BEGIN, QUERY_SYMBOLS_END));
     }
 
-    /**
-     *
-     * @param asset
-     * @return list of cheap pairs, exclude pairs of opened positions.
-     */
     public List<String> getCheapPairsExcludeOpenedPositions(String asset, Set<String> longPositions, Set<String> shortPositions) {
         List<String> pairs = cheapPairs.getOrDefault(asset, Collections.emptyList());
         pairs.removeAll(longPositions);

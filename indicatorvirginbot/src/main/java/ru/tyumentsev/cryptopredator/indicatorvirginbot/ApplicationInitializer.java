@@ -26,6 +26,7 @@ import ru.tyumentsev.cryptopredator.commons.mapping.CandlestickToBaseBarMapper;
 import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 
+import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
@@ -39,11 +40,8 @@ import java.util.stream.Collectors;
 public class ApplicationInitializer implements ApplicationRunner {
 
     final MarketInfo marketInfo;
-    final AccountManager accountManager;
     final Map<String, TradingStrategy> tradingStrategies;
 
-    @Getter
-    Closeable userDataUpdateEventsListener;
     @Value("${applicationconfig.testLaunch}")
     boolean testLaunch;
     @Value("${strategy.global.tradingAsset}")
@@ -89,54 +87,5 @@ public class ApplicationInitializer implements ApplicationRunner {
         log.info(macd.getShortTermEma().toString());
         log.info(macd.getValue(5).toString());
 
-    }
-
-    @Scheduled(fixedDelayString = "${strategy.global.initializeUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.initializeUserDataUpdateStream.initialDelay}")
-    public void generalMonitoring_initializeAliveUserDataUpdateStream() {
-        if (!testLaunch && tradingStrategies.values().stream().anyMatch(TradingStrategy::isEnabled)) {
-            // User data stream are closing by binance after 24 hours of opening.
-            accountManager.initializeUserDataUpdateStream();
-
-            if (userDataUpdateEventsListener != null) {
-                try {
-                    userDataUpdateEventsListener.close();
-                } catch (IOException e) {
-                    log.error("Error while trying to close user data update events listener:\n{}.", e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-            monitorUserDataUpdateEvents();
-        }
-    }
-
-    @Scheduled(fixedDelayString = "${strategy.global.keepAliveUserDataUpdateStream.fixedDelay}", initialDelayString = "${strategy.global.keepAliveUserDataUpdateStream.initialDelay}")
-    public void generalMonitoring_keepAliveUserDataUpdateStream() {
-        if (!testLaunch) {
-            accountManager.keepAliveUserDataUpdateStream();
-        }
-    }
-
-    /**
-     * Opens web socket stream of user data update events and monitors trade events.
-     * If it was "buy" event, then add pair from this event to monitoring,
-     * if it was "sell" event - removes from monitoring.
-     */
-    public void monitorUserDataUpdateEvents() {
-        userDataUpdateEventsListener = accountManager.listenUserDataUpdateEvents(callback -> {
-            if (callback.getEventType() == UserDataUpdateEvent.UserDataUpdateEventType.ORDER_TRADE_UPDATE
-                    && callback.getOrderTradeUpdateEvent().getExecutionType() == ExecutionType.TRADE) {
-                OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();
-
-                switch (event.getSide()) {
-                    case BUY -> {
-                        tradingStrategies.values().forEach(strategy -> strategy.handleBuying(event));
-                    }
-                    case SELL -> {
-                        tradingStrategies.values().forEach(strategy -> strategy.handleSelling(event));
-                    }
-                }
-                accountManager.refreshAccountBalances();
-            }
-        });
     }
 }

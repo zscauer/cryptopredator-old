@@ -4,15 +4,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.binance.api.client.domain.event.CandlestickEvent;
+import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.binance.api.client.BinanceApiRestClient;
-import com.binance.api.client.domain.account.Account;
-import com.binance.api.client.domain.account.AssetBalance;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -28,28 +28,13 @@ import ru.tyumentsev.cryptopredator.dailyvolumesbot.strategy.Daily;
 @RequestMapping("/state")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
+@Slf4j
+@SuppressWarnings("unused")
 public class StateController {
 
-    BinanceApiRestClient restClient;
     DailyVolumesStrategyCondition dailyVolumesStrategyCondition;
     MarketInfo marketInfo;
     Daily daily;
-
-    @GetMapping("/accountBalance")
-    public List<AssetBalance> accountBalance() {
-        Account account = restClient.getAccount();
-        return account.getBalances().stream()
-                .filter(balance -> Float.parseFloat(balance.getFree()) > 0
-                        || Float.parseFloat(balance.getLocked()) > 0)
-                .sorted(Comparator.comparing(AssetBalance::getAsset))
-                .toList();
-    }
-
-    @GetMapping("/accountBalance/{ticker}")
-    public AssetBalance assetBalance(@PathVariable String ticker) {
-        Account account = restClient.getAccount();
-        return account.getAssetBalance(ticker.toUpperCase());
-    }
 
     @GetMapping("/placedOrders")
     public Map<String, PlacedOrder> getPlacedOrders() {
@@ -93,4 +78,15 @@ public class StateController {
     public Map<String, Deque<CandlestickEvent>> getDailyCachedCandleStickEvents() {
         return daily.getCachedCandlestickEvents();
     }
+
+    @PostMapping("/userDataUpdateEvent")
+    public void handleUserDataUpdateEvent(@RequestBody OrderTradeUpdateEvent event) {
+        log.debug("Get order trade update event: {}", event);
+        switch (event.getSide()) {
+            case BUY -> daily.handleBuying(event);
+            case SELL -> daily.handleSelling(event);
+        }
+    }
+
+
 }

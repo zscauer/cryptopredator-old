@@ -3,12 +3,16 @@ package ru.tyumentsev.cryptopredator.indicatorvirginbot.controller;
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.domain.account.Account;
 import com.binance.api.client.domain.account.AssetBalance;
+import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.ta4j.core.BarSeries;
@@ -29,22 +33,12 @@ import java.util.stream.Collectors;
 @RequestMapping("/state")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
+@Slf4j
 public class StateController {
 
-    BinanceApiRestClient restClient;
     IndicatorVirginStrategyCondition indicatorVirginStrategyCondition;
     MarketInfo marketInfo;
     IndicatorVirgin indicatorVirgin;
-
-    @GetMapping("/accountBalance")
-    public List<AssetBalance> accountBalance() {
-        Account account = restClient.getAccount();
-        return account.getBalances().stream()
-                .filter(balance -> Float.parseFloat(balance.getFree()) > 0
-                        || Float.parseFloat(balance.getLocked()) > 0)
-                .sorted(Comparator.comparing(AssetBalance::getAsset))
-                .toList();
-    }
 
     @GetMapping("/placedOrders")
     public Map<String, PlacedOrder> getPlacedOrders() {
@@ -94,4 +88,16 @@ public class StateController {
         return indicatorVirgin.getBarSeriesMap().get(symbol);
     }
 
+    @PostMapping("/userDataUpdateEvent")
+    public void handleUserDataUpdateEvent(@RequestBody OrderTradeUpdateEvent event) {
+        log.debug("Get order trade update event: {}", event);
+        switch (event.getSide()) {
+            case BUY -> {
+                indicatorVirgin.handleBuying(event);
+            }
+            case SELL -> {
+                indicatorVirgin.handleSelling(event);
+            }
+        }
+    }
 }
