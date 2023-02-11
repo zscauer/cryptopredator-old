@@ -21,12 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SpotTrading implements TradingService {
 
-    final AccountManager accountManager;
+//    final AccountManager accountManager;
+    final AccountInfo accountInfo;
     final BinanceApiAsyncRestClient asyncRestClient;
     final MarketInfo marketInfo;
 
     public List<AssetBalance> getAccountBalances() {
-        return accountManager.getAccountBalances();
+        return accountInfo.getAllAccountBalances();
     }
 
     public void placeBuyOrderFast(final String symbol, final String strategyName, final int strategyId, final float price, String quoteAsset, final int minimalAssetBalance, final int baseOrderVolume) {
@@ -36,10 +37,8 @@ public class SpotTrading implements TradingService {
         }
         marketInfo.pairOrderPlaced(symbol, strategyName, baseOrderVolume / price, OrderSide.BUY);
         synchronized (this) {
-            int availableOrdersCount = accountManager.getFreeAssetBalance(quoteAsset).intValue() / minimalAssetBalance;
+            int availableOrdersCount = accountInfo.getFreeAssetBalance(quoteAsset).intValue() / minimalAssetBalance;
             if (availableOrdersCount > 0) {
-//            marketInfo.pairOrderPlaced(symbol);
-//            placeLimitBuyOrderAtLastMarketPrice(symbol, baseOrderVolume / price);
                 placeMarketBuyOrder(symbol, baseOrderVolume / price, strategyId);
             } else {
                 marketInfo.pairOrderFilled(symbol, strategyName);
@@ -105,8 +104,7 @@ public class SpotTrading implements TradingService {
     }
 
     public List<AssetBalance> recieveOpenedLongPositionsFromMarket() {
-        return accountManager.refreshAccountBalances()
-                .getAccountBalances().stream()
+        return accountInfo.getAllAccountBalances().stream()
                 .filter(balance -> !(balance.getAsset().equals("USDT") || balance.getAsset().equals("BNB")))
                 .collect(Collectors.toList());
     }

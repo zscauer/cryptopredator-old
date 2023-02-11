@@ -17,6 +17,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Unite cache and data clients.
+ */
 @Slf4j
 @RequiredArgsConstructor
 @SuppressWarnings("unused")

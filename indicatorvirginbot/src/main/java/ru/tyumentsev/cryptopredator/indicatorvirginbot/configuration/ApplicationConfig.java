@@ -22,7 +22,9 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
+import ru.tyumentsev.cryptopredator.commons.service.AccountInfo;
 import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
+import ru.tyumentsev.cryptopredator.commons.service.AccountServiceClient;
 import ru.tyumentsev.cryptopredator.commons.service.CacheServiceClient;
 import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
@@ -92,16 +94,16 @@ public class ApplicationConfig {
         return new MarketInfo(binanceApiRestClient(), binanceApiWebSocketClient());
     }
 
-    @Bean
-    @DependsOn("binanceApiWebSocketClient")
-    public AccountManager accountManager() {
-        return new AccountManager(binanceApiRestClient(), binanceApiWebSocketClient());
-    }
+//    @Bean
+//    @DependsOn("binanceApiWebSocketClient")
+//    public AccountManager accountManager() {
+//        return new AccountManager(binanceApiRestClient(), binanceApiWebSocketClient());
+//    }
 
     @Bean
-    @DependsOn("accountManager")
+    @DependsOn("accountInfo")
     public SpotTrading spotTrading() {
-        return new SpotTrading(accountManager(), binanceApiAsyncRestClient(), marketInfo());
+        return new SpotTrading(accountInfo(), binanceApiAsyncRestClient(), marketInfo());
     }
     // ---------- Cryptopredator commons
     @Bean
@@ -111,6 +113,16 @@ public class ApplicationConfig {
                 .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().registerModule(new JavaTimeModule())))
                 .client(new OkHttpClient.Builder().build())
                 .build().create(CacheServiceClient.class)
+        );
+    }
+
+    @Bean
+    public AccountInfo accountInfo() {
+        return new AccountInfo(new Retrofit.Builder()
+                .baseUrl(String.format(stateKeeperURL))
+                .addConverterFactory(JacksonConverterFactory.create())
+                .client(new OkHttpClient.Builder().build())
+                .build().create(AccountServiceClient.class)
         );
     }
 }

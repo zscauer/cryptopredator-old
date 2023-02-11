@@ -21,6 +21,7 @@ import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.SMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.num.DoubleNum;
+import org.ta4j.core.num.Num;
 import ru.tyumentsev.cryptopredator.commons.TradingStrategy;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.commons.mapping.CandlestickToBaseBarMapper;
@@ -274,7 +275,7 @@ public class IndicatorVirgin implements TradingStrategy {
 
         if (sma7Value.isGreaterThan(sma25Value) && itsSustainableGrowth(sma7, sma25, endBarSeriesIndex, 2)
                 && rsi14Value.floatValue() > 73F
-                && haveBreakdown(sma7, sma25, endBarSeriesIndex, 14)) {
+                && haveBreakdown(sma7, sma25, endBarSeriesIndex, 10)) {
 //                && sma7Value.isLessThanOrEqual(sma25Value.multipliedBy(DoubleNum.valueOf(1.06F)))
             log.debug("SMA7 of {} ({}) is higher then SMA25 ({}) with RSI14 ({}) is greater then 72.", event.getSymbol(), sma7Value, sma25Value, rsi14Value);
             return true;
@@ -358,7 +359,9 @@ public class IndicatorVirgin implements TradingStrategy {
         float stopTriggerValue = openedPosition.priceDecreaseFactor() == takeProfitPriceDecreaseFactor ? openedPosition.maxPrice() : openedPosition.avgPrice();
 
         if (currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor()
-                && macdIndicator.getValue(endBarSeriesIndex).isLessThanOrEqual(macdIndicator.getValue(endBarSeriesIndex - 1))) {
+                && (macdIndicator.getValue(endBarSeriesIndex).isLessThanOrEqual(macdIndicator.getValue(endBarSeriesIndex - 1))
+                        || series.getBar(endBarSeriesIndex).getClosePrice().isGreaterThan(series.getBar(endBarSeriesIndex).getOpenPrice().multipliedBy(DoubleNum.valueOf(1.2))))
+        ) {
             log.info("PRICE of {} DECREASED and now equals {} (current MACD is {}, prev MACD is {}), price decrease factor is {} / {}.",
                     ticker, currentPrice, macdIndicator.getValue(endBarSeriesIndex), macdIndicator.getValue(endBarSeriesIndex - 1),
                     openedPosition.priceDecreaseFactor(), indicatorVirginStrategyCondition.getLongPositions().get(openedPosition.symbol()).priceDecreaseFactor());

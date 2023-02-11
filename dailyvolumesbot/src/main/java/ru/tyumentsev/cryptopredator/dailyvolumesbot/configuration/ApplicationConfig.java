@@ -25,7 +25,9 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
+import ru.tyumentsev.cryptopredator.commons.service.AccountInfo;
 import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
+import ru.tyumentsev.cryptopredator.commons.service.AccountServiceClient;
 import ru.tyumentsev.cryptopredator.commons.service.CacheServiceClient;
 import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
@@ -96,16 +98,16 @@ public class ApplicationConfig {
         return new MarketInfo(binanceApiRestClient(), binanceApiWebSocketClient());
     }
 
-    @Bean
-    @DependsOn({"binanceApiWebSocketClient", "dataService"})
-    public AccountManager accountManager() {
-        return new AccountManager(binanceApiRestClient(), binanceApiWebSocketClient());
-    }
+//    @Bean
+//    @DependsOn({"binanceApiWebSocketClient", "dataService"})
+//    public AccountManager accountManager() {
+//        return new AccountManager(binanceApiRestClient(), binanceApiWebSocketClient());
+//    }
 
     @Bean
-    @DependsOn("accountManager")
+    @DependsOn("accountInfo")
     public SpotTrading spotTrading() {
-        return new SpotTrading(accountManager(), binanceApiAsyncRestClient(), marketInfo());
+        return new SpotTrading(accountInfo(), binanceApiAsyncRestClient(), marketInfo());
     }
     // ---------- Cryptopredator commons
 
@@ -118,6 +120,17 @@ public class ApplicationConfig {
                 .build().create(CacheServiceClient.class)
         );
     }
+
+    @Bean
+    public AccountInfo accountInfo() {
+        return new AccountInfo(new Retrofit.Builder()
+                .baseUrl(String.format(stateKeeperURL))
+                .addConverterFactory(JacksonConverterFactory.create())
+                .client(new OkHttpClient.Builder().build())
+                .build().create(AccountServiceClient.class)
+        );
+    }
+
     @Bean
 	public ServletRegistrationBean<MetricsServlet> metricsServlet() {
 		ServletRegistrationBean<MetricsServlet> bean = new ServletRegistrationBean<>(new MetricsServlet(), "/metrics");

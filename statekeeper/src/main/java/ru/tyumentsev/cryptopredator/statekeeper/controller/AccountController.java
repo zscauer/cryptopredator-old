@@ -1,7 +1,6 @@
 package ru.tyumentsev.cryptopredator.statekeeper.controller;
 
 import com.binance.api.client.BinanceApiRestClient;
-import com.binance.api.client.domain.account.Account;
 import com.binance.api.client.domain.account.AssetBalance;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.tyumentsev.cryptopredator.statekeeper.service.AccountService;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -30,22 +28,33 @@ import java.util.Map;
 public class AccountController {
 
     AccountService accountService;
-    BinanceApiRestClient restClient;
+//    BinanceApiRestClient restClient;
 
     @GetMapping("/accountBalance")
-    public List<AssetBalance> accountBalance() {
-        Account account = restClient.getAccount();
-        return account.getBalances().stream()
-                .filter(balance -> Float.parseFloat(balance.getFree()) > 0
-                        || Float.parseFloat(balance.getLocked()) > 0)
-                .sorted(Comparator.comparing(AssetBalance::getAsset))
-                .toList();
+    public List<AssetBalance> getAccountBalance() {
+        return accountService.getAccountBalances();
+//        Account account = restClient.getAccount();
+//        return account.getBalances().stream()
+//                .filter(balance -> Float.parseFloat(balance.getFree()) > 0
+//                        || Float.parseFloat(balance.getLocked()) > 0)
+//                .sorted(Comparator.comparing(AssetBalance::getAsset))
+//                .toList();
     }
 
-    @GetMapping("/accountBalance/{ticker}")
-    public AssetBalance assetBalance(@PathVariable String ticker) {
-        Account account = restClient.getAccount();
-        return account.getAssetBalance(ticker.toUpperCase());
+    @GetMapping("/accountBalance/{asset}")
+    public AssetBalance getAssetBalance(@PathVariable String asset) {
+        return accountService.getAccountBalances().stream()
+                .filter(assetBalance -> assetBalance.getAsset().equalsIgnoreCase(asset))
+                .findFirst().orElseThrow();
+//        Account account = restClient.getAccount();
+//        return account.getAssetBalance(ticker.toUpperCase());
+    }
+
+    @GetMapping("/accountBalance/{asset}/free")
+    public Float getFreeAssetBalance(@PathVariable String asset) {
+        return accountService.getFreeAssetBalance(asset);
+//        Account account = restClient.getAccount();
+//        return account.getAssetBalance(ticker.toUpperCase());
     }
 
     @GetMapping("/activeStrategies")
