@@ -40,6 +40,11 @@ public class StateController {
     MarketInfo marketInfo;
     IndicatorVirgin indicatorVirgin;
 
+    @GetMapping("/monitoredPositions")
+    public Map<String, IndicatorVirginStrategyCondition.MonitoredPosition> getMonitoredPositions() {
+        return indicatorVirginStrategyCondition.getMonitoredPositions();
+    }
+
     @GetMapping("/placedOrders")
     public Map<String, PlacedOrder> getPlacedOrders() {
         return marketInfo.getPlacedOrders();

@@ -1,6 +1,7 @@
 package ru.tyumentsev.cryptopredator.indicatorvirginbot.cache;
 
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class IndicatorVirginStrategyCondition extends StrategyCondition {
 
+    @Getter
     Map<String, MonitoredPosition> monitoredPositions = new ConcurrentHashMap<>();
     Long monitoringExpirationTime = 6L;
 
@@ -60,12 +62,14 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
         return Optional.ofNullable(monitoredPositions.get(symbol)).map(MonitoredPosition::price);
     }
 
+
+
     public void removePositionFromMonitoring(final String symbol) {
         monitoredPositions.remove(symbol);
     }
 
 
-    private record MonitoredPosition(
+    public record MonitoredPosition(
             String symbol,
             float price,
             LocalDateTime beginMonitoringTime
