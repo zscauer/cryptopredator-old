@@ -179,9 +179,10 @@ public class IndicatorVirgin implements TradingStrategy {
 
             log.info("BUY {} {} at {}.",
                     buyEvent.getAccumulatedQuantity(), symbol, dealPrice);
-            indicatorVirginStrategyCondition.putLongPositionToPriceMonitoring(symbol, dealPrice, parsedFloat(buyEvent.getAccumulatedQuantity()),
+            indicatorVirginStrategyCondition.addOpenedPosition(symbol, dealPrice, parsedFloat(buyEvent.getAccumulatedQuantity()),
                     priceDecreaseFactor, false, getName()
             );
+            indicatorVirginStrategyCondition.removePositionFromMonitoring(symbol);
 
             marketInfo.pairOrderFilled(symbol, getName());
         }
@@ -200,7 +201,7 @@ public class IndicatorVirgin implements TradingStrategy {
             log.info("SELL {} {} at {}.",
                     sellEvent.getOriginalQuantity(), sellEvent.getSymbol(), dealPrice);
 
-            indicatorVirginStrategyCondition.removeLongPositionFromPriceMonitoring(sellEvent.getSymbol());
+            indicatorVirginStrategyCondition.removeOpenedPosition(sellEvent.getSymbol());
             indicatorVirginStrategyCondition.addSellRecordToJournal(sellEvent.getSymbol(), getName());
 
             marketInfo.pairOrderFilled(sellEvent.getSymbol(), getName());
@@ -249,8 +250,11 @@ public class IndicatorVirgin implements TradingStrategy {
     }
 
     private void analizeMarketPosition(final CandlestickEvent event) {
-        if (signalToOpenLongPosition(event)) {
-            buyFast(event.getSymbol(), parsedFloat(event.getClose()), tradingAsset, false);
+        if (indicatorVirginStrategyCondition.pairOnMonitoring(event.getSymbol())) {
+            analizeMonitoredPosition(event);
+//            buyFast(event.getSymbol(), parsedFloat(event.getClose()), tradingAsset, false);
+        } else if (signalToOpenLongPosition(event)) {
+            indicatorVirginStrategyCondition.addPairToMonitoring(event.getSymbol(), parsedFloat(event.getClose()));
         }
     }
 
@@ -302,6 +306,18 @@ public class IndicatorVirgin implements TradingStrategy {
         }
 
         return false;
+    }
+
+    private void analizeMonitoredPosition(final CandlestickEvent event) {
+        Optional<Float> startPrice = indicatorVirginStrategyCondition.getMonitoredPositionPrice(event.getSymbol());
+        if (startPrice.isEmpty()) {
+            return;
+        }
+        if (parsedFloat(event.getClose()) > startPrice.get() * 1.02) {
+            buyFast(event.getSymbol(), parsedFloat(event.getClose()), tradingAsset, false);
+        }
+
+
     }
 
     private void analizeOpenedPosition(final CandlestickEvent event, final OpenedPosition openedPosition) {
@@ -356,7 +372,7 @@ public class IndicatorVirgin implements TradingStrategy {
 
         final String ticker = event.getSymbol();
         var currentPrice = parsedFloat(event.getClose());
-        float stopTriggerValue = openedPosition.priceDecreaseFactor() == takeProfitPriceDecreaseFactor ? openedPosition.maxPrice() : openedPosition.avgPrice();
+        float stopTriggerValue = openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor) ? openedPosition.maxPrice() : openedPosition.avgPrice();
 
         if (currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor()
                 && (macdIndicator.getValue(endBarSeriesIndex).isLessThanOrEqual(macdIndicator.getValue(endBarSeriesIndex - 1))

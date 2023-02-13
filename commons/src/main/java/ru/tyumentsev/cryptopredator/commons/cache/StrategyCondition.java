@@ -29,8 +29,8 @@ public abstract class StrategyCondition {
     @Getter
     Map<String, SellRecord> sellJournal = new ConcurrentHashMap<>();
 
-    public void putLongPositionToPriceMonitoring(String pair, float price, float qty, float priceDecreaseFactor,
-                                                 boolean rocketCandidate, String strategy) {
+    public void addOpenedPosition(String pair, float price, float qty, float priceDecreaseFactor,
+                                  boolean rocketCandidate, String strategy) {
         Optional.ofNullable(longPositions.get(pair)).ifPresentOrElse(pos -> {
             var newQty = pos.qty() + qty;
             pos.avgPrice((pos.avgPrice() * pos.qty() + price * qty) / newQty)
@@ -61,7 +61,7 @@ public abstract class StrategyCondition {
         });
     }
 
-    public void removeLongPositionFromPriceMonitoring(String pair) {
+    public void removeOpenedPosition(String pair) {
         longPositions.remove(pair);
     }
 
