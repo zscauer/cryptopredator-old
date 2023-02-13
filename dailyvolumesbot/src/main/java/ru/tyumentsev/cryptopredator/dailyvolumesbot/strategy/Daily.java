@@ -25,9 +25,9 @@ import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -180,7 +180,7 @@ public class Daily implements TradingStrategy {
     }
 
     private void restoreCachedCandlestickEvents(String interval) throws IOException {
-        int yesterdayDayOfYear = LocalDateTime.now().minusDays(1L).getDayOfYear();
+        int yesterdayDayOfYear = ZonedDateTime.now().minusDays(1L).getDayOfYear();
 //        var cachedCandlestickEvents = marketData.getCachedCandlestickEvents();
 
         List<PreviousCandleContainer> dailyCachedCandleData = dataService.findAllPreviousCandleContainers().stream().filter(data -> data.id().startsWith(interval)).toList();
@@ -188,7 +188,7 @@ public class Daily implements TradingStrategy {
                 cachedCandlestickEvents.entrySet().stream().filter(entry -> entry.getValue().isEmpty()).collect(Collectors.toSet()).size());
 
         dailyCachedCandleData.stream()
-                .filter(data -> LocalDateTime.ofInstant(Instant.ofEpochMilli(data.event().getOpenTime()), ZoneId.systemDefault()).getDayOfYear() == yesterdayDayOfYear)
+                .filter(data -> ZonedDateTime.ofInstant(Instant.ofEpochMilli(data.event().getOpenTime()), ZoneId.systemDefault()).getDayOfYear() == yesterdayDayOfYear)
                 .forEach(element -> addCandlestickEventToCache(element.event().getSymbol(), element.event()));
 
         var emptyCachedCandlestickEvents = cachedCandlestickEvents.entrySet().stream().filter(entry -> entry.getValue().isEmpty()).collect(Collectors.toSet());
@@ -235,7 +235,7 @@ public class Daily implements TradingStrategy {
 
             log.info("BUY {} {} at {}.",
                     buyEvent.getAccumulatedQuantity(), symbol, dealPrice);
-            dailyVolumesStrategyCondition.putLongPositionToPriceMonitoring(symbol, dealPrice, parsedFloat(buyEvent.getAccumulatedQuantity()),
+            dailyVolumesStrategyCondition.addOpenedPosition(symbol, dealPrice, parsedFloat(buyEvent.getAccumulatedQuantity()),
                     priceDecreaseFactor, Optional.ofNullable(rocketCandidates.remove(symbol)).orElse(false), getName()
             );
 
@@ -257,7 +257,7 @@ public class Daily implements TradingStrategy {
             log.info("SELL {} {} at {}.",
                     sellEvent.getOriginalQuantity(), sellEvent.getSymbol(), dealPrice);
 
-            dailyVolumesStrategyCondition.removeLongPositionFromPriceMonitoring(sellEvent.getSymbol());
+            dailyVolumesStrategyCondition.removeOpenedPosition(sellEvent.getSymbol());
             dailyVolumesStrategyCondition.addSellRecordToJournal(sellEvent.getSymbol(), getName());
 
             marketInfo.pairOrderFilled(sellEvent.getSymbol(), getName());

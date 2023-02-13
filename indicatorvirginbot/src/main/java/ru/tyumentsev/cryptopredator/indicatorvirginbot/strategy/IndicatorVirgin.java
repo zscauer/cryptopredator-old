@@ -2,7 +2,6 @@ package ru.tyumentsev.cryptopredator.indicatorvirginbot.strategy;
 
 import com.binance.api.client.BinanceApiCallback;
 import com.binance.api.client.domain.Candle;
-import com.binance.api.client.domain.account.AssetBalance;
 import com.binance.api.client.domain.event.CandlestickEvent;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.market.CandlestickInterval;
@@ -21,7 +20,6 @@ import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.SMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.num.DoubleNum;
-import org.ta4j.core.num.Num;
 import ru.tyumentsev.cryptopredator.commons.TradingStrategy;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.commons.mapping.CandlestickToBaseBarMapper;
@@ -34,10 +32,9 @@ import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -388,12 +385,12 @@ public class IndicatorVirgin implements TradingStrategy {
 
     public void addEventToBaseBarSeries(final CandlestickEvent event) {
         Optional.ofNullable(barSeriesMap.get(event.getSymbol())).ifPresentOrElse(barSeries -> {
-            if (LocalDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).equals(barSeries.getBar(barSeries.getEndIndex()).getEndTime().toLocalDateTime())) {
+            if (ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).equals(barSeries.getBar(barSeries.getEndIndex()).getEndTime())) {
                               barSeries.addBar(CandlestickToBaseBarMapper.map(event, candlestickInterval), true);
             } else {
                 log.debug("Close time of {} are equals? - {} : {} / {}",
-                        event.getSymbol(), LocalDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).equals(barSeries.getBar(barSeries.getEndIndex()).getEndTime().toLocalDateTime()),
-                        LocalDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()), barSeries.getBar(barSeries.getEndIndex()).getEndTime().toLocalDateTime());
+                        event.getSymbol(), ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).equals(barSeries.getBar(barSeries.getEndIndex()).getEndTime()),
+                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()), barSeries.getBar(barSeries.getEndIndex()).getEndTime());
                 barSeries.addBar(CandlestickToBaseBarMapper.map(event, candlestickInterval), false);
             }
         }, () -> {

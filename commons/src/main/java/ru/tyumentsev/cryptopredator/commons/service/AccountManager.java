@@ -9,9 +9,7 @@ import java.util.Map;
 import com.binance.api.client.BinanceApiCallback;
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.BinanceApiWebSocketClient;
-import com.binance.api.client.domain.ExecutionType;
 import com.binance.api.client.domain.account.AssetBalance;
-import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.event.UserDataUpdateEvent;
 
 import com.binance.api.client.exception.BinanceApiException;
@@ -51,10 +49,6 @@ public class AccountManager implements TradingService {
                 .filter(assetBalance -> assetBalance.getAsset().equalsIgnoreCase(asset))
                 .findFirst().map(AssetBalance::getFree).orElse("0"));
     }
-
-//    public Float getFreeAssetBalance(String asset) {
-//        return Float.parseFloat(restClient.getAccount().getAssetBalance(asset).getFree());
-//    }
 
     protected AccountManager refreshAccountBalances() {
         accountBalances = restClient.getAccount().getBalances().stream()

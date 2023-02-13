@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,7 +30,7 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
         AtomicBoolean ignoreSignal = new AtomicBoolean(false);
 
         Optional.ofNullable(sellJournal.get(pair)).ifPresent(sellRecord -> {
-            if (sellRecord.sellTime().isAfter(LocalDateTime.now().minusHours(3))) {
+            if (sellRecord.sellTime().isAfter(ZonedDateTime.now().minusHours(3))) {
                 ignoreSignal.set(true);
             } else {
                 log.debug("Period of signal ignoring for {} expired, remove pair from sell journal.", pair);
@@ -45,13 +45,13 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
         Optional.ofNullable(monitoredPositions.get(symbol)).ifPresentOrElse(monitoredPosition -> {
 
         }, () -> {
-            monitoredPositions.put(symbol, new MonitoredPosition(symbol, price, LocalDateTime.now()));
+            monitoredPositions.put(symbol, new MonitoredPosition(symbol, price, ZonedDateTime.now()));
         });
     }
 
     public boolean pairOnMonitoring(final String symbol) {
         Optional.ofNullable(monitoredPositions.get(symbol)).ifPresent(monitoredPosition -> {
-            if (monitoredPosition.beginMonitoringTime().isBefore(LocalDateTime.now().minusHours(monitoringExpirationTime))) {
+            if (monitoredPosition.beginMonitoringTime().isBefore(ZonedDateTime.now().minusHours(monitoringExpirationTime))) {
                 monitoredPositions.remove(symbol);
             }
         });
@@ -72,7 +72,7 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
     public record MonitoredPosition(
             String symbol,
             float price,
-            LocalDateTime beginMonitoringTime
+            ZonedDateTime beginMonitoringTime
     ) {
 
     }

@@ -9,7 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Deque;
 import java.util.Map;
 import java.util.Optional;
@@ -67,7 +68,7 @@ public abstract class StrategyCondition {
 
 
     public void addSellRecordToJournal(String pair, String strategy) {
-        sellJournal.put(pair, new SellRecord(pair, LocalDateTime.now(), strategy));
+        sellJournal.put(pair, new SellRecord(pair, ZonedDateTime.now(), strategy));
     }
 
     protected abstract boolean thisSignalWorkedOutBefore(final String pair);
