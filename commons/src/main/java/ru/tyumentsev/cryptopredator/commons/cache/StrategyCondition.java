@@ -59,6 +59,8 @@ public abstract class StrategyCondition {
             if (lastPrice > pos.maxPrice()) {
                 pos.maxPrice(lastPrice);
             }
+            pos.updateStamp(ZonedDateTime.now(ZoneId.systemDefault()));
+            pos.threadName(String.format("%s:%s", Thread.currentThread().getName(), Thread.currentThread().getId()));
         });
     }
 
@@ -68,7 +70,7 @@ public abstract class StrategyCondition {
 
 
     public void addSellRecordToJournal(String pair, String strategy) {
-        sellJournal.put(pair, new SellRecord(pair, ZonedDateTime.now(), strategy));
+        sellJournal.put(pair, new SellRecord(pair, ZonedDateTime.now(ZoneId.systemDefault()), strategy));
     }
 
     protected abstract boolean thisSignalWorkedOutBefore(final String pair);

@@ -31,10 +31,28 @@ services:
     ports:
       - 102:8080
       - 5102:5005
+      - 1089:1089
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./metrics/logs/indicatorvirginbot:/tmp/logs
+    mem_limit: 512m
+
+  macsawbot:
+    image: macsawbot
+    container_name: macsawbot
+    depends_on:
+      - statekeeper
+    env_file:
+      - .env
+      - macsawbot/.env
+    ports:
+      - 103:8080
+      - 5103:5005
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./metrics/logs/macsawbot:/tmp/logs
     mem_limit: 512m
 
   statekeeper:

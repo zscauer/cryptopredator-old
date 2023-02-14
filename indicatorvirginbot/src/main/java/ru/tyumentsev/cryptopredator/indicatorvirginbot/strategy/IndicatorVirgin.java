@@ -91,6 +91,8 @@ public class IndicatorVirgin implements TradingStrategy {
     float pairTakeProfitFactor;
     @Value("${strategy.indicatorVirgin.takeProfitPriceDecreaseFactor}")
     float takeProfitPriceDecreaseFactor;
+    @Value("${strategy.indicatorVirgin.averagingTrigger}")
+    float averagingTrigger;
 
 
     @Scheduled(fixedDelayString = "${strategy.indicatorVirgin.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.indicatorVirgin.startCandlstickEventsCacheUpdating.initialDelay}")
@@ -311,6 +313,8 @@ public class IndicatorVirgin implements TradingStrategy {
             return;
         }
         if (parsedFloat(event.getClose()) > startPrice.get() * 1.02) {
+            log.info("Price of monitored pair {} growth more then 2%. First signal was in {} with price {}.",
+                    event.getSymbol(), indicatorVirginStrategyCondition.getMonitoredPositions().get(event.getSymbol()).beginMonitoringTime(), startPrice);
             buyFast(event.getSymbol(), parsedFloat(event.getClose()), tradingAsset, false);
         }
 
@@ -325,11 +329,12 @@ public class IndicatorVirgin implements TradingStrategy {
 
         indicatorVirginStrategyCondition.updateOpenedPositionLastPrice(ticker, currentPrice, indicatorVirginStrategyCondition.getLongPositions());
 
-        if (currentPrice > openedPosition.avgPrice() * pairTakeProfitFactor) {
+        if (currentPrice > openedPosition.avgPrice() * pairTakeProfitFactor && !openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor)) {
             openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
-            if (averagingEnabled) {
-                buyFast(ticker, currentPrice, tradingAsset, true);
-            }
+        }
+
+        if (averagingEnabled && currentPrice > openedPosition.avgPrice() * averagingTrigger) {
+            buyFast(ticker, currentPrice, tradingAsset, true);
         }
 
         if (signalToCloseLongPosition(event, openedPosition)) {
@@ -372,8 +377,9 @@ public class IndicatorVirgin implements TradingStrategy {
         float stopTriggerValue = openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor) ? openedPosition.maxPrice() : openedPosition.avgPrice();
 
         if (currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor()
-                && (macdIndicator.getValue(endBarSeriesIndex).isLessThanOrEqual(macdIndicator.getValue(endBarSeriesIndex - 1))
-                        || series.getBar(endBarSeriesIndex).getClosePrice().isGreaterThan(series.getBar(endBarSeriesIndex).getOpenPrice().multipliedBy(DoubleNum.valueOf(1.2))))
+//                && (macdIndicator.getValue(endBarSeriesIndex).isLessThanOrEqual(macdIndicator.getValue(endBarSeriesIndex - 1))
+////                    || series.getBar(endBarSeriesIndex).getClosePrice().isGreaterThan(series.getBar(endBarSeriesIndex).getOpenPrice().multipliedBy(DoubleNum.valueOf(1.1)))
+//                    || currentPrice > openedPosition.avgPrice() * 1.1)
         ) {
             log.info("PRICE of {} DECREASED and now equals {} (current MACD is {}, prev MACD is {}), price decrease factor is {} / {}.",
                     ticker, currentPrice, macdIndicator.getValue(endBarSeriesIndex), macdIndicator.getValue(endBarSeriesIndex - 1),

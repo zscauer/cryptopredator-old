@@ -13,14 +13,9 @@ scrape_configs:
     scrape_interval: 5s
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['host.docker.internal:100', 'host.docker.internal:101', 'host.docker.internal:102']
-#  - job_name: 'dailyvolumesbot monitoring prometheus job'
-#    scrape_interval: 5s
-#    metrics_path: '/actuator/prometheus'
-#    static_configs:
-#      - targets: ['host.docker.internal:101']
-#  - job_name: 'multitimeframe monitoring prometheus job'
-#    scrape_interval: 5s
-#    metrics_path: '/actuator/prometheus'
-#    static_configs:
-#      - targets: ['host.docker.internal:102']
+      - targets: ['host.docker.internal:100']
+  - job_name: 'cryptopredator trade bots prometheus job'
+    scrape_interval: 5s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:101', 'host.docker.internal:102', 'host.docker.internal:103']
