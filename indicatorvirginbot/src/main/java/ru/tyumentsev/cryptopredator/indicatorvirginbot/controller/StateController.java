@@ -53,14 +53,14 @@ public class StateController {
     @GetMapping("/openedPositions/long")
     public List<OpenedPosition> getOpenedLongPositions() {
         return indicatorVirginStrategyCondition.getLongPositions().values().stream()
-                .sorted(Comparator.comparing(OpenedPosition::symbol))
+                .sorted(Comparator.comparing(OpenedPosition::updateStamp))
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/openedPositions/short")
     public List<OpenedPosition> getOpenedShortPositions() {
         return indicatorVirginStrategyCondition.getShortPositions().values().stream()
-                .sorted(Comparator.comparing(OpenedPosition::symbol))
+                .sorted(Comparator.comparing(OpenedPosition::updateStamp))
                 .collect(Collectors.toList());
     }
 

@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -30,7 +32,7 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
         AtomicBoolean ignoreSignal = new AtomicBoolean(false);
 
         Optional.ofNullable(sellJournal.get(pair)).ifPresent(sellRecord -> {
-            if (sellRecord.sellTime().isAfter(ZonedDateTime.now().minusHours(3))) {
+            if (sellRecord.sellTime().isAfter(LocalDateTime.now().minusHours(3))) {
                 ignoreSignal.set(true);
             } else {
                 log.debug("Period of signal ignoring for {} expired, remove pair from sell journal.", pair);

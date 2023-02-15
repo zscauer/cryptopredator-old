@@ -51,14 +51,14 @@ public class ApplicationConfig {
 
     {
         Dispatcher dispatcher = new Dispatcher();
-        dispatcher.setMaxRequestsPerHost(300);
-        dispatcher.setMaxRequests(300);
+        dispatcher.setMaxRequestsPerHost(400);
+        dispatcher.setMaxRequests(400);
         sharedClient = new OkHttpClient.Builder()
                 .dispatcher(dispatcher)
 //                .pingInterval(20, TimeUnit.SECONDS)
-                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
-                .callTimeout(30, TimeUnit.SECONDS)
-                .connectionPool(new ConnectionPool())
+//                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
+                .callTimeout(60, TimeUnit.SECONDS)
+//                .connectionPool(new ConnectionPool())
                 .build();
     }
 

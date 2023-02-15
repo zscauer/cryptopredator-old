@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -22,7 +23,7 @@ public class DailyVolumesStrategyCondition extends StrategyCondition {
         AtomicBoolean ignoreSignal = new AtomicBoolean(false);
 
         Optional.ofNullable(sellJournal.get(pair)).ifPresent(sellRecord -> {
-            if (sellRecord.sellTime().getDayOfYear() == ZonedDateTime.now().getDayOfYear()) {
+            if (sellRecord.sellTime().getDayOfYear() == ZonedDateTime.now(ZoneId.systemDefault()).getDayOfYear()) {
                 ignoreSignal.set(true);
             } else {
                 log.debug("Period of signal ignoring for {} expired, remove pair from sell journal.", pair);

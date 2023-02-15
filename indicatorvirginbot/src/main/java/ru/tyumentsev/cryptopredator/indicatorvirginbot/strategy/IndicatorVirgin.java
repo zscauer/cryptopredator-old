@@ -105,15 +105,6 @@ public class IndicatorVirgin implements TradingStrategy {
         }
     }
 
-//    @Scheduled(fixedDelayString = "240000", initialDelayString = "300000")
-//    public void indicatorVirgin_checkThredsState() {
-//        if (testLaunch) {
-//            Thread.getAllStackTraces().keySet().stream().filter(Thread::isAlive).forEach(thread -> {
-//                log.info("Thread {} name: {} group: {} is alive.", thread.getId(), thread.getName(), thread.getThreadGroup());
-//            });
-//        }
-//    }
-
     @Override
     public String getName() {
         return STRATEGY_NAME;
@@ -151,6 +142,8 @@ public class IndicatorVirgin implements TradingStrategy {
         log.debug("Found next cached opened positions: {}", cachedOpenedPositions);
         cachedOpenedPositions.forEach(pos -> {
             if (accountPositions.contains(pos.symbol())) {
+                pos.threadName(null);
+                pos.updateStamp(null);
                 indicatorVirginStrategyCondition.getLongPositions().put(pos.symbol(), pos);
             }
         });
@@ -266,6 +259,9 @@ public class IndicatorVirgin implements TradingStrategy {
         }
 
         BaseBarSeries series = barSeriesMap.get(event.getSymbol());
+        if (series.getBarData().isEmpty()) {
+            return false;
+        }
         var endBarSeriesIndex = series.getEndIndex();
 
         SMAIndicator sma7 = new SMAIndicator(new ClosePriceIndicator(series), 7);
@@ -371,10 +367,11 @@ public class IndicatorVirgin implements TradingStrategy {
         var endBarSeriesIndex = series.getEndIndex();
         MACDIndicator macdIndicator = new MACDIndicator(new ClosePriceIndicator(series), 7, 14);
 
-
         final String ticker = event.getSymbol();
         var currentPrice = parsedFloat(event.getClose());
-        float stopTriggerValue = openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor) ? openedPosition.maxPrice() : openedPosition.avgPrice();
+        // test logic to not wait out drawdowns
+//        float stopTriggerValue = openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor) ? openedPosition.maxPrice() : openedPosition.avgPrice();
+        float stopTriggerValue = openedPosition.maxPrice();
 
         if (currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor()
 //                && (macdIndicator.getValue(endBarSeriesIndex).isLessThanOrEqual(macdIndicator.getValue(endBarSeriesIndex - 1))
@@ -391,12 +388,9 @@ public class IndicatorVirgin implements TradingStrategy {
 
     public void addEventToBaseBarSeries(final CandlestickEvent event) {
         Optional.ofNullable(barSeriesMap.get(event.getSymbol())).ifPresentOrElse(barSeries -> {
-            if (ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).equals(barSeries.getBar(barSeries.getEndIndex()).getEndTime())) {
+            if (barSeries.getEndIndex() >= 0 && ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).equals(barSeries.getBar(barSeries.getEndIndex()).getEndTime())) {
                               barSeries.addBar(CandlestickToBaseBarMapper.map(event, candlestickInterval), true);
             } else {
-                log.debug("Close time of {} are equals? - {} : {} / {}",
-                        event.getSymbol(), ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).equals(barSeries.getBar(barSeries.getEndIndex()).getEndTime()),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()), barSeries.getBar(barSeries.getEndIndex()).getEndTime());
                 barSeries.addBar(CandlestickToBaseBarMapper.map(event, candlestickInterval), false);
             }
         }, () -> {

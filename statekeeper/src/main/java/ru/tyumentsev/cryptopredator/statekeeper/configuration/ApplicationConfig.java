@@ -40,15 +40,16 @@ public class ApplicationConfig {
         sharedClient = new OkHttpClient.Builder()
                 .dispatcher(dispatcher)
 //                .pingInterval(20, TimeUnit.SECONDS)
-                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
-                .callTimeout(30, TimeUnit.SECONDS)
-                .connectionPool(new ConnectionPool())
+//                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
+                .callTimeout(60, TimeUnit.SECONDS)
+//                .connectionPool(new ConnectionPool())
                 .build();
     }
 
     // ++++++++++ Binance functionality
     @Bean(name = "binanceApiClientFactory")
     public BinanceApiClientFactory binanceApiClientFactory() {
+        System.out.printf("Injecting listenKey %s and secret %s", apiKey, secret);
         return BinanceApiClientFactory.newInstance(apiKey, secret, useTestnet, useTestnetStreaming, sharedClient);
     }
 

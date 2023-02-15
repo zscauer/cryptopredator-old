@@ -13,7 +13,8 @@ services:
       - dailyvolumesbot/.env
     ports:
       - 101:8080
-      - 5101:5005
+      - 5101:5005 # debug agentlib
+      - 9101:9101 # profiling jmx
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
@@ -30,7 +31,8 @@ services:
       - indicatorvirginbot/.env
     ports:
       - 102:8080
-      - 5102:5005
+      - 5102:5005 # debug agentlib
+      - 9102:9102 # profiling jmx
       - 1089:1089
     volumes:
       - /etc/timezone:/etc/timezone:ro
@@ -48,7 +50,8 @@ services:
       - macsawbot/.env
     ports:
       - 103:8080
-      - 5103:5005
+      - 5103:5005 # debug agentlib
+      - 9103:9103 # profiling jmx
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
@@ -66,7 +69,8 @@ services:
       - statekeeper/.env
     ports:
       - 100:8080
-      - 5100:5005
+      - 5100:5005 # debug agentlib
+      - 9100:9100 # profiling jmx
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
