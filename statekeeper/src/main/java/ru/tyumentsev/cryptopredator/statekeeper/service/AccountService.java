@@ -7,19 +7,24 @@ import com.binance.api.client.domain.ExecutionType;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.event.UserDataUpdateEvent;
 import lombok.AccessLevel;
-import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import ru.tyumentsev.cryptopredator.commons.domain.StrategyLimit;
 import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
+import ru.tyumentsev.cryptopredator.statekeeper.cache.BotState;
 
 import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
+
+import static ru.tyumentsev.cryptopredator.commons.domain.StrategyLimit.*;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -27,12 +32,9 @@ import java.util.Map;
 @SuppressWarnings("unused")
 public class AccountService extends AccountManager {
 
-    /**
-     * key - strategy name, value - bot endpoint
-     */
-    @Getter
-    final Map<String, String> activeBots = new HashMap<>();
-
+    @Autowired
+    @Setter
+    BotState botState;
     @Value("${applicationconfig.testLaunch}")
     boolean testLaunch;
 
@@ -52,12 +54,24 @@ public class AccountService extends AccountManager {
                             && callback.getOrderTradeUpdateEvent().getExecutionType() == ExecutionType.TRADE) {
                         OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();
                         if (Float.parseFloat(event.getAccumulatedQuantity()) == Float.parseFloat(event.getOriginalQuantity())) {
-                            if (activeBots.isEmpty()) {
-                                log.warn("No user data update event listeners found, but new trade event recieved:\n{}", event);
+                            if (!botState.getActiveBots().isEmpty()) {
+                                updateLimits(event);
+                                botState.getActiveBots().values().forEach(endpointURL -> notifyBot(endpointURL, event));
                             } else {
-                                activeBots.forEach((strategy, endpointURL) -> notifyBot(endpointURL, event));
+                                log.warn("No user data update event listeners found, but new trade event recieved:\n{}", event);
                             }
                             refreshAccountBalances();
+                        }
+                    }
+                }
+
+                private void updateLimits(OrderTradeUpdateEvent event) {
+                    var strategyLimits = Optional.ofNullable(botState.getStrategyLimits().get(event.getStrategyId())).orElseGet(HashMap::new);
+                    if (!strategyLimits.isEmpty()) {
+                        int ordersQtyInTrade = ((Double) Math.ceil(Double.parseDouble(event.getCumulativeQuoteQty()))).intValue() / strategyLimits.get(ORDER_VOLUME);// qty of base orders in current trade.
+                        switch (event.getSide()) {
+                            case SELL -> strategyLimits.put(ORDERS_QTY, strategyLimits.get(ORDERS_QTY) + ordersQtyInTrade);
+                            case BUY -> strategyLimits.put(ORDERS_QTY, strategyLimits.get(ORDERS_QTY) - ordersQtyInTrade);
                         }
                     }
                 }

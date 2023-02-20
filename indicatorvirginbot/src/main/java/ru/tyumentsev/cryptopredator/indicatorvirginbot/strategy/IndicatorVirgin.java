@@ -23,6 +23,7 @@ import org.ta4j.core.num.DoubleNum;
 import ru.tyumentsev.cryptopredator.commons.TradingStrategy;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.commons.mapping.CandlestickToBaseBarMapper;
+import ru.tyumentsev.cryptopredator.commons.service.BotStateService;
 import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.commons.service.SpotTrading;
@@ -56,6 +57,7 @@ public class IndicatorVirgin implements TradingStrategy {
     final IndicatorVirginStrategyCondition indicatorVirginStrategyCondition;
     final SpotTrading spotTrading;
     final DataService dataService;
+    final BotStateService botStateService;
 
     final CandlestickInterval candlestickInterval = CandlestickInterval.HALF_HOURLY;
     final int baseBarSeriesLimit = 26;
@@ -77,6 +79,8 @@ public class IndicatorVirgin implements TradingStrategy {
     boolean testLaunch;
     @Value("${strategy.indicatorVirgin.enabled}")
     boolean indicatorVirginEnabled;
+    @Value("${strategy.indicatorVirgin.ordersQtyLimit}")
+    int ordersQtyLimit;
     @Value("${strategy.indicatorVirgin.averagingEnabled}")
     boolean averagingEnabled;
     @Value("${strategy.global.tradingAsset}")
@@ -124,6 +128,7 @@ public class IndicatorVirgin implements TradingStrategy {
     public void prepareData() {
         restoreSellJournalFromCache();
         prepareOpenedLongPositions();
+        defineAvailableOrdersLimit();
         subscribeToUserUpdateEvents();
     }
 
@@ -151,11 +156,20 @@ public class IndicatorVirgin implements TradingStrategy {
         dataService.deleteAllOpenedPositions(indicatorVirginStrategyCondition.getLongPositions().values(), this);
     }
 
+    private void defineAvailableOrdersLimit() {
+        int availableOrdersLimit = ordersQtyLimit - indicatorVirginStrategyCondition.getLongPositions().values().stream()
+                .map(openedPosition -> Math.ceil(openedPosition.avgPrice() * openedPosition.qty()))
+                .reduce(0D, Double::sum)
+                .intValue() / baseOrderVolume;
+
+        botStateService.setAvailableOrdersLimit(getId(), availableOrdersLimit, baseOrderVolume);
+    }
+
     private void subscribeToUserUpdateEvents() {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("strategyName", getName());
         parameters.put("botAddress", USER_DATA_UPDATE_ENDPOINT);
-        dataService.addActiveStrategy(parameters);
+        botStateService.addActiveStrategy(parameters);
     }
 
     @Override
@@ -308,13 +322,11 @@ public class IndicatorVirgin implements TradingStrategy {
         if (startPrice.isEmpty()) {
             return;
         }
-        if (parsedFloat(event.getClose()) > startPrice.get() * 1.02) {
+        if (parsedFloat(event.getClose()) > startPrice.get() * 1.02 && botStateService.getAvailableOrdersCount(getId()) > 0) {
             log.info("Price of monitored pair {} growth more then 2%. First signal was in {} with price {}.",
                     event.getSymbol(), indicatorVirginStrategyCondition.getMonitoredPositions().get(event.getSymbol()).beginMonitoringTime(), startPrice);
             buyFast(event.getSymbol(), parsedFloat(event.getClose()), tradingAsset, false);
         }
-
-
     }
 
     private void analizeOpenedPosition(final CandlestickEvent event, final OpenedPosition openedPosition) {
@@ -402,7 +414,6 @@ public class IndicatorVirgin implements TradingStrategy {
     private BaseBarSeries newBaseBarSeries(List<? extends Candle> candles, final String ticker) {
         return barSeriesBuilder
                 .withBars(CandlestickToBaseBarMapper.map(candles, candlestickInterval))
-                .withMaxBarCount(baseBarSeriesLimit)
                 .withName(String.format("%s_%s", ticker, getName()))
                 .build();
     }
@@ -444,7 +455,7 @@ public class IndicatorVirgin implements TradingStrategy {
 
     private void unSubscribeFromUserUpdateEvents() {
         try {
-            dataService.deleteActiveStrategy(getName());
+            botStateService.deleteActiveStrategy(getName());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }

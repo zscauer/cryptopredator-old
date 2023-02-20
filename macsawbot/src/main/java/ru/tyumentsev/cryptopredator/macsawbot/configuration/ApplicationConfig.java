@@ -1,8 +1,15 @@
-package ru.tyumentsev.cryptopredator.indicatorvirginbot.configuration;
+package ru.tyumentsev.cryptopredator.macsawbot.configuration;
 
+import com.binance.api.client.BinanceApiAsyncRestClient;
+import com.binance.api.client.BinanceApiClientFactory;
+import com.binance.api.client.BinanceApiRestClient;
+import com.binance.api.client.BinanceApiWebSocketClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import okhttp3.ConnectionPool;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -10,20 +17,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.annotation.EnableScheduling;
-
-import com.binance.api.client.BinanceApiAsyncRestClient;
-import com.binance.api.client.BinanceApiClientFactory;
-import com.binance.api.client.BinanceApiRestClient;
-import com.binance.api.client.BinanceApiWebSocketClient;
-
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.FieldDefaults;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 import ru.tyumentsev.cryptopredator.commons.service.AccountInfo;
-import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
 import ru.tyumentsev.cryptopredator.commons.service.AccountServiceClient;
 import ru.tyumentsev.cryptopredator.commons.service.BotStateService;
 import ru.tyumentsev.cryptopredator.commons.service.BotStateServiceClient;
@@ -57,10 +53,7 @@ public class ApplicationConfig {
         dispatcher.setMaxRequests(400);
         sharedClient = new OkHttpClient.Builder()
                 .dispatcher(dispatcher)
-//                .pingInterval(20, TimeUnit.SECONDS)
-//                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
                 .callTimeout(60, TimeUnit.SECONDS)
-//                .connectionPool(new ConnectionPool())
                 .build();
     }
 

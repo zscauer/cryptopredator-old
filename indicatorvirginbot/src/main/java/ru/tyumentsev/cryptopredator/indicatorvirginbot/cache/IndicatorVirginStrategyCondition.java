@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -64,19 +63,13 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
         return Optional.ofNullable(monitoredPositions.get(symbol)).map(MonitoredPosition::price);
     }
 
-
-
     public void removePositionFromMonitoring(final String symbol) {
         monitoredPositions.remove(symbol);
     }
-
 
     public record MonitoredPosition(
             String symbol,
             float price,
             ZonedDateTime beginMonitoringTime
-    ) {
-
-    }
-
+    ) {}
 }

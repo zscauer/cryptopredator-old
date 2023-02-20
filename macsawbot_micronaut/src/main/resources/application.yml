@@ -1,7 +1,16 @@
+micronaut:
+  application:
+    name: macsawbot
+netty:
+  default:
+    allocator:
+      max-order: 3
+
+
 logging:
-  level:
-    root: ${LOGGING_LEVEL_ROOT}
-    web: ${LOGGING_LEVEL_WEB}
+#  level:
+#    root: ${LOGGING_LEVEL_ROOT}
+#    web: ${LOGGING_LEVEL_WEB}
   pattern:
     console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
     file: "%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}" # "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg %n"
@@ -11,29 +20,6 @@ logging:
     rollingpolicy:
       file-name-pattern: "${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz"
       max-history: 30
-
-server:
-  tomcat:
-    accesslog:
-      enabled: true
-      rotate: false
-      suffix: ".log"
-      prefix: "access_log"
-      directory: "/tmp/logs"
-      pattern: "common"
-
-spring:
-  main:
-    banner-mode: off
-    lazy-initialization: true
-  profiles:
-    active: "default"
-  output:
-    ansi:
-      enabled: ALWAYS
-  # mvc:
-  #     pathmatch:
-  #         matching-strategy: ant-path-matcher
 
 management:
   endpoint:
@@ -53,29 +39,32 @@ management:
       percentiles-histogram:
         "[http.server.requests]": true
 
+jackson:
+  dateFormat: "yyyy-MM-dd HH:mm:ss"
+  serializationInclusion: ALWAYS
+
 applicationconfig:
   testLaunch: ${TEST_LAUNCH}
   useTestnet: ${BINANCE_USE_TESTNET}
   useTestnetStreaming: ${BINANCE_USE_TESTNET_STREAMING}
   apiKey: ${BINANCE_API_KEY}
   secret: ${BINANCE_SECRET_KEY}
-  stateKeeperURL: http://${STATEKEEPER_HOST}:${STATEKEEPER_PORT}
+#  stateKeeperURL: http://${STATEKEEPER_HOST}:${STATEKEEPER_PORT}
 
 strategy:
   # ------------------ global
   global:
-    tradingAsset: ${STRATEGY_GLOBAL_TRADING_ASSET}
+    tradingAsset: USDT #${STRATEGY_GLOBAL_TRADING_ASSET}
     maximalPairPrice: ${STRATEGY_GLOBAL_MAXIMAL_PAIR_PRICE}
     minimalAssetBalance: ${STRATEGY_GLOBAL_MINIMAL_ASSET_BALANCE}
     baseOrderVolume: ${STRATEGY_GLOBAL_BASE_ORDER_VOLUME}
-  indicatorVirgin:
-    enabled: ${INDICATORVIRGIN_ENABLED}
-    ordersQtyLimit: ${INDICATORVIRGIN_ORDERS_QTY_LIMIT}
-    averagingEnabled: ${INDICATORVIRGIN_AVERAGING_ENABLED}
-    priceDecreaseFactor: ${INDICATORVIRGIN_PRICE_DECREASE_FACTOR}
-    pairTakeProfitFactor: ${INDICATORVIRGIN_PAIR_TAKE_PROFIT_FACTOR}
-    takeProfitPriceDecreaseFactor: ${INDICATORVIRGIN_TAKE_PROFIT_PRICE_DECREASE_FACTOR}
-    averagingTrigger: ${INDICATORVIRGIN_AVERAGING_TRIGGER}
+  macSaw:
+    enabled: ${MACSAW_ENABLED}
+    averagingEnabled: ${MACSAW_AVERAGING_ENABLED}
+    priceDecreaseFactor: ${MACSAW_PRICE_DECREASE_FACTOR}
+    pairTakeProfitFactor: ${MACSAW_PAIR_TAKE_PROFIT_FACTOR}
+    takeProfitPriceDecreaseFactor: ${MACSAW_TAKE_PROFIT_PRICE_DECREASE_FACTOR}
+    averagingTrigger: ${MACSAW_AVERAGING_TRIGGER}
     startCandlstickEventsCacheUpdating:
-      initialDelay: ${INDICATORVIRGIN_START_CANDLESTICKEVENTS_CACHE_UPDATING_INITIAL_DELAY}
-      fixedDelay: ${INDICATORVIRGIN_START_CANDLESTICKEVENTS_CACHE_UPDATING_FIXED_DELAY}
+      initialDelay: ${MACSAW_START_CANDLESTICKEVENTS_CACHE_UPDATING_INITIAL_DELAY}
+      fixedDelay: ${MACSAW_START_CANDLESTICKEVENTS_CACHE_UPDATING_FIXED_DELAY}

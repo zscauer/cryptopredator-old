@@ -1,7 +1,0 @@
-micronaut:
-  application:
-    name: macsawbot
-netty:
-  default:
-    allocator:
-      max-order: 3

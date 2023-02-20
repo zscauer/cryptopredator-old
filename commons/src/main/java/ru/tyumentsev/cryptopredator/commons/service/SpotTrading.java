@@ -19,12 +19,14 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
+@SuppressWarnings("unused")
 public class SpotTrading implements TradingService {
 
 //    final AccountManager accountManager;
     final AccountInfo accountInfo;
     final BinanceApiAsyncRestClient asyncRestClient;
     final MarketInfo marketInfo;
+    final BotStateService botStateService;
 
     public List<AssetBalance> getAccountBalances() {
         return accountInfo.getAllAccountBalances();
@@ -37,7 +39,7 @@ public class SpotTrading implements TradingService {
         }
         marketInfo.pairOrderPlaced(symbol, strategyName, baseOrderVolume / price, OrderSide.BUY);
         synchronized (this) {
-            int availableOrdersCount = accountInfo.getFreeAssetBalance(quoteAsset).intValue() / minimalAssetBalance;
+            int availableOrdersCount = botStateService.getAvailableOrdersCount(strategyId); //accountInfo.getFreeAssetBalance(quoteAsset).intValue() / minimalAssetBalance;
             if (availableOrdersCount > 0) {
                 placeMarketBuyOrder(symbol, baseOrderVolume / price, strategyId);
             } else {

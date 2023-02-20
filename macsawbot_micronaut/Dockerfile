@@ -1,6 +1,6 @@
 FROM resurfaceio/alpine-jdk17:3.17.0a
 
-ADD ./build/libs/macsawbot.jar macsawbot/
+ADD ./build/libs/macsawbot-all.jar macsawbot/
 
 ENTRYPOINT ["java", "-jar", \
 "-Xms256m", "-Xmx256m", \
@@ -14,4 +14,4 @@ ENTRYPOINT ["java", "-jar", \
 "-Dcom.sun.management.jmxremote.ssl=false", \
 "-Djava.rmi.server.hostname=192.168.1.66", \
 "-Dcom.sun.management.jmxremote.authenticate=false", \
-"macsawbot/macsawbot.jar"]
+"macsawbot/macsawbot-all.jar"]

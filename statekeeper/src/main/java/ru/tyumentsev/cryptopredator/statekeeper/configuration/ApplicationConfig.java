@@ -7,7 +7,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
-import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -49,7 +48,6 @@ public class ApplicationConfig {
     // ++++++++++ Binance functionality
     @Bean(name = "binanceApiClientFactory")
     public BinanceApiClientFactory binanceApiClientFactory() {
-        System.out.printf("Injecting listenKey %s and secret %s", apiKey, secret);
         return BinanceApiClientFactory.newInstance(apiKey, secret, useTestnet, useTestnetStreaming, sharedClient);
     }
 

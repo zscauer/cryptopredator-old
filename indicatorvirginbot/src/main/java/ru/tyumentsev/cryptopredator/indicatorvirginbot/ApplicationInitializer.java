@@ -65,27 +65,6 @@ public class ApplicationInitializer implements ApplicationRunner {
 
         if (testLaunch) {
             log.warn("Application launched in test mode. Deals functionality disabled.");
-//            runTest();
         }
-    }
-
-    private void runTest() {
-        CandlestickInterval interval = CandlestickInterval.FIVE_MINUTES;
-        List<Candlestick> candlestickList = marketInfo.getCandleSticks("TUSDT", interval, 20);
-        log.info("Candlesticks: {}", candlestickList);
-        List<Bar> barsList = CandlestickToBaseBarMapper.map(candlestickList, interval);
-        log.info("Bars list: {}", barsList);
-        BaseBarSeriesBuilder barSeriesBuilder = new BaseBarSeriesBuilder();
-        barSeriesBuilder.withBars(barsList);
-        barSeriesBuilder.withMaxBarCount(26);
-        barSeriesBuilder.withNumTypeOf(DoubleNum::valueOf);
-        BaseBarSeries series = barSeriesBuilder.build();
-        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-        MACDIndicator macd = new MACDIndicator(closePrice);
-
-        log.info(macd.getLongTermEma().toString());
-        log.info(macd.getShortTermEma().toString());
-        log.info(macd.getValue(5).toString());
-
     }
 }

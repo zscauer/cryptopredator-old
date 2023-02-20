@@ -1,7 +1,7 @@
 logging:
   level:
-    root: ${LOGGING_LEVEL_ROOT}
-    web: ${LOGGING_LEVEL_WEB}
+    root: ${LOGGING_LEVEL_ROOT:-INFO}
+    web: ${LOGGING_LEVEL_ROOT:-INFO}
   pattern:
     console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
     file: "%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}" # "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg %n"
@@ -34,19 +34,6 @@ spring:
   # mvc:
   #     pathmatch:
   #         matching-strategy: ant-path-matcher
-  datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-    driver-class-name: org.postgresql.Driver
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
-#  jpa:
-#    database-platform: org.hibernate.dialect.PostgreSQLDialect
-#    url: jdbc:postgresql://host.docker.internal:5432/binance
-#    driver-class-name: org.postgresql.Driver
-#    username: postgres
-#    password: postgres
-  jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 management:
   endpoint:
@@ -66,22 +53,28 @@ management:
       percentiles-histogram:
         "[http.server.requests]": true
 
-redis:
-  host: ${REDIS_HOST}
-  port: ${REDIS_PORT}
-  password: ${REDIS_PASSWORD}
-
 applicationconfig:
   testLaunch: ${TEST_LAUNCH}
   useTestnet: ${BINANCE_USE_TESTNET}
   useTestnetStreaming: ${BINANCE_USE_TESTNET_STREAMING}
   apiKey: ${BINANCE_API_KEY}
   secret: ${BINANCE_SECRET_KEY}
-
-monitoring:
-  initializeUserDataUpdateStream:
-    initialDelay: ${INITIALIZE_USERDATA_UPDATE_STREAM_INITIAL_DELAY}
-    fixedDelay: ${INITIALIZE_USERDATA_UPDATE_STREAM_FIXED_DELAY}
-  keepAliveUserDataUpdateStream:
-    initialDelay: ${KEEP_ALIVE_USERDATA_UPDATE_STREAM_INITIAL_DELAY}
-    fixedDelay: ${KEEP_ALIVE_USERDATA_UPDATE_STREAM_FIXED_DELAY}
+  stateKeeperURL: http://test:55 # http://${STATEKEEPER_HOST}:${STATEKEEPER_PORT}
+#
+#strategy:
+#  # ------------------ global
+#  global:
+#    tradingAsset: ${STRATEGY_GLOBAL_TRADING_ASSET}
+#    maximalPairPrice: ${STRATEGY_GLOBAL_MAXIMAL_PAIR_PRICE}
+#    minimalAssetBalance: ${STRATEGY_GLOBAL_MINIMAL_ASSET_BALANCE}
+#    baseOrderVolume: ${STRATEGY_GLOBAL_BASE_ORDER_VOLUME}
+#  indicatorVirgin:
+#    enabled: ${INDICATORVIRGIN_ENABLED}
+#    averagingEnabled: ${INDICATORVIRGIN_AVERAGING_ENABLED}
+#    priceDecreaseFactor: ${INDICATORVIRGIN_PRICE_DECREASE_FACTOR}
+#    pairTakeProfitFactor: ${INDICATORVIRGIN_PAIR_TAKE_PROFIT_FACTOR}
+#    takeProfitPriceDecreaseFactor: ${INDICATORVIRGIN_TAKE_PROFIT_PRICE_DECREASE_FACTOR}
+#    averagingTrigger: ${INDICATORVIRGIN_AVERAGING_TRIGGER}
+#    startCandlstickEventsCacheUpdating:
+#      initialDelay: ${INDICATORVIRGIN_START_CANDLESTICKEVENTS_CACHE_UPDATING_INITIAL_DELAY}
+#      fixedDelay: ${INDICATORVIRGIN_START_CANDLESTICKEVENTS_CACHE_UPDATING_FIXED_DELAY}
