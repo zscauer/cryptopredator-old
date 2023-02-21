@@ -1,0 +1,79 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "7.1.2"
+    id 'org.graalvm.buildtools.native' version '0.9.18'
+    id 'io.freefair.lombok' version '6.6.1'
+    id "io.micronaut.application" version "3.7.2"
+    id "io.micronaut.aot" version "3.7.2"
+}
+
+def artifactVersion = 'native'
+def prometheusVersion = '0.16.0'
+
+group = 'ru.tyumentsev.cryptopredator'
+version = artifactVersion
+sourceCompatibility = '17'
+description = 'macsawbot'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation "ru.tyumentsev.cryptopredator:commons:0.4"
+    implementation "com.binance.api:binance-api-client:1.2.2"
+    implementation "org.ta4j:ta4j-core:0.16-SNAPSHOT"
+    annotationProcessor("io.micronaut:micronaut-http-validation")
+//    annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
+    implementation("io.micronaut:micronaut-http-client")
+    implementation("io.micronaut:micronaut-jackson-databind")
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.2'
+//    implementation("io.micronaut.serde:micronaut-serde-jackson")
+//    implementation("jakarta.annotation:jakarta.annotation-api")
+    runtimeOnly("ch.qos.logback:logback-classic")
+    implementation("io.micronaut:micronaut-validation")
+    implementation "io.micrometer:micrometer-registry-prometheus:1.10.2"
+    implementation "io.prometheus:simpleclient_servlet:${prometheusVersion}"
+    implementation "io.prometheus:simpleclient_hotspot:${prometheusVersion}"
+}
+
+graalvmNative {
+    testSupport = false
+    toolchainDetection = false
+    binaries {
+        main {
+            buildArgs.add("-H:-DeleteLocalSymbols")
+            buildArgs.add("-H:+PreserveFramePointer")
+            buildArgs.add("-H:DynamicProxyConfigurationFiles=")
+            buildArgs.add("-H:DynamicProxyConfigurationResources=")
+        }
+    }
+}
+
+application {
+    mainClass.set("ru.tyumentsev.cryptopredator.macsaw.Application")
+}
+
+micronaut {
+    runtime("netty")
+    testRuntime("junit5")
+    processing {
+        incremental(true)
+        annotations("ru.tyumentsev.cryptopredator.macsaw.*")
+    }
+}
+
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        substitute(module("io.micronaut:micronaut-jackson-databind"))
+            .using(module("io.micronaut.serde:micronaut-serde-jackson:1.5.0"))
+    }
+}
+

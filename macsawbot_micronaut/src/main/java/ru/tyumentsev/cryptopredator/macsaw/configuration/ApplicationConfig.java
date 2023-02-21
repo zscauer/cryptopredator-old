@@ -19,6 +19,8 @@ import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 import ru.tyumentsev.cryptopredator.commons.service.AccountInfo;
 import ru.tyumentsev.cryptopredator.commons.service.AccountServiceClient;
+import ru.tyumentsev.cryptopredator.commons.service.BotStateService;
+import ru.tyumentsev.cryptopredator.commons.service.BotStateServiceClient;
 import ru.tyumentsev.cryptopredator.commons.service.CacheServiceClient;
 import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
@@ -88,10 +90,10 @@ public class ApplicationConfig {
     }
 
     @Singleton
-    @Requires(classes = {AccountInfo.class, BinanceApiAsyncRestClient.class, MarketInfo.class})
+    @Requires(classes = {AccountInfo.class, BinanceApiAsyncRestClient.class, MarketInfo.class, BotStateService.class})
     @Inject
-    public SpotTrading spotTrading(AccountInfo accountInfo, BinanceApiAsyncRestClient binanceApiAsyncRestClient, MarketInfo marketInfo) {
-        return new SpotTrading(accountInfo, binanceApiAsyncRestClient, marketInfo);
+    public SpotTrading spotTrading(AccountInfo accountInfo, BinanceApiAsyncRestClient binanceApiAsyncRestClient, MarketInfo marketInfo, BotStateService botStateService) {
+        return new SpotTrading(accountInfo, binanceApiAsyncRestClient, marketInfo, botStateService);
     }
     // ---------- Cryptopredator commons
 
@@ -112,6 +114,16 @@ public class ApplicationConfig {
                 .addConverterFactory(JacksonConverterFactory.create())
                 .client(new OkHttpClient.Builder().build())
                 .build().create(AccountServiceClient.class)
+        );
+    }
+
+    @Singleton
+    public BotStateService botStateService() {
+        return new BotStateService(new Retrofit.Builder()
+                .baseUrl(String.format(stateKeeperURL))
+                .addConverterFactory(JacksonConverterFactory.create())
+                .client(new OkHttpClient.Builder().build())
+                .build().create(BotStateServiceClient.class)
         );
     }
 

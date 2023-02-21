@@ -1,0 +1,6 @@
+FROM alpine
+
+ADD ./build/native/nativeCompile/macsawbot macsawbot/
+
+ENTRYPOINT ["/bin/sh", "-c", "./macsawbot/macsawbot"]
+#ENTRYPOINT ["top"]
