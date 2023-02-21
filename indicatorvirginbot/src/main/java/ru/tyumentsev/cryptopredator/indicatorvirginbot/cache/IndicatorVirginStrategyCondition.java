@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
 
@@ -17,21 +18,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Slf4j
 public class IndicatorVirginStrategyCondition extends StrategyCondition {
 
     @Getter
-    Map<String, MonitoredPosition> monitoredPositions = new ConcurrentHashMap<>();
-    Long monitoringExpirationTime = 6L;
+    final Map<String, MonitoredPosition> monitoredPositions = new ConcurrentHashMap<>();
+    @Value("${strategy.indicatorVirgin.workedOutSignalsIgnoringPeriod}")
+    int workedOutSignalsIgnoringPeriod;
+    final Long monitoringExpirationTime = 4L;
 
     @Override
     public boolean thisSignalWorkedOutBefore(final String pair) {
-    //TODO: define parameter for signal ignoring period.
         AtomicBoolean ignoreSignal = new AtomicBoolean(false);
 
         Optional.ofNullable(sellJournal.get(pair)).ifPresent(sellRecord -> {
-            if (sellRecord.sellTime().isAfter(LocalDateTime.now().minusHours(3))) {
+            if (sellRecord.sellTime().isAfter(LocalDateTime.now().minusHours(workedOutSignalsIgnoringPeriod))) {
                 ignoreSignal.set(true);
             } else {
                 log.debug("Period of signal ignoring for {} expired, remove pair from sell journal.", pair);

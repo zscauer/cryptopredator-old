@@ -5,7 +5,8 @@ ADD ./build/libs/indicatorvirginbot.jar indicatorvirginbot/
 
 ENTRYPOINT ["java", "-jar", \
 "-Xms256m", "-Xmx256m", \
-"-XX:MaxMetaspaceSize=256m", \
+"-XX:NewSize=128m", "-XX:MaxNewSize=128m", \
+"-XX:MaxMetaspaceSize=128m", \
 "-XX:+HeapDumpOnOutOfMemoryError", \
 "-XX:HeapDumpPath=/tmp/logs", \
 "-Dcom.sun.management.jmxremote", \

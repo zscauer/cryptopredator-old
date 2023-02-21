@@ -1,8 +1,5 @@
 package ru.tyumentsev.cryptopredator.indicatorvirginbot.controller;
 
-import com.binance.api.client.BinanceApiRestClient;
-import com.binance.api.client.domain.account.Account;
-import com.binance.api.client.domain.account.AssetBalance;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -78,19 +75,19 @@ public class StateController {
 
     @GetMapping("/candleStickEventsStreams")
     public List<String> getDailyCandleStickEventsStreams() {
-        return indicatorVirgin.getCandleStickEventsStreams().keySet().stream()
+        return indicatorVirgin.getMarketCandleStickEventsStreams().keySet().stream()
                 .sorted()
                 .collect(Collectors.toList());
     }
 
     @GetMapping("/barSeries")
     public List<BarSeries> getAllBarSeries() {
-        return new ArrayList<>(indicatorVirgin.getBarSeriesMap().values());
+        return new ArrayList<>(indicatorVirgin.getMarketBarSeriesMap().values());
     }
 
     @GetMapping("/barSeries/{symbol}")
     public BarSeries getBarSeries(@PathVariable String symbol) {
-        return indicatorVirgin.getBarSeriesMap().get(symbol);
+        return indicatorVirgin.getMarketBarSeriesMap().get(symbol);
     }
 
     @PostMapping("/userDataUpdateEvent")
