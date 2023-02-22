@@ -51,8 +51,8 @@ graalvmNative {
         main {
             buildArgs.add("-H:-DeleteLocalSymbols")
             buildArgs.add("-H:+PreserveFramePointer")
-            buildArgs.add("-H:DynamicProxyConfigurationFiles=")
-            buildArgs.add("-H:DynamicProxyConfigurationResources=")
+//            buildArgs.add("-H:DynamicProxyConfigurationFiles='src/main/resources/proxy-config.json'")
+//            buildArgs.add("-H:DynamicProxyConfigurationResources=")
         }
     }
 }

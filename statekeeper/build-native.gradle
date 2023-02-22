@@ -4,14 +4,16 @@ plugins {
     id 'org.springframework.boot' version '3.0.2'
     id 'io.spring.dependency-management' version '1.1.0'
     id 'io.freefair.lombok' version '6.6.1'
+    id 'org.graalvm.buildtools.native' version '0.9.18'
 }
 
-def artifactVersion = '0.5'
+def artifactVersion = 'native'
 def springBootVersion = '3.0.2'
 def prometheusVersion = '0.16.0'
 
 group 'ru.tyumentsev.cryptopredator'
 version artifactVersion
+sourceCompatibility = '17'
 description = 'statekeeper'
 
 configurations {
@@ -46,36 +48,6 @@ dependencies {
     implementation "io.prometheus:simpleclient_hotspot:${prometheusVersion}"
 }
 
-jar {
-    project.version = ''
-    setArchivesBaseName('statekeeper')
-    setProperty('version', artifactVersion)
-//    setProperty('classifier', '') // build jar without "-plain" suffix
+graalvmNative {
+    testSupport = false
 }
-
-//bootJar {
-//    enabled = true;
-//    setProperty('archiveClassifier', 'fat')
-//}
-
-//tasks.withType(JavaCompile) {
-//    options.encoding = 'UTF-8'
-//}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            groupId = 'ru.tyumentsev.cryptopredator'
-            artifactId = 'statekeeper'
-            version = artifactVersion
-        }
-    }
-    repositories {
-        mavenLocal()
-    }
-}
-
-//test {
-//    useJUnitPlatform()
-//}

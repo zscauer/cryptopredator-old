@@ -32,14 +32,14 @@ import java.util.stream.Collectors;
 @SerdeImport(SellRecord.class)
 public class ApplicationInitializer implements ApplicationEventListener<ApplicationStartupEvent> {
 
-    @Inject
-    public ApplicationInitializer(MarketInfo marketInfo, List<TradingStrategy> tradingStrategies) {
-        this.marketInfo = marketInfo;
-        this.tradingStrategies = tradingStrategies;
-    }
+//    @Inject
+//    public ApplicationInitializer(MarketInfo marketInfo, List<TradingStrategy> tradingStrategies) {
+//        this.marketInfo = marketInfo;
+//        this.tradingStrategies = tradingStrategies;
+//    }
 
-    final MarketInfo marketInfo;
-    final List<TradingStrategy> tradingStrategies;
+//    final MarketInfo marketInfo;
+//    final List<TradingStrategy> tradingStrategies;
 //    @Value("${applicationconfig.testLaunch}")
 //    boolean testLaunch;
 //    @Value("${strategy.global.tradingAsset}")
@@ -53,13 +53,13 @@ public class ApplicationInitializer implements ApplicationEventListener<Applicat
 //        marketInfo.getAvailableTradePairs(tradingAsset);
 //        marketInfo.fillCheapPairs(tradingAsset, maximalPairPrice);
 
-        Map<String, TradingStrategy> activeStrategies = tradingStrategies.stream()
-                .filter(TradingStrategy::isEnabled)
-                .collect(Collectors.toMap(value -> String.format("%s (id: %s)", value.getName(), value.getId()), value -> value));
-
-        activeStrategies.forEach((name, implementation) -> implementation.prepareData());
-
-        log.info("Application initialization complete. Active strategies: {}.", activeStrategies.keySet());
+//        Map<String, TradingStrategy> activeStrategies = tradingStrategies.stream()
+//                .filter(TradingStrategy::isEnabled)
+//                .collect(Collectors.toMap(value -> String.format("%s (id: %s)", value.getName(), value.getId()), value -> value));
+//
+//        activeStrategies.forEach((name, implementation) -> implementation.prepareData());
+//
+//        log.info("Application initialization complete. Active strategies: {}.", activeStrategies.keySet());
 
 //        if (testLaunch) {
 //            log.warn("Application launched in test mode. Deals functionality disabled.");

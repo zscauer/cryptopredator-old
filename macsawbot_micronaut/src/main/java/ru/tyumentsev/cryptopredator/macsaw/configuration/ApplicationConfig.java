@@ -4,6 +4,7 @@ import com.binance.api.client.BinanceApiAsyncRestClient;
 import com.binance.api.client.BinanceApiClientFactory;
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.BinanceApiWebSocketClient;
+import com.binance.api.client.impl.BinanceApiService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.micronaut.context.annotation.ConfigurationProperties;
@@ -11,6 +12,7 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import okhttp3.Dispatcher;
@@ -106,30 +108,30 @@ public class ApplicationConfig {
                 .build().create(CacheServiceClient.class)
         );
     }
-
-    @Singleton
-    public AccountInfo accountInfo() {
-        return new AccountInfo(new Retrofit.Builder()
-                .baseUrl(String.format(stateKeeperURL))
-                .addConverterFactory(JacksonConverterFactory.create())
-                .client(new OkHttpClient.Builder().build())
-                .build().create(AccountServiceClient.class)
-        );
-    }
-
-    @Singleton
-    public BotStateService botStateService() {
-        return new BotStateService(new Retrofit.Builder()
-                .baseUrl(String.format(stateKeeperURL))
-                .addConverterFactory(JacksonConverterFactory.create())
-                .client(new OkHttpClient.Builder().build())
-                .build().create(BotStateServiceClient.class)
-        );
-    }
-
-    @Singleton @Replaces(ObjectMapper.class)
-    public ObjectMapper objectMapper() {
-        System.out.println("replace mapper");
-        return new ObjectMapper().registerModule(new JavaTimeModule());
-    }
+//
+//    @Singleton
+//    public AccountInfo accountInfo() {
+//        return new AccountInfo(new Retrofit.Builder()
+//                .baseUrl(String.format(stateKeeperURL))
+//                .addConverterFactory(JacksonConverterFactory.create())
+//                .client(new OkHttpClient.Builder().build())
+//                .build().create(AccountServiceClient.class)
+//        );
+//    }
+//
+//    @Singleton
+//    public BotStateService botStateService() {
+//        return new BotStateService(new Retrofit.Builder()
+//                .baseUrl(String.format(stateKeeperURL))
+//                .addConverterFactory(JacksonConverterFactory.create())
+//                .client(new OkHttpClient.Builder().build())
+//                .build().create(BotStateServiceClient.class)
+//        );
+//    }
+//
+//    @Singleton @Replaces(ObjectMapper.class)
+//    public ObjectMapper objectMapper() {
+//        System.out.println("replace mapper");
+//        return new ObjectMapper().registerModule(new JavaTimeModule());
+//    }
 }

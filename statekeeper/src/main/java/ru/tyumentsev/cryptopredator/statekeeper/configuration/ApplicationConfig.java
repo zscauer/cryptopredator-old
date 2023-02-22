@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 @Getter
 @Setter
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @ConfigurationProperties(prefix = "applicationconfig")
 @EnableScheduling
 @FieldDefaults(level = AccessLevel.PRIVATE)

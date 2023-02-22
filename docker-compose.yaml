@@ -4,7 +4,7 @@
 services:
 
   dailyvolumesbot:
-    image: dailyvolumesbot
+    image: dailyvolumesbot:${DAILYVOLUMESBOT_IMAGE_TAG:-latest}
     container_name: dailyvolumesbot
     depends_on:
       - statekeeper
@@ -22,7 +22,7 @@ services:
     mem_limit: 512m
 
   indicatorvirginbot:
-    image: indicatorvirginbot
+    image: indicatorvirginbot:${INDICATORVIRGINBOT_IMAGE_TAG:-latest}
     container_name: indicatorvirginbot
     depends_on:
       - statekeeper
@@ -41,7 +41,7 @@ services:
     mem_limit: 512m
 
   macsawbot:
-    image: macsawbot
+    image: macsawbot:${MACSAWBOT_IMAGE_TAG:-latest}
     container_name: macsawbot
     depends_on:
       - statekeeper
@@ -59,7 +59,7 @@ services:
     mem_limit: 512m
 
   statekeeper:
-    image: statekeeper
+    image: statekeeper:${STATEKEEPER_IMAGE_TAG:-latest}
     container_name: statekeeper
     depends_on:
       - redis_binance

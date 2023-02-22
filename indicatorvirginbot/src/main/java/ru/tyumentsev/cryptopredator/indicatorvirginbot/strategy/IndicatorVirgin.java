@@ -326,15 +326,20 @@ public class IndicatorVirgin implements TradingStrategy {
         EMAIndicator ema7 = new EMAIndicator(new ClosePriceIndicator(series), 7);
         EMAIndicator ema25 = new EMAIndicator(new ClosePriceIndicator(series), 25);
         RSIIndicator rsi14 = new RSIIndicator(new ClosePriceIndicator(series), 14);
+        MACDIndicator macd = new MACDIndicator(new ClosePriceIndicator((series)), 12, 26);
 
         var ema7Value = ema7.getValue(endBarSeriesIndex);
         var ema25Value = ema25.getValue(endBarSeriesIndex);
         var rsi14Value = rsi14.getValue(endBarSeriesIndex);
 
-        if (ema7Value.isGreaterThan(ema25Value) && itsSustainableGrowth(ema7, ema25, endBarSeriesIndex, 2)
-                && rsi14.getValue(endBarSeriesIndex).isGreaterThan(DoubleNum.valueOf(72))
-                && rsi14.getValue(endBarSeriesIndex - 1).isGreaterThan(DoubleNum.valueOf(72))
-                && haveBreakdown(ema7, ema25, endBarSeriesIndex, 15)) {
+        if (ema7Value.isGreaterThan(ema25Value) && rsi14.getValue(endBarSeriesIndex).isGreaterThan(DoubleNum.valueOf(72))
+                && (itsSustainableGrowth(ema7, ema25, endBarSeriesIndex, 2)
+                        && haveBreakdown(ema7, ema25, endBarSeriesIndex, 15)
+                        && rsi14.getValue(endBarSeriesIndex - 1).isGreaterThan(DoubleNum.valueOf(72))
+                        || (macd.getValue(endBarSeriesIndex - 1).isPositive()
+                                && macd.getValue(endBarSeriesIndex).isGreaterThanOrEqual(macd.getValue(endBarSeriesIndex - 1).multipliedBy(DoubleNum.valueOf(3))))
+                    )
+            ) {
 //                && sma7Value.isLessThanOrEqual(sma25Value.multipliedBy(DoubleNum.valueOf(1.06F)))
             log.debug("SMA7 of {} ({}) is higher then SMA25 ({}) with RSI14 ({}) is greater then 72.", event.getSymbol(), ema7Value, ema25Value, rsi14Value);
             return true;
@@ -343,6 +348,14 @@ public class IndicatorVirgin implements TradingStrategy {
         return false;
     }
 
+    /**
+     * Growth is sustainable if short MA of last N bars are higher then their long MA.
+     * @param ema7 short MA
+     * @param ema25 long MA
+     * @param endBarSeriesIndex last bar index
+     * @param barsQty quantity of bars to analize
+     * @return True if growth is sustainable.
+     */
     private boolean itsSustainableGrowth(final EMAIndicator ema7, final EMAIndicator ema25, final int endBarSeriesIndex, final int barsQty) {
         for (int i = endBarSeriesIndex; i > endBarSeriesIndex - barsQty; i--) {
             if (ema25.getValue(i).isGreaterThan(ema7.getValue(i))) {
@@ -426,12 +439,12 @@ public class IndicatorVirgin implements TradingStrategy {
 
         final String ticker = event.getSymbol();
         var currentPrice = parsedFloat(event.getClose());
-        float stopTriggerValue = openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor) ? openedPosition.maxPrice() : openedPosition.avgPrice();
-//        float stopTriggerValue = openedPosition.maxPrice(); // test logic to not wait out drawdowns
+//        float stopTriggerValue = openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor) ? openedPosition.maxPrice() : openedPosition.avgPrice();
+        float stopTriggerValue = openedPosition.maxPrice(); // test logic to not wait out drawdowns
 
         if (currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor()
                 && series.getBar(endBarSeriesIndex - 1).isBearish()
-                && rsi14.getValue(endBarSeriesIndex).isLessThanOrEqual(DoubleNum.valueOf(65))
+                && rsi14.getValue(endBarSeriesIndex).isLessThanOrEqual(DoubleNum.valueOf(67))
 //                && (macdIndicator.getValue(endBarSeriesIndex).isLessThanOrEqual(macdIndicator.getValue(endBarSeriesIndex - 1))
 ////                    || series.getBar(endBarSeriesIndex).getClosePrice().isGreaterThan(series.getBar(endBarSeriesIndex).getOpenPrice().multipliedBy(DoubleNum.valueOf(1.1)))
 //                    || currentPrice > openedPosition.avgPrice() * 1.1)
@@ -489,6 +502,16 @@ public class IndicatorVirgin implements TradingStrategy {
             }
         });
         marketCandleStickEventsStreams.clear();
+
+        openedPositionsCandleStickEventsStreams.forEach((pair, stream) -> {
+            try {
+                stream.close();
+                log.debug("WebStream of '{}' closed.", pair);
+            } catch (IOException e) {
+                log.error(e.getMessage());
+            }
+        });
+        openedPositionsCandleStickEventsStreams.clear();
     }
 
     private void backupOpenedPositions() {
