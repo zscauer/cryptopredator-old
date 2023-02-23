@@ -108,7 +108,8 @@ public class ApplicationConfig {
         return new DataService(new Retrofit.Builder()
                 .baseUrl(String.format(stateKeeperURL))
                 .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().registerModule(new JavaTimeModule())))
-                .client(new OkHttpClient.Builder().build())
+                .client(sharedClient)
+//                .client(new OkHttpClient.Builder().build())
                 .build().create(CacheServiceClient.class)
         );
     }
@@ -118,7 +119,8 @@ public class ApplicationConfig {
         return new AccountInfo(new Retrofit.Builder()
                 .baseUrl(String.format(stateKeeperURL))
                 .addConverterFactory(JacksonConverterFactory.create())
-                .client(new OkHttpClient.Builder().build())
+                .client(sharedClient)
+//                .client(new OkHttpClient.Builder().build())
                 .build().create(AccountServiceClient.class)
         );
     }
@@ -128,7 +130,8 @@ public class ApplicationConfig {
         return new BotStateService(new Retrofit.Builder()
                 .baseUrl(String.format(stateKeeperURL))
                 .addConverterFactory(JacksonConverterFactory.create())
-                .client(new OkHttpClient.Builder().build())
+                .client(sharedClient)
+//                .client(new OkHttpClient.Builder().build())
                 .build().create(BotStateServiceClient.class)
         );
     }

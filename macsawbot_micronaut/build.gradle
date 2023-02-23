@@ -24,11 +24,11 @@ dependencies {
     implementation "com.binance.api:binance-api-client:1.2.2"
     implementation "org.ta4j:ta4j-core:0.16-SNAPSHOT"
     annotationProcessor("io.micronaut:micronaut-http-validation")
-//    annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
+    annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
     implementation("io.micronaut:micronaut-http-client")
-    implementation("io.micronaut:micronaut-jackson-databind")
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.2'
-//    implementation("io.micronaut.serde:micronaut-serde-jackson")
+//    implementation("io.micronaut:micronaut-jackson-databind")
+//    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.2'
+    implementation("io.micronaut.serde:micronaut-serde-jackson")
 //    implementation("jakarta.annotation:jakarta.annotation-api")
     runtimeOnly("ch.qos.logback:logback-classic")
     implementation("io.micronaut:micronaut-validation")
@@ -79,7 +79,7 @@ publishing {
     }
 }
 
-configurations.all {
+configurations.configureEach {
     resolutionStrategy.dependencySubstitution {
         substitute(module("io.micronaut:micronaut-jackson-databind"))
             .using(module("io.micronaut.serde:micronaut-serde-jackson:1.5.0"))

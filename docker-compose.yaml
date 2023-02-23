@@ -43,8 +43,8 @@ services:
   macsawbot:
     image: macsawbot:${MACSAWBOT_IMAGE_TAG:-latest}
     container_name: macsawbot
-    depends_on:
-      - statekeeper
+#    depends_on:
+#      - statekeeper
     env_file:
       - .env
       - macsawbot/.env

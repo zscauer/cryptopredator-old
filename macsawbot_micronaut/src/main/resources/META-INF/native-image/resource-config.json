@@ -2,6 +2,9 @@
   "resources":{
   "includes":[
     {
+      "pattern":"\\QMETA-INF/micronaut/io.micronaut.core.beans.BeanIntrospectionReference\\E"
+    }, 
+    {
       "pattern":"\\QMETA-INF/micronaut/io.micronaut.inject.BeanConfiguration\\E"
     }, 
     {

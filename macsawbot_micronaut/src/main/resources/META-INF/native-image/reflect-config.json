@@ -158,6 +158,10 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"io.micronaut.discovery.cloud.digitalocean.$DigitalOceanInstanceMetadata$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"io.micronaut.discovery.cloud.digitalocean.$DigitalOceanMetadataConfiguration$Definition$Reference",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -174,7 +178,15 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"io.micronaut.health.$HealthStatus$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"io.micronaut.health.$HeartbeatConfiguration$Definition$Reference",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.health.$HeartbeatDiscoveryClientCondition$IntrospectionRef",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -203,6 +215,10 @@
 },
 {
   "name":"io.micronaut.http.client.$DefaultLoadBalancerResolver$Definition$Reference",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.http.client.$ServiceHttpClientCondition$IntrospectionRef",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -298,6 +314,30 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"io.micronaut.http.hateoas.$AbstractResource$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.http.hateoas.$DefaultLink$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.http.hateoas.$GenericResource$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.http.hateoas.$JsonError$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.http.hateoas.$Resource$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.http.hateoas.$VndError$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"io.micronaut.http.netty.channel.$DefaultEventLoopGroupConfiguration$Definition$Reference",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -318,7 +358,15 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"io.micronaut.http.netty.channel.$EpollAvailabilityCondition$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"io.micronaut.http.netty.channel.$EpollEventLoopGroupFactory$Definition$Reference",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.http.netty.channel.$KQueueAvailabilityCondition$IntrospectionRef",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -598,11 +646,27 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"io.micronaut.http.server.netty.ssl.$BuildSelfSignedCondition$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"io.micronaut.http.server.netty.ssl.$CertificateProvidedSslBuilder$Definition$Reference",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"io.micronaut.http.server.netty.ssl.$CertificateProvidedSslBuilder$SelfSignedNotConfigured$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"io.micronaut.http.server.netty.ssl.$SelfSignedSslBuilder$Definition$Reference",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.http.server.netty.ssl.$SelfSignedSslBuilder$SelfSignedConfigured$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.http.server.netty.ssl.$SslEnabledCondition$IntrospectionRef",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -757,6 +821,10 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"io.micronaut.logging.$LogLevel$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"io.micronaut.logging.$PropertiesLoggingLevelsConfigurer$Definition$Reference",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -778,6 +846,10 @@
 },
 {
   "name":"io.micronaut.reactive.reactor.instrument.$ReactorInstrumentation$ReactorInstrumenterFactory$Definition$Reference",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.retry.annotation.$DefaultRetryPredicate$IntrospectionRef",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -901,11 +973,19 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"io.micronaut.scheduling.executor.$UserExecutorConfiguration$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"io.micronaut.scheduling.instrument.$ExecutorServiceInstrumenter$Definition$Reference",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
   "name":"io.micronaut.scheduling.io.watch.$DefaultWatchThread$Definition$Reference",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.scheduling.io.watch.$FileWatchCondition$IntrospectionRef",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -938,6 +1018,22 @@
 },
 {
   "name":"io.micronaut.serde.jackson.$JacksonJsonMapper$Definition$Reference",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.serde.support.$AdditionalSerdes$IntrospectionRef0",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.serde.support.$AdditionalSerdes$IntrospectionRef1",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.serde.support.$AdditionalSerdes$IntrospectionRef2",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.serde.support.$AdditionalSerdes$IntrospectionRef3",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -1153,6 +1249,10 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"io.micronaut.validation.validator.constraints.$DefaultConstraintValidators$IntrospectionRef",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"io.micronaut.validation.validator.constraints.$EmailValidator$Definition$Reference",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -1162,6 +1262,10 @@
 },
 {
   "name":"io.micronaut.validation.validator.extractors.$DefaultValueExtractors$Definition$Reference",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.validation.validator.extractors.$DefaultValueExtractors$IntrospectionRef",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -1579,15 +1683,19 @@
   "name":"reactor.core.publisher.Mono"
 },
 {
-  "name":"ru.tyumentsev.cryptopredator.macsaw.$Application$ObjectMapperBeanEventListener$Definition$Reference",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"ru.tyumentsev.cryptopredator.macsaw.$ApplicationInitializer$Definition$Reference",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"ru.tyumentsev.cryptopredator.macsaw.$ApplicationInitializer$IntrospectionRef0",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"ru.tyumentsev.cryptopredator.macsaw.cache.$MacSawStrategyCondition$Definition$Reference",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ru.tyumentsev.cryptopredator.macsaw.configuration.$ApplicationConfig$AccountInfo6$Definition$Reference",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -1607,7 +1715,7 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"ru.tyumentsev.cryptopredator.macsaw.configuration.$ApplicationConfig$DataService6$Definition$Reference",
+  "name":"ru.tyumentsev.cryptopredator.macsaw.configuration.$ApplicationConfig$BotStateService7$Definition$Reference",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {

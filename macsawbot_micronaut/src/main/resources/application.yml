@@ -1,6 +1,9 @@
 micronaut:
   application:
     name: macsawbot
+  serde:
+    write-dates-as-timestamps: false
+#    date-format: 'yyyy-MM-dd' specific date format globally
 netty:
   default:
     allocator:
@@ -42,9 +45,10 @@ management:
 jackson:
   dateFormat: "yyyy-MM-dd HH:mm:ss"
   serializationInclusion: ALWAYS
+  serialization:
 
 applicationconfig:
-  testLaunch: ${TEST_LAUNCH}
+  testLaunch: ${TEST_LAUNCH:-true}
   useTestnet: ${BINANCE_USE_TESTNET}
   useTestnetStreaming: ${BINANCE_USE_TESTNET_STREAMING}
   apiKey: ${BINANCE_API_KEY}
@@ -59,7 +63,7 @@ strategy:
     minimalAssetBalance: ${STRATEGY_GLOBAL_MINIMAL_ASSET_BALANCE}
     baseOrderVolume: ${STRATEGY_GLOBAL_BASE_ORDER_VOLUME}
   macSaw:
-    enabled: ${MACSAW_ENABLED}
+    enabled: ${MACSAW_ENABLED:-true}
     averagingEnabled: ${MACSAW_AVERAGING_ENABLED}
     priceDecreaseFactor: ${MACSAW_PRICE_DECREASE_FACTOR}
     pairTakeProfitFactor: ${MACSAW_PAIR_TAKE_PROFIT_FACTOR}

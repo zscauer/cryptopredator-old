@@ -4,15 +4,10 @@ import com.binance.api.client.BinanceApiAsyncRestClient;
 import com.binance.api.client.BinanceApiClientFactory;
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.BinanceApiWebSocketClient;
-import com.binance.api.client.impl.BinanceApiService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import okhttp3.Dispatcher;
@@ -44,7 +39,6 @@ public class ApplicationConfig {
     String stateKeeperURL;
 
     {
-        System.out.println("init dispatcher");
         Dispatcher dispatcher = new Dispatcher();
         dispatcher.setMaxRequestsPerHost(400);
         dispatcher.setMaxRequests(400);
@@ -57,7 +51,6 @@ public class ApplicationConfig {
     // ++++++++++ Binance functionality
     @Singleton
     public BinanceApiClientFactory binanceApiClientFactory() {
-        System.out.println("key" + apiKey);
         return BinanceApiClientFactory.newInstance(apiKey, secret, useTestnet, useTestnetStreaming, sharedClient);
     }
 
@@ -99,39 +92,43 @@ public class ApplicationConfig {
     }
     // ---------- Cryptopredator commons
 
+//    @Singleton
+//    public DataService dataService() {
+//        return new DataService(new Retrofit.Builder()
+//                .baseUrl(String.format(stateKeeperURL))
+//                .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().registerModule(new JavaTimeModule())))
+//                .client(sharedClient)
+//                .build().create(CacheServiceClient.class)
+//        );
+//    }
+
     @Singleton
     public DataService dataService() {
         return new DataService(new Retrofit.Builder()
                 .baseUrl(String.format(stateKeeperURL))
-                .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().registerModule(new JavaTimeModule())))
-                .client(new OkHttpClient.Builder().build())
+//                .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().registerModule(new JavaTimeModule())))
+                .client(sharedClient)
                 .build().create(CacheServiceClient.class)
         );
     }
-//
-//    @Singleton
-//    public AccountInfo accountInfo() {
-//        return new AccountInfo(new Retrofit.Builder()
-//                .baseUrl(String.format(stateKeeperURL))
-//                .addConverterFactory(JacksonConverterFactory.create())
-//                .client(new OkHttpClient.Builder().build())
-//                .build().create(AccountServiceClient.class)
-//        );
-//    }
-//
-//    @Singleton
-//    public BotStateService botStateService() {
-//        return new BotStateService(new Retrofit.Builder()
-//                .baseUrl(String.format(stateKeeperURL))
-//                .addConverterFactory(JacksonConverterFactory.create())
-//                .client(new OkHttpClient.Builder().build())
-//                .build().create(BotStateServiceClient.class)
-//        );
-//    }
-//
-//    @Singleton @Replaces(ObjectMapper.class)
-//    public ObjectMapper objectMapper() {
-//        System.out.println("replace mapper");
-//        return new ObjectMapper().registerModule(new JavaTimeModule());
-//    }
+
+    @Singleton
+    public AccountInfo accountInfo() {
+        return new AccountInfo(new Retrofit.Builder()
+                .baseUrl(String.format(stateKeeperURL))
+                .addConverterFactory(JacksonConverterFactory.create())
+                .client(sharedClient)
+                .build().create(AccountServiceClient.class)
+        );
+    }
+
+    @Singleton
+    public BotStateService botStateService() {
+        return new BotStateService(new Retrofit.Builder()
+                .baseUrl(String.format(stateKeeperURL))
+                .addConverterFactory(JacksonConverterFactory.create())
+                .client(sharedClient)
+                .build().create(BotStateServiceClient.class)
+        );
+    }
 }

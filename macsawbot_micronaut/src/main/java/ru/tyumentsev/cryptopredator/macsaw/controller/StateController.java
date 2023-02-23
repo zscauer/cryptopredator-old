@@ -1,5 +1,7 @@
 package ru.tyumentsev.cryptopredator.macsaw.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -21,6 +23,7 @@ import java.time.LocalDateTime;
 @Slf4j
 public class StateController {
 
+//    ObjectMapper objectMapper;
     MarketInfo marketInfo;
     MacSaw macSaw;
     MacSawStrategyCondition macSawStrategyCondition;
@@ -30,13 +33,15 @@ public class StateController {
         this.marketInfo = marketInfo;
         this.macSaw = macSaw;
         this.macSawStrategyCondition = macSawStrategyCondition;
+//        this.objectMapper = objectMapper;
     }
 
     @Get(uri = "/ping", produces = MediaType.APPLICATION_JSON)
-    public @Format("yyyy-MM-dd") LocalDateTime testController() {
+    public @Format("yyyy-MM-dd") SellRecord testController() throws JsonProcessingException {
+//        log.info(objectMapper.writeValueAsString(LocalDateTime.now()));
         var body = LocalDateTime.now();
 //        var body = new SellRecord("BTC", LocalDateTime.now(), "macsaw");
-        return body;
+        return new SellRecord("sss", LocalDateTime.now(), "mac");
     }
 
 }
