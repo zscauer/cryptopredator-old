@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PROTECTED)
 @Slf4j
 public class IndicatorVirginStrategyCondition extends StrategyCondition {
 
@@ -26,7 +26,8 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
     final Map<String, MonitoredPosition> monitoredPositions = new ConcurrentHashMap<>();
     @Value("${strategy.indicatorVirgin.workedOutSignalsIgnoringPeriod}")
     int workedOutSignalsIgnoringPeriod;
-    final Long monitoringExpirationTime = 4L;
+    @Value("${strategy.indicatorVirgin.monitoringExpirationTime}")
+    long monitoringExpirationTime;
 
     @Override
     public boolean thisSignalWorkedOutBefore(final String pair) {
@@ -54,7 +55,7 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
 
     public boolean pairOnMonitoring(final String symbol) {
         Optional.ofNullable(monitoredPositions.get(symbol)).ifPresent(monitoredPosition -> {
-            if (monitoredPosition.beginMonitoringTime().isBefore(ZonedDateTime.now().minusHours(monitoringExpirationTime))) {
+            if (monitoredPosition.beginMonitoringTime().isBefore(ZonedDateTime.now().minusMinutes(monitoringExpirationTime))) {
                 monitoredPositions.remove(symbol);
             }
         });

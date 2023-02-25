@@ -17,7 +17,7 @@ public interface BotStateServiceClient {
     public Call<Void> addActiveStrategy(@Body Map<String, String> parameters);
 
     @DELETE("/api/bots/activeStrategies")
-    public Call<Void> deleteActiveStrategy(@Query("strategyName") String strategyName);
+    public Call<Void> deleteActiveStrategy(@Query("strategyId") String strategyId);
 
     @POST("/api/bots/strategyLimits/{strategyId}")
     public Call<Void> setAvailableOrdersLimit(@Path("strategyId") Integer strategyId,

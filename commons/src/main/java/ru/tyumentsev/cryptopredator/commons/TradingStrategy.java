@@ -4,7 +4,7 @@ import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 
 public interface TradingStrategy {
 
-    default float parsedFloat(String stringToParse) {
+    default float parsedFloat(final String stringToParse) {
         return Float.parseFloat(stringToParse);
     }
 

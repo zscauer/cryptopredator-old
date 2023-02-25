@@ -1,6 +1,17 @@
 micronaut:
   application:
     name: macsawbot
+  metrics:
+    enabled: true
+    export:
+      prometheus:
+        enabled: true
+        descriptions: true
+        step: PT1M
+endpoints:
+  prometheus:
+#      details-visible: ANONYMOUS
+    sensitive: false
   serde:
     write-dates-as-timestamps: false
 #    date-format: 'yyyy-MM-dd' specific date format globally
@@ -24,28 +35,10 @@ logging:
       file-name-pattern: "${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz"
       max-history: 30
 
-management:
-  endpoint:
-    health:
-      show-details: always
-  endpoints:
-    web:
-      exposure:
-        include:
-          - prometheus
-          - health
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-    distribution:
-      percentiles-histogram:
-        "[http.server.requests]": true
-
-jackson:
-  dateFormat: "yyyy-MM-dd HH:mm:ss"
-  serializationInclusion: ALWAYS
-  serialization:
+#jackson:
+#  dateFormat: "yyyy-MM-dd HH:mm:ss"
+#  serializationInclusion: ALWAYS
+#  serialization:
 
 applicationconfig:
   testLaunch: ${TEST_LAUNCH:-true}
@@ -53,7 +46,7 @@ applicationconfig:
   useTestnetStreaming: ${BINANCE_USE_TESTNET_STREAMING}
   apiKey: ${BINANCE_API_KEY}
   secret: ${BINANCE_SECRET_KEY}
-#  stateKeeperURL: http://${STATEKEEPER_HOST}:${STATEKEEPER_PORT}
+  stateKeeperURL: http://${STATEKEEPER_HOST}:${STATEKEEPER_PORT}
 
 strategy:
   # ------------------ global
@@ -63,7 +56,8 @@ strategy:
     minimalAssetBalance: ${STRATEGY_GLOBAL_MINIMAL_ASSET_BALANCE}
     baseOrderVolume: ${STRATEGY_GLOBAL_BASE_ORDER_VOLUME}
   macSaw:
-    enabled: ${MACSAW_ENABLED:-true}
+    enabled: true #${MACSAW_ENABLED:-true}
+    ordersQtyLimit: 5 #${MACSAW_ORDERS_QTY_LIMIT}
     averagingEnabled: ${MACSAW_AVERAGING_ENABLED}
     priceDecreaseFactor: ${MACSAW_PRICE_DECREASE_FACTOR}
     pairTakeProfitFactor: ${MACSAW_PAIR_TAKE_PROFIT_FACTOR}

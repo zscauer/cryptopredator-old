@@ -1,5 +1,6 @@
 package ru.tyumentsev.cryptopredator.macsaw.cache;
 
+import io.micronaut.context.annotation.Context;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
@@ -9,6 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
+@Context
 @Slf4j
 public class MacSawStrategyCondition extends StrategyCondition {
 

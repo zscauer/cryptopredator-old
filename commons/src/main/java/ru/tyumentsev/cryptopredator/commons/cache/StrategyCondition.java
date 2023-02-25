@@ -65,8 +65,8 @@ public abstract class StrategyCondition {
         });
     }
 
-    public void removeOpenedPosition(String pair) {
-        longPositions.remove(pair);
+    public OpenedPosition removeOpenedPosition(String pair) {
+        return longPositions.remove(pair);
     }
 
 

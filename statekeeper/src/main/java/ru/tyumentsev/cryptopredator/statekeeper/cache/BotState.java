@@ -11,10 +11,10 @@ import java.util.Map;
 public class BotState {
 
     /**
-     * key - strategy name, value - bot endpoint.
+     * key - strategy id, value - bot endpoint.
      */
     @Getter
-    final Map<String, String> activeBots = new HashMap<>();
+    final Map<Integer, String> activeBots = new HashMap<>();
 
     /**
      * key - strategy id, value - map (limit type / limit value).

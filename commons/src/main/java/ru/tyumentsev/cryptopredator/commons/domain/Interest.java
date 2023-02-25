@@ -9,7 +9,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 @Getter
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class Interest {
     String symbol;
     Queue<OrderBookEntry> bids = new LinkedList<>(); // buy orders.

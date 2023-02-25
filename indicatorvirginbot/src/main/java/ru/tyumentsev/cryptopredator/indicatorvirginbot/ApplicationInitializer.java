@@ -1,41 +1,22 @@
 package ru.tyumentsev.cryptopredator.indicatorvirginbot;
 
-import com.binance.api.client.domain.ExecutionType;
-import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
-import com.binance.api.client.domain.event.UserDataUpdateEvent;
-import com.binance.api.client.domain.market.Candlestick;
-import com.binance.api.client.domain.market.CandlestickInterval;
 import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.ta4j.core.Bar;
-import org.ta4j.core.BaseBarSeries;
-import org.ta4j.core.BaseBarSeriesBuilder;
-import org.ta4j.core.indicators.MACDIndicator;
-import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
-import org.ta4j.core.num.DoubleNum;
 import ru.tyumentsev.cryptopredator.commons.TradingStrategy;
-import ru.tyumentsev.cryptopredator.commons.mapping.CandlestickToBaseBarMapper;
-import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 
-import javax.annotation.PreDestroy;
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PROTECTED)
 @Slf4j
 public class ApplicationInitializer implements ApplicationRunner {
 

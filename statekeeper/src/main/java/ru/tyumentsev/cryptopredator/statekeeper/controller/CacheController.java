@@ -55,12 +55,6 @@ public class CacheController {
         cacheService.deleteAllSellRecordsById(ids);
     }
 
-//    @PostMapping("/sellRecord/delete")
-//    public void deleteAllSellRecords(@RequestBody List<SellRecord> records) {
-////        log.info("deleteAllSellRecords() call from {}.", headers.map().get("bot-id"));
-//        cacheService.deleteAllSellRecords(records);
-//    }
-
     @GetMapping("/previousCandleContainer")
     public List<PreviousCandleData> getPreviousCandlesData() {
 //        log.info("getPreviousCandlesData() call from {}.", headers.map().get("bot-id"));
@@ -107,12 +101,6 @@ public class CacheController {
         log.info("Saved positions: {}", openedPositionList);
         return openedPositionList;
     }
-
-//    @DeleteMapping("/openedPosition")
-//    public void deleteAllOpenedPositions() {
-////        log.info("deleteAllOpenedPositions() call from {}.", headers.map().get("bot-id"));
-//        cacheService.deleteAllOpenedPositions();
-//    }
 
     @PostMapping("/openedPosition/delete")
     public void deleteAllOpenedPositionsById(@RequestBody List<String> openedPositionsIds) {

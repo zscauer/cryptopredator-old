@@ -4,7 +4,7 @@
 services:
 
   dailyvolumesbot:
-    image: dailyvolumesbot:${DAILYVOLUMESBOT_IMAGE_TAG:-latest}
+    image: dailyvolumesbot
     container_name: dailyvolumesbot
     depends_on:
       - statekeeper
@@ -22,7 +22,7 @@ services:
     mem_limit: 512m
 
   indicatorvirginbot:
-    image: indicatorvirginbot:${INDICATORVIRGINBOT_IMAGE_TAG:-latest}
+    image: indicatorvirginbot
     container_name: indicatorvirginbot
     depends_on:
       - statekeeper
@@ -41,13 +41,13 @@ services:
     mem_limit: 512m
 
   macsawbot:
-    image: macsawbot:${MACSAWBOT_IMAGE_TAG:-latest}
+    image: macsawbot
     container_name: macsawbot
 #    depends_on:
 #      - statekeeper
     env_file:
       - .env
-      - macsawbot/.env
+      - macsawbot_micronaut/.env
     ports:
       - 103:8080
       - 5103:5005 # debug agentlib
@@ -59,7 +59,7 @@ services:
     mem_limit: 512m
 
   statekeeper:
-    image: statekeeper:${STATEKEEPER_IMAGE_TAG:-latest}
+    image: statekeeper
     container_name: statekeeper
     depends_on:
       - redis_binance
@@ -88,8 +88,8 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./data/redis:/data
-    mem_limit: 128m
-    mem_reservation: 64m
+    mem_limit: 64m
+    mem_reservation: 32m
 
   postgres:
     image: postgres:15.1-alpine
@@ -104,8 +104,8 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./data/postgres:/var/lib/postgresql/data
-    mem_limit: 512m
-    mem_reservation: 256m
+    mem_limit: 256m
+    mem_reservation: 128m
 
 # https://habr.com/ru/post/578744/
 #  postgres_exporter:
@@ -140,6 +140,10 @@ services:
     container_name: prometheus
     extra_hosts:
       - "host.docker.internal:host-gateway"
+      - "statekeeper:host-gateway"
+      - "dailyvolumesbot:host-gateway"
+      - "indicatorvirginbot:host-gateway"
+      - "macsawbot:host-gateway"
     ports:
       - 9096:9090
     volumes:

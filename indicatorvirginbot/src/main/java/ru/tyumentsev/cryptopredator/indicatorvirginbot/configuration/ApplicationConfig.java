@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @ConfigurationProperties(prefix = "applicationconfig")
 @EnableScheduling
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PROTECTED)
 @SuppressWarnings("unused")
 public class ApplicationConfig {
 

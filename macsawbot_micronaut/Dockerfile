@@ -1,10 +1,12 @@
+#FROM ghcr.io/graalvm/native-image:ol7-java17-22.3.0 AS graalvm
 FROM resurfaceio/alpine-jdk17:3.17.0a
 
 ADD ./build/libs/macsawbot-all.jar .
-
+#"-agentlib:native-image-agent=config-output-dir=/tmp/logs/META-INF/native-image",
 ENTRYPOINT ["java", "-jar", \
 "-Xms256m", "-Xmx256m", \
-"-XX:MaxMetaspaceSize=256m", \
+"-XX:NewSize=156m", "-XX:MaxNewSize=156m", \
+"-XX:MaxMetaspaceSize=100m", \
 "-XX:+HeapDumpOnOutOfMemoryError", \
 "-XX:HeapDumpPath=/tmp/logs", \
 "-Dcom.sun.management.jmxremote", \

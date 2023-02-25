@@ -4,6 +4,8 @@ import com.binance.api.client.BinanceApiAsyncRestClient;
 import com.binance.api.client.BinanceApiClientFactory;
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.BinanceApiWebSocketClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Factory;
@@ -92,21 +94,11 @@ public class ApplicationConfig {
     }
     // ---------- Cryptopredator commons
 
-//    @Singleton
-//    public DataService dataService() {
-//        return new DataService(new Retrofit.Builder()
-//                .baseUrl(String.format(stateKeeperURL))
-//                .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().registerModule(new JavaTimeModule())))
-//                .client(sharedClient)
-//                .build().create(CacheServiceClient.class)
-//        );
-//    }
-
     @Singleton
     public DataService dataService() {
         return new DataService(new Retrofit.Builder()
                 .baseUrl(String.format(stateKeeperURL))
-//                .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().registerModule(new JavaTimeModule())))
+                .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().registerModule(new JavaTimeModule())))
                 .client(sharedClient)
                 .build().create(CacheServiceClient.class)
         );

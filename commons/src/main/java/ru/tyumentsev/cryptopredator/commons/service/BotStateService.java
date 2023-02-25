@@ -22,9 +22,9 @@ public class BotStateService {
         }
     }
 
-    public void deleteActiveStrategy(String strategyName) {
+    public void deleteActiveStrategy(String strategyId) {
         try {
-            botStateServiceClient.deleteActiveStrategy(strategyName).execute();
+            botStateServiceClient.deleteActiveStrategy(strategyId).execute();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

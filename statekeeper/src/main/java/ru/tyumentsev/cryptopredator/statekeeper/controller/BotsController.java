@@ -30,20 +30,20 @@ public class BotsController {
     BotState botState;
 
     @GetMapping("/activeStrategies")
-    public Map<String, String> getActiveStrategies() {
+    public Map<Integer, String> getActiveStrategies() {
         return botState.getActiveBots();
     }
 
     @PostMapping("/activeStrategies")
     public void addActiveStrategy(@RequestBody Map<String, String> parameters) {
-        botState.getActiveBots().put(parameters.get("strategyName"), parameters.get("botAddress"));
-        log.info("Strategy {} was added to user data stream monitoring with address {}.", parameters.get("strategyName"), parameters.get("botAddress"));
+        botState.getActiveBots().put(Integer.valueOf(parameters.get("strategyId")), parameters.get("botAddress"));
+        log.info("Strategy with id '{}' was added to user data stream monitoring with address {}.", parameters.get("strategyId"), parameters.get("botAddress"));
     }
 
     @DeleteMapping("/activeStrategies")
-    public void deleteActiveStrategy(@RequestParam String strategyName) {
-        botState.getActiveBots().remove(strategyName);
-        log.info("Strategy {} was deleted from user data stream monitoring.", strategyName);
+    public void deleteActiveStrategy(@RequestParam Integer strategyId) {
+        botState.getActiveBots().remove(strategyId);
+        log.info("Strategy with id '{}' was deleted from user data stream monitoring.", strategyId);
     }
 
     @PostMapping("/strategyLimits/{strategyId}")
