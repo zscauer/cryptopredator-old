@@ -2,7 +2,6 @@ package ru.tyumentsev.cryptopredator.indicatorvirginbot.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -23,7 +22,6 @@ import lombok.experimental.FieldDefaults;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 import ru.tyumentsev.cryptopredator.commons.service.AccountInfo;
-import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
 import ru.tyumentsev.cryptopredator.commons.service.AccountServiceClient;
 import ru.tyumentsev.cryptopredator.commons.service.BotStateService;
 import ru.tyumentsev.cryptopredator.commons.service.BotStateServiceClient;

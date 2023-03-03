@@ -1,19 +1,19 @@
-package ru.tyumentsev.cryptopredator.macsaw.strategy;
+package ru.tyumentsev.cryptopredator.macsawbot.strategy;
 
 import com.binance.api.client.BinanceApiCallback;
 import com.binance.api.client.domain.Candle;
 import com.binance.api.client.domain.event.CandlestickEvent;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.market.CandlestickInterval;
-import io.micronaut.context.annotation.Value;
-import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.ta4j.core.BaseBarSeries;
 import org.ta4j.core.BaseBarSeriesBuilder;
 import org.ta4j.core.indicators.MACDIndicator;
@@ -29,7 +29,7 @@ import ru.tyumentsev.cryptopredator.commons.service.BotStateService;
 import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.commons.service.SpotTrading;
-import ru.tyumentsev.cryptopredator.macsaw.cache.MacSawStrategyCondition;
+import ru.tyumentsev.cryptopredator.macsawbot.cache.MacSawStrategyCondition;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -50,7 +50,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Singleton
+@Component
+@RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Slf4j
 public class MacSaw implements TradingStrategy {
@@ -97,16 +98,7 @@ public class MacSaw implements TradingStrategy {
     @Value("${strategy.macSaw.priceDecreaseFactor}")
     float priceDecreaseFactor;
 
-    @Inject
-    public MacSaw(MarketInfo marketInfo, MacSawStrategyCondition macSawStrategyCondition, SpotTrading spotTrading, DataService dataService, BotStateService botStateService) {
-        this.marketInfo = marketInfo;
-        this.macSawStrategyCondition = macSawStrategyCondition;
-        this.spotTrading = spotTrading;
-        this.dataService = dataService;
-        this.botStateService = botStateService;
-    }
-
-    @Scheduled(fixedDelay = "${strategy.macSaw.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelay = "${strategy.macSaw.startCandlstickEventsCacheUpdating.initialDelay}")
+    @Scheduled(fixedDelayString = "${strategy.macSaw.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.macSaw.startCandlstickEventsCacheUpdating.initialDelay}")
     public void macSaw_startCandlstickEventsCacheUpdating() {
         if (macSawEnabled && !testLaunch) {
             startCandlstickEventsCacheUpdating();

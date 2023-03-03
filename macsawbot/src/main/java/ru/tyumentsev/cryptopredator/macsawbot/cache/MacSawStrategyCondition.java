@@ -1,16 +1,19 @@
-package ru.tyumentsev.cryptopredator.macsaw.cache;
+package ru.tyumentsev.cryptopredator.macsawbot.cache;
 
-import io.micronaut.context.annotation.Context;
-import jakarta.inject.Singleton;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Singleton
-@Context
+@Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PROTECTED)
 @Slf4j
 public class MacSawStrategyCondition extends StrategyCondition {
 

@@ -1,15 +1,7 @@
 package ru.tyumentsev.cryptopredator.macsawbot.configuration;
 
-import com.binance.api.client.BinanceApiAsyncRestClient;
-import com.binance.api.client.BinanceApiClientFactory;
-import com.binance.api.client.BinanceApiRestClient;
-import com.binance.api.client.BinanceApiWebSocketClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.FieldDefaults;
 import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -17,6 +9,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.annotation.EnableScheduling;
+
+import com.binance.api.client.BinanceApiAsyncRestClient;
+import com.binance.api.client.BinanceApiClientFactory;
+import com.binance.api.client.BinanceApiRestClient;
+import com.binance.api.client.BinanceApiWebSocketClient;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 import ru.tyumentsev.cryptopredator.commons.service.AccountInfo;
@@ -35,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @ConfigurationProperties(prefix = "applicationconfig")
 @EnableScheduling
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PROTECTED)
 @SuppressWarnings("unused")
 public class ApplicationConfig {
 
@@ -53,7 +55,10 @@ public class ApplicationConfig {
         dispatcher.setMaxRequests(400);
         sharedClient = new OkHttpClient.Builder()
                 .dispatcher(dispatcher)
+//                .pingInterval(20, TimeUnit.SECONDS)
+//                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
                 .callTimeout(60, TimeUnit.SECONDS)
+//                .connectionPool(new ConnectionPool())
                 .build();
     }
 
@@ -96,15 +101,16 @@ public class ApplicationConfig {
     }
     // ---------- Cryptopredator commons
 
-//    @Bean
-//    public DataService dataService() {
-//        return new DataService(new Retrofit.Builder()
-//                .baseUrl(String.format(stateKeeperURL))
-//                .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().registerModule(new JavaTimeModule())))
-//                .client(sharedClient)
-//                .build().create(CacheServiceClient.class)
-//        );
-//    }
+    @Bean
+    public DataService dataService() {
+        return new DataService(new Retrofit.Builder()
+                .baseUrl(String.format(stateKeeperURL))
+                .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().registerModule(new JavaTimeModule())))
+                .client(sharedClient)
+//                .client(new OkHttpClient.Builder().build())
+                .build().create(CacheServiceClient.class)
+        );
+    }
 
     @Bean
     public AccountInfo accountInfo() {
@@ -112,6 +118,7 @@ public class ApplicationConfig {
                 .baseUrl(String.format(stateKeeperURL))
                 .addConverterFactory(JacksonConverterFactory.create())
                 .client(sharedClient)
+//                .client(new OkHttpClient.Builder().build())
                 .build().create(AccountServiceClient.class)
         );
     }
@@ -122,6 +129,7 @@ public class ApplicationConfig {
                 .baseUrl(String.format(stateKeeperURL))
                 .addConverterFactory(JacksonConverterFactory.create())
                 .client(sharedClient)
+//                .client(new OkHttpClient.Builder().build())
                 .build().create(BotStateServiceClient.class)
         );
     }

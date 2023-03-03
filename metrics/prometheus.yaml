@@ -18,9 +18,9 @@ scrape_configs:
     scrape_interval: 5s
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['indicatorvirginbot:102', 'bigasscandlesbot:104']
-  - job_name: 'cryptopredator micronaut trade bots prometheus job'
-    scrape_interval: 5s
-    metrics_path: '/prometheus'
-    static_configs:
-      - targets: ['macsawbot:103']
+      - targets: ['indicatorvirginbot:102', 'macsawbot:103', 'bigasscandlesbot:104']
+#  - job_name: 'cryptopredator micronaut trade bots prometheus job'
+#    scrape_interval: 5s
+#    metrics_path: '/prometheus'
+#    static_configs:
+#      - targets: ['macsawbot:103']

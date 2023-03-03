@@ -29,7 +29,7 @@ services:
       - statekeeper
     env_file:
       - .env
-      - macsawbot_micronaut/.env
+      - macsawbot/.env
     ports:
       - 103:8080
       - 5103:5005 # debug agentlib
