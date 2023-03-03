@@ -3,24 +3,6 @@
 
 services:
 
-  dailyvolumesbot:
-    image: dailyvolumesbot
-    container_name: dailyvolumesbot
-    depends_on:
-      - statekeeper
-    env_file:
-      - .env
-      - dailyvolumesbot/.env
-    ports:
-      - 101:8080
-      - 5101:5005 # debug agentlib
-      - 9101:9101 # profiling jmx
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - ./metrics/logs/dailyvolumesbot:/tmp/logs
-    mem_limit: 512m
-
   indicatorvirginbot:
     image: indicatorvirginbot
     container_name: indicatorvirginbot
@@ -43,8 +25,8 @@ services:
   macsawbot:
     image: macsawbot
     container_name: macsawbot
-#    depends_on:
-#      - statekeeper
+    depends_on:
+      - statekeeper
     env_file:
       - .env
       - macsawbot_micronaut/.env
@@ -56,6 +38,24 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./metrics/logs/macsawbot:/tmp/logs
+    mem_limit: 512m
+
+  bigasscandlesbot:
+    image: bigasscandlesbot
+    container_name: bigasscandlesbot
+    depends_on:
+      - statekeeper
+    env_file:
+      - .env
+      - bigasscandlesbot/.env
+    ports:
+      - 104:8080
+      - 5104:5005 # debug agentlib
+      - 9104:9104 # profiling jmx
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./metrics/logs/bigasscandlesbot:/tmp/logs
     mem_limit: 512m
 
   statekeeper:
@@ -141,9 +141,9 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
       - "statekeeper:host-gateway"
-      - "dailyvolumesbot:host-gateway"
       - "indicatorvirginbot:host-gateway"
       - "macsawbot:host-gateway"
+      - "bigasscandlesbot:host-gateway"
     ports:
       - 9096:9090
     volumes:
@@ -181,3 +181,24 @@ services:
       - ./metrics/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
     mem_limit: 128m
     mem_reservation: 64m
+
+
+# --- archived
+
+#  dailyvolumesbot:
+#    image: dailyvolumesbot
+#    container_name: dailyvolumesbot
+#    depends_on:
+#      - statekeeper
+#    env_file:
+#      - .env
+#      - dailyvolumesbot/.env
+#    ports:
+#      - 101:8080
+#      - 5101:5005 # debug agentlib
+#      - 9101:9101 # profiling jmx
+#    volumes:
+#      - /etc/timezone:/etc/timezone:ro
+#      - /etc/localtime:/etc/localtime:ro
+#      - ./metrics/logs/dailyvolumesbot:/tmp/logs
+#    mem_limit: 512m

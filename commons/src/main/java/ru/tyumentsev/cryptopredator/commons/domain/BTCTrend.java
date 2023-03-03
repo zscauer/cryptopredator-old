@@ -9,13 +9,12 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 
+@Getter
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class BTCTrend {
 
-    @Getter
     String symbol = "BTCUSDT";
-    @Getter
     CandlestickInterval interval;
     @Setter
     @NonFinal

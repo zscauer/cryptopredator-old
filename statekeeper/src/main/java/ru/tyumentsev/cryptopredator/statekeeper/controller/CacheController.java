@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.tyumentsev.cryptopredator.commons.domain.BTCTrend;
 import ru.tyumentsev.cryptopredator.statekeeper.domain.OpenedPositionData;
 import ru.tyumentsev.cryptopredator.statekeeper.domain.PreviousCandleData;
 import ru.tyumentsev.cryptopredator.statekeeper.domain.SellRecordData;
@@ -20,7 +21,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/cache/v1")
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
 @SuppressWarnings("unused")
@@ -28,6 +29,11 @@ public class CacheController {
 
     CacheService cacheService;
     AccountService accountService;
+
+    @GetMapping("/btcTrend")
+    public BTCTrend getBTCTrend() {
+        return cacheService.getBTCTrend();
+    }
 
     @GetMapping("/sellRecord")
     public List<SellRecordData> getSellRecords() {

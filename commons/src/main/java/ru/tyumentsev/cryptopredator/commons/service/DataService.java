@@ -3,6 +3,7 @@ package ru.tyumentsev.cryptopredator.commons.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.cryptopredator.commons.TradingStrategy;
+import ru.tyumentsev.cryptopredator.commons.domain.BTCTrend;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPositionContainer;
 import ru.tyumentsev.cryptopredator.commons.domain.PreviousCandleContainer;
@@ -25,6 +26,14 @@ import java.util.stream.Collectors;
 public class DataService {
 
     final CacheServiceClient cacheServiceClient;
+
+    public BTCTrend getBTCTrend() {
+        try {
+            return cacheServiceClient.getBTCTrend().execute().body();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public List<SellRecord> saveAllSellRecords(Collection<SellRecord> sellRecords, TradingStrategy strategy) {
         try {

@@ -28,7 +28,7 @@ import java.util.Optional;
 import static ru.tyumentsev.cryptopredator.commons.domain.StrategyLimit.*;
 
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PROTECTED)
 @Slf4j
 @SuppressWarnings("unused")
 public class AccountService extends AccountManager {
