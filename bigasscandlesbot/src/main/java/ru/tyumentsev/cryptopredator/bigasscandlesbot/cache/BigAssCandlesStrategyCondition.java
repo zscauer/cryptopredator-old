@@ -7,7 +7,11 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.ta4j.core.BaseBarSeries;
+import org.ta4j.core.indicators.EMAIndicator;
+import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
+import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -28,6 +32,18 @@ public class BigAssCandlesStrategyCondition extends StrategyCondition {
     int workedOutSignalsIgnoringPeriod;
 //    @Value("${strategy.bigAssCandles.monitoringExpirationTime}")
 //    long monitoringExpirationTime;
+
+    public void updateOpenedPositionStopPrice(final OpenedPosition position, final BaseBarSeries series) {
+        if (!series.getBarData().isEmpty()) {
+            EMAIndicator ema25 = new EMAIndicator(new ClosePriceIndicator(series), 25);
+            var ema25VAlue = ema25.getValue(series.getEndIndex() - 1).floatValue();
+            if (ema25VAlue > Optional.ofNullable(position.stopPrice()).orElse(0F)) {
+                position.stopPrice(ema25VAlue);
+            }
+        } else {
+            log.info("Bar series of {} is empty, cannot update stop price.", position.symbol());
+        }
+    }
 
     @Override
     public boolean thisSignalWorkedOutBefore(final String pair) {

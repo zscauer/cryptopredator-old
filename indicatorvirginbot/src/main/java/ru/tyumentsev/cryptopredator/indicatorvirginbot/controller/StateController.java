@@ -41,8 +41,8 @@ public class StateController {
     IndicatorVirgin indicatorVirgin;
 
     @GetMapping("/btcTrend")
-    public Map<BTCTrend, Boolean> getBtcTrend() {
-        return Collections.singletonMap(indicatorVirgin.getBtcTrend(), indicatorVirgin.getBtcTrend().isBullish());
+    public BTCTrend getBtcTrend() {
+        return indicatorVirgin.getBtcTrend();
     }
 
     @GetMapping("/monitoredPositions")

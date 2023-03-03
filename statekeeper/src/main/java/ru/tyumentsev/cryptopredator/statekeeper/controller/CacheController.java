@@ -51,7 +51,10 @@ public class CacheController {
     public List<SellRecordData> saveSellRecordsCache(@RequestBody List<SellRecordData> sellRecords) {
         log.debug("Request to save sell records: {}", sellRecords);
         List<SellRecordData> savedRecords = cacheService.saveAllSellRecords(sellRecords);
-        log.info("Saved sell records: {}", savedRecords);
+        log.info("Saved {} sell records of {}.",
+                savedRecords.size(),
+                savedRecords.stream().findFirst().map(sellRecordData -> sellRecordData.sellRecord().strategy())
+        );
         return savedRecords;
     }
 
@@ -77,7 +80,7 @@ public class CacheController {
     public List<PreviousCandleData> savePreviousCandleDataCache(@RequestBody List<PreviousCandleData> previousCandleData) {
         log.debug("Request to save previous cande data: {}", previousCandleData);
         List<PreviousCandleData> savedCandles = cacheService.saveAllPreviousCandleData(previousCandleData);
-        log.debug("Saved candles: {}", savedCandles);
+        log.info("Saved {} candles.", savedCandles.size());
         return savedCandles;
     }
 
@@ -104,7 +107,10 @@ public class CacheController {
 //        log.info("saveOpenedPositionsCache({}) call from {}.", openedPositions, headers.map().get("bot-id"));
         log.debug("Request to save openend positions: {}", openedPositions);
         List<OpenedPositionData> openedPositionList = cacheService.saveAllOpenedPositions(openedPositions);
-        log.info("Saved positions: {}", openedPositionList);
+        log.info("Saved {} opened positions of {}.",
+                openedPositionList.size(),
+                openedPositionList.stream().findFirst().map(openedPositionData -> openedPositionData.openedPosition().strategy())
+        );
         return openedPositionList;
     }
 

@@ -4,8 +4,8 @@ ADD ./build/libs/bigasscandlesbot.jar .
 #ENV HOST_NAME = "192.168.1.66"
 
 ENTRYPOINT ["java", "-jar", \
-"-Xms256m", "-Xmx256m", \
-"-XX:NewSize=128m", "-XX:MaxNewSize=128m", \
+"-Xms300m", "-Xmx300m", \
+"-XX:NewSize=200m", "-XX:MaxNewSize=200m", \
 "-XX:MaxMetaspaceSize=100m", \
 "-XX:+HeapDumpOnOutOfMemoryError", \
 "-XX:HeapDumpPath=/tmp/logs", \

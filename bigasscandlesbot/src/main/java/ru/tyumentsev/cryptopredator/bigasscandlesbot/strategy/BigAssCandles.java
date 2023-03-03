@@ -337,7 +337,7 @@ public class BigAssCandles implements TradingStrategy {
         RSIIndicator rsi14 = new RSIIndicator(new ClosePriceIndicator(series), 14);
 
 //        EMAIndicator ema7 = new EMAIndicator(new ClosePriceIndicator(series), 7);
-//        EMAIndicator ema25 = new EMAIndicator(new ClosePriceIndicator(series), 25);
+        EMAIndicator ema25 = new EMAIndicator(new ClosePriceIndicator(series), 25);
 //        MACDIndicator macd = new MACDIndicator(new ClosePriceIndicator(series), 12, 26);
 
 //        var ema7Value = ema7.getValue(endBarSeriesIndex);
@@ -349,8 +349,11 @@ public class BigAssCandles implements TradingStrategy {
 
         if (rsi14Value.isGreaterThanOrEqual(DoubleNum.valueOf(55)) &&
                 sma200Value.isLessThan(currentPrice) &&
-                previousBar.isBullish() && previousBar.getClosePrice().isLessThan(currentPrice) &&
-                allBarsAreBearish(series, series.getEndIndex() - 2, 3)
+                previousBar.isBullish() &&
+                previousBar.getClosePrice().isGreaterThan(ema25.getValue(series.getEndIndex() - 2)) &&
+//                previousBar.getClosePrice().isLessThan(currentPrice.multipliedBy(DoubleNum.valueOf(1.01))) &&
+                allBarsAreBearish(series, series.getEndIndex() - 2, 3) &&
+                previousBar.getClosePrice().isGreaterThan(series.getBar(series.getEndIndex() - 2).getOpenPrice())
             ) {
             return true;
         }
@@ -360,7 +363,7 @@ public class BigAssCandles implements TradingStrategy {
 
     private boolean allBarsAreBearish(final BaseBarSeries series, final int lastIndex, final int barsQty) {
         for (int i = lastIndex; i > lastIndex - barsQty; i--) {
-            if (series.getBar(i).isBullish()) {
+            if (series.getBar(i).getClosePrice().isGreaterThanOrEqual(series.getBar(i).getOpenPrice())) {
                 return false;
             }
         }
@@ -398,6 +401,9 @@ public class BigAssCandles implements TradingStrategy {
         var currentPrice = parsedFloat(event.getClose());
 
         bigAssCandlesStrategyCondition.updateOpenedPositionLastPrice(symbol, currentPrice, bigAssCandlesStrategyCondition.getLongPositions());
+        bigAssCandlesStrategyCondition.updateOpenedPositionStopPrice(openedPosition,
+                Optional.ofNullable(openedPositionsBarSeriesMap.get(symbol)).orElseGet(BaseBarSeries::new)
+        );
 
         if (signalToCloseLongPosition(event, openedPosition)) {
             emulateSell(event.getSymbol(), currentPrice);
@@ -445,6 +451,8 @@ public class BigAssCandles implements TradingStrategy {
         Optional.ofNullable(bigAssCandlesStrategyCondition.getLongPositions().get(symbol)).ifPresent(pos -> {
             pos.updateStamp(LocalDateTime.now());
             pos.threadName(String.format("%s:%s", Thread.currentThread().getName(), Thread.currentThread().getId()));
+
+            bigAssCandlesStrategyCondition.updateOpenedPositionStopPrice(pos, Optional.ofNullable(marketBarSeriesMap.get(pos.symbol())).orElseGet(BaseBarSeries::new));
         });
         Optional.ofNullable(openedPositionsCandleStickEventsStreams.get(symbol)).ifPresentOrElse(stream -> {
         }, () -> { // do nothing if stream is already running.
@@ -477,25 +485,29 @@ public class BigAssCandles implements TradingStrategy {
         RSIIndicator rsi14 = new RSIIndicator(new ClosePriceIndicator(series), 14);
         MACDIndicator macdIndicator = new MACDIndicator(new ClosePriceIndicator(series), 10, 22);
 
-        float macd9barsAVG = macdSignalLineValue(macdIndicator, endBarSeriesIndex, 9);
+//        float macd9barsAVG = macdSignalLineValue(macdIndicator, endBarSeriesIndex, 9);
 
-        var currentPrice = parsedFloat(event.getClose());
+//        var currentPrice = parsedFloat(event.getClose());
 //        float stopTriggerValue = openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor) ? openedPosition.maxPrice() : openedPosition.avgPrice();
-        float stopTriggerValue = openedPosition.maxPrice();
+//        float stopTriggerValue = openedPosition.maxPrice();
 
-        if (currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor() &&
-                series.getBar(endBarSeriesIndex - 1).isBearish() &&
-//                rsi14.getValue(endBarSeriesIndex).isLessThanOrEqual(DoubleNum.valueOf(67)) &&
-                macdIndicator.getValue(endBarSeriesIndex).isLessThan(DoubleNum.valueOf(macd9barsAVG)) // current MACD less or equals signal line.
-//                && (macdIndicator.getValue(endBarSeriesIndex).isLessThanOrEqual(macdIndicator.getValue(endBarSeriesIndex - 1))
-////                    || series.getBar(endBarSeriesIndex).getClosePrice().isGreaterThan(series.getBar(endBarSeriesIndex).getOpenPrice().multipliedBy(DoubleNum.valueOf(1.1)))
-//                    || currentPrice > openedPosition.avgPrice() * 1.1)
-        ) {
-            log.debug("PRICE of {} DECREASED and now equals '{}' (rsi14 is '{}', current MACD is '{}', signal MACD line is '{}'), price decrease factor is {} / {}.",
-                    ticker, currentPrice, rsi14.getValue(endBarSeriesIndex), macdIndicator.getValue(endBarSeriesIndex), macd9barsAVG,
-                    openedPosition.priceDecreaseFactor(), bigAssCandlesStrategyCondition.getLongPositions().get(openedPosition.symbol()).priceDecreaseFactor());
+        if (series.getBar(endBarSeriesIndex - 1).getClosePrice().floatValue() < openedPosition.stopPrice()) {
             return true;
         }
+
+//        if (currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor() &&
+//                series.getBar(endBarSeriesIndex - 1).isBearish() &&
+////                rsi14.getValue(endBarSeriesIndex).isLessThanOrEqual(DoubleNum.valueOf(67)) &&
+//                macdIndicator.getValue(endBarSeriesIndex).isLessThan(DoubleNum.valueOf(macd9barsAVG)) // current MACD less or equals signal line.
+////                && (macdIndicator.getValue(endBarSeriesIndex).isLessThanOrEqual(macdIndicator.getValue(endBarSeriesIndex - 1))
+//////                    || series.getBar(endBarSeriesIndex).getClosePrice().isGreaterThan(series.getBar(endBarSeriesIndex).getOpenPrice().multipliedBy(DoubleNum.valueOf(1.1)))
+////                    || currentPrice > openedPosition.avgPrice() * 1.1)
+//        ) {
+//            log.debug("PRICE of {} DECREASED and now equals '{}' (rsi14 is '{}', current MACD is '{}', signal MACD line is '{}'), price decrease factor is {} / {}.",
+//                    ticker, currentPrice, rsi14.getValue(endBarSeriesIndex), macdIndicator.getValue(endBarSeriesIndex), macd9barsAVG,
+//                    openedPosition.priceDecreaseFactor(), bigAssCandlesStrategyCondition.getLongPositions().get(openedPosition.symbol()).priceDecreaseFactor());
+//            return true;
+//        }
         return false;
     }
 
@@ -539,7 +551,12 @@ public class BigAssCandles implements TradingStrategy {
         Optional.ofNullable(emulatedPositions.get(symbol)).ifPresent(inPosition -> {
             if (inPosition.get()) {
                 inPosition.set(false);
-                log.info("SELL {} at {}, buy price was {}.", symbol, price, Optional.ofNullable(bigAssCandlesStrategyCondition.getLongPositions().get(symbol)).map(OpenedPosition::avgPrice).orElse(null));
+                log.info("SELL {} at {}, buy price was {} (profit {}%).",
+                        symbol,
+                        price,
+                        Optional.ofNullable(bigAssCandlesStrategyCondition.getLongPositions().get(symbol)).map(OpenedPosition::avgPrice).orElse(null),
+                        percentageDifference(price, Optional.ofNullable(bigAssCandlesStrategyCondition.getLongPositions().get(symbol)).map(OpenedPosition::avgPrice).orElse(0F))
+                );
                 bigAssCandlesStrategyCondition.removeOpenedPosition(symbol);
                 Optional.ofNullable(openedPositionsCandleStickEventsStreams.remove(symbol)).ifPresentOrElse(stream -> {
                     try {
@@ -590,7 +607,7 @@ public class BigAssCandles implements TradingStrategy {
         unSubscribeFromUserUpdateEvents();
         try {
             closeOpenedWebSocketStreams();
-            backupOpenedPositions();
+//            backupOpenedPositions();
             backupSellRecords();
         } catch (Exception e) {
             log.error(e.getMessage(), e);

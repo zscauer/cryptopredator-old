@@ -15,6 +15,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 @Getter
 @Configuration
 @ConfigurationProperties(prefix = "redis")
+@SuppressWarnings("unused")
 public class RedisConfig {
 
     String host;

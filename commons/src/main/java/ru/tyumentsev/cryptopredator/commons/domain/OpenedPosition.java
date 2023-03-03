@@ -8,7 +8,6 @@ import lombok.experimental.FieldDefaults;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 
 @Getter
 @Setter
@@ -34,7 +33,11 @@ public class OpenedPosition implements Serializable {
     @JsonProperty
     volatile Float maxPrice;
     @JsonProperty
-    volatile Float priceDecreaseFactor;
+    volatile Float priceDecreaseFactor; // indicatorvirginbot
+    @JsonProperty
+    volatile Float stopPrice; //bigasscandlesbot
+    @JsonProperty
+    volatile Float takePrice; //bigasscandlesbot
     @JsonProperty
     volatile LocalDateTime updateStamp;
     @JsonProperty

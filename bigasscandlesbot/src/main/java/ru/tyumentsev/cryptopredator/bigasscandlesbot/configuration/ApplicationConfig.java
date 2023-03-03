@@ -55,7 +55,7 @@ public class ApplicationConfig {
                 .dispatcher(dispatcher)
 //                .pingInterval(20, TimeUnit.SECONDS)
 //                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
-                .callTimeout(60, TimeUnit.SECONDS)
+                .callTimeout(90, TimeUnit.SECONDS)
 //                .connectionPool(new ConnectionPool())
                 .build();
     }
