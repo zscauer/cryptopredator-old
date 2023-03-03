@@ -31,7 +31,7 @@ import lombok.experimental.FieldDefaults;
 import ru.tyumentsev.cryptopredator.commons.domain.PlacedOrder;
 
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 @Slf4j
 @SuppressWarnings("unused")
 public class MarketInfo implements TradingService {

@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Deque;
@@ -59,16 +60,18 @@ public abstract class StrategyCondition {
             if (lastPrice > pos.maxPrice()) {
                 pos.maxPrice(lastPrice);
             }
+            pos.updateStamp(LocalDateTime.now());
+            pos.threadName(String.format("%s:%s", Thread.currentThread().getName(), Thread.currentThread().getId()));
         });
     }
 
-    public void removeOpenedPosition(String pair) {
-        longPositions.remove(pair);
+    public OpenedPosition removeOpenedPosition(String pair) {
+        return longPositions.remove(pair);
     }
 
 
     public void addSellRecordToJournal(String pair, String strategy) {
-        sellJournal.put(pair, new SellRecord(pair, ZonedDateTime.now(), strategy));
+        sellJournal.put(pair, new SellRecord(pair, LocalDateTime.now(), strategy));
     }
 
     protected abstract boolean thisSignalWorkedOutBefore(final String pair);

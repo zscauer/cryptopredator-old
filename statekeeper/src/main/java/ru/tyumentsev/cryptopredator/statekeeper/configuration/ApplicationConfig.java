@@ -7,7 +7,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
-import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -20,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 @Getter
 @Setter
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @ConfigurationProperties(prefix = "applicationconfig")
 @EnableScheduling
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -40,9 +39,9 @@ public class ApplicationConfig {
         sharedClient = new OkHttpClient.Builder()
                 .dispatcher(dispatcher)
 //                .pingInterval(20, TimeUnit.SECONDS)
-                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
-                .callTimeout(30, TimeUnit.SECONDS)
-                .connectionPool(new ConnectionPool())
+//                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
+                .callTimeout(60, TimeUnit.SECONDS)
+//                .connectionPool(new ConnectionPool())
                 .build();
     }
 

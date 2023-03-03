@@ -1,0 +1,68 @@
+micronaut:
+  application:
+    name: macsawbot
+  metrics:
+    enabled: true
+    export:
+      prometheus:
+        enabled: true
+        descriptions: true
+        step: PT1M
+endpoints:
+  prometheus:
+#      details-visible: ANONYMOUS
+    sensitive: false
+  serde:
+    write-dates-as-timestamps: false
+#    date-format: 'yyyy-MM-dd' specific date format globally
+netty:
+  default:
+    allocator:
+      max-order: 3
+
+
+logging:
+#  level:
+#    root: ${LOGGING_LEVEL_ROOT}
+#    web: ${LOGGING_LEVEL_WEB}
+  pattern:
+    console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
+    file: "%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}" # "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg %n"
+  file:
+    path: /tmp/logs
+  logback:
+    rollingpolicy:
+      file-name-pattern: "${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz"
+      max-history: 30
+
+#jackson:
+#  dateFormat: "yyyy-MM-dd HH:mm:ss"
+#  serializationInclusion: ALWAYS
+#  serialization:
+
+applicationconfig:
+  testLaunch: ${TEST_LAUNCH:-true}
+  useTestnet: ${BINANCE_USE_TESTNET}
+  useTestnetStreaming: ${BINANCE_USE_TESTNET_STREAMING}
+  apiKey: ${BINANCE_API_KEY}
+  secret: ${BINANCE_SECRET_KEY}
+  stateKeeperURL: http://${STATEKEEPER_HOST}:${STATEKEEPER_PORT}
+
+strategy:
+  # ------------------ global
+  global:
+    tradingAsset: USDT #${STRATEGY_GLOBAL_TRADING_ASSET}
+    maximalPairPrice: ${STRATEGY_GLOBAL_MAXIMAL_PAIR_PRICE}
+    minimalAssetBalance: ${STRATEGY_GLOBAL_MINIMAL_ASSET_BALANCE}
+    baseOrderVolume: ${STRATEGY_GLOBAL_BASE_ORDER_VOLUME}
+  macSaw:
+    enabled: true #${MACSAW_ENABLED:-true}
+    ordersQtyLimit: 5 #${MACSAW_ORDERS_QTY_LIMIT}
+    averagingEnabled: ${MACSAW_AVERAGING_ENABLED}
+    priceDecreaseFactor: ${MACSAW_PRICE_DECREASE_FACTOR}
+    pairTakeProfitFactor: ${MACSAW_PAIR_TAKE_PROFIT_FACTOR}
+    takeProfitPriceDecreaseFactor: ${MACSAW_TAKE_PROFIT_PRICE_DECREASE_FACTOR}
+    averagingTrigger: ${MACSAW_AVERAGING_TRIGGER}
+    startCandlstickEventsCacheUpdating:
+      initialDelay: ${MACSAW_START_CANDLESTICKEVENTS_CACHE_UPDATING_INITIAL_DELAY}
+      fixedDelay: ${MACSAW_START_CANDLESTICKEVENTS_CACHE_UPDATING_FIXED_DELAY}

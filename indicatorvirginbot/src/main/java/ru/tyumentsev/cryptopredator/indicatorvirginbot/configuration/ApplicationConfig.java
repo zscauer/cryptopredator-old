@@ -25,6 +25,8 @@ import retrofit2.converter.jackson.JacksonConverterFactory;
 import ru.tyumentsev.cryptopredator.commons.service.AccountInfo;
 import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
 import ru.tyumentsev.cryptopredator.commons.service.AccountServiceClient;
+import ru.tyumentsev.cryptopredator.commons.service.BotStateService;
+import ru.tyumentsev.cryptopredator.commons.service.BotStateServiceClient;
 import ru.tyumentsev.cryptopredator.commons.service.CacheServiceClient;
 import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
@@ -37,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @ConfigurationProperties(prefix = "applicationconfig")
 @EnableScheduling
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PROTECTED)
 @SuppressWarnings("unused")
 public class ApplicationConfig {
 
@@ -51,14 +53,14 @@ public class ApplicationConfig {
 
     {
         Dispatcher dispatcher = new Dispatcher();
-        dispatcher.setMaxRequestsPerHost(300);
-        dispatcher.setMaxRequests(300);
+        dispatcher.setMaxRequestsPerHost(400);
+        dispatcher.setMaxRequests(400);
         sharedClient = new OkHttpClient.Builder()
                 .dispatcher(dispatcher)
 //                .pingInterval(20, TimeUnit.SECONDS)
-                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
-                .callTimeout(30, TimeUnit.SECONDS)
-                .connectionPool(new ConnectionPool())
+//                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
+                .callTimeout(60, TimeUnit.SECONDS)
+//                .connectionPool(new ConnectionPool())
                 .build();
     }
 
@@ -94,24 +96,20 @@ public class ApplicationConfig {
         return new MarketInfo(binanceApiRestClient(), binanceApiWebSocketClient());
     }
 
-//    @Bean
-//    @DependsOn("binanceApiWebSocketClient")
-//    public AccountManager accountManager() {
-//        return new AccountManager(binanceApiRestClient(), binanceApiWebSocketClient());
-//    }
-
     @Bean
-    @DependsOn("accountInfo")
+    @DependsOn({"accountInfo", "botStateService"})
     public SpotTrading spotTrading() {
-        return new SpotTrading(accountInfo(), binanceApiAsyncRestClient(), marketInfo());
+        return new SpotTrading(accountInfo(), binanceApiAsyncRestClient(), marketInfo(), botStateService());
     }
     // ---------- Cryptopredator commons
+
     @Bean
     public DataService dataService() {
         return new DataService(new Retrofit.Builder()
                 .baseUrl(String.format(stateKeeperURL))
                 .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().registerModule(new JavaTimeModule())))
-                .client(new OkHttpClient.Builder().build())
+                .client(sharedClient)
+//                .client(new OkHttpClient.Builder().build())
                 .build().create(CacheServiceClient.class)
         );
     }
@@ -121,8 +119,20 @@ public class ApplicationConfig {
         return new AccountInfo(new Retrofit.Builder()
                 .baseUrl(String.format(stateKeeperURL))
                 .addConverterFactory(JacksonConverterFactory.create())
-                .client(new OkHttpClient.Builder().build())
+                .client(sharedClient)
+//                .client(new OkHttpClient.Builder().build())
                 .build().create(AccountServiceClient.class)
+        );
+    }
+
+    @Bean
+    public BotStateService botStateService() {
+        return new BotStateService(new Retrofit.Builder()
+                .baseUrl(String.format(stateKeeperURL))
+                .addConverterFactory(JacksonConverterFactory.create())
+                .client(sharedClient)
+//                .client(new OkHttpClient.Builder().build())
+                .build().create(BotStateServiceClient.class)
         );
     }
 }

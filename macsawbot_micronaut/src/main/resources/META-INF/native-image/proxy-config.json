@@ -1,0 +1,14 @@
+[
+  {
+    "interfaces":["com.binance.api.client.impl.BinanceApiService"]
+  },
+  {
+    "interfaces":["ru.tyumentsev.cryptopredator.commons.service.AccountServiceClient"]
+  },
+  {
+    "interfaces":["ru.tyumentsev.cryptopredator.commons.service.BotStateServiceClient"]
+  },
+  {
+    "interfaces":["ru.tyumentsev.cryptopredator.commons.service.CacheServiceClient"]
+  }
+]

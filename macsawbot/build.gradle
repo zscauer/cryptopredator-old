@@ -1,52 +1,74 @@
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("io.micronaut.application") version "3.7.0"
+	id 'java'
+	id 'org.springframework.boot' version '3.0.2'
+	id 'io.spring.dependency-management' version '1.1.0'
+//	id 'org.graalvm.buildtools.native' version '0.9.18'
+	id 'io.freefair.lombok' version '6.6.1'
+	id 'maven-publish'
 }
 
-version = "0.1"
-group = "ru.tyumentsev.cryptopredator.macsaw"
+def artifactVersion = '0.1'
+def springBootVersion = '3.0.2'
+def prometheusVersion = '0.16.0'
+
+group = 'ru.tyumentsev.cryptopredator'
+version = artifactVersion
+sourceCompatibility = '17'
+description = 'macsaw bot'
+
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
 
 repositories {
-    mavenCentral()
+	mavenLocal()
+	mavenCentral()
 }
 
 dependencies {
-    annotationProcessor("io.micronaut:micronaut-http-validation")
-    annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
-    implementation("io.micronaut:micronaut-http-client")
-    implementation("io.micronaut:micronaut-jackson-databind")
-    implementation("io.micronaut.serde:micronaut-serde-jackson")
-    implementation("jakarta.annotation:jakarta.annotation-api")
-    runtimeOnly("ch.qos.logback:logback-classic")
-    implementation("io.micronaut:micronaut-validation")
-
+	implementation "ru.tyumentsev.cryptopredator:commons:0.4"
+	implementation "com.binance.api:binance-api-client:1.2.2"
+	implementation "org.ta4j:ta4j-core:0.16-SNAPSHOT"
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation "org.springframework.boot:spring-boot-starter-web"
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation "org.springframework.boot:spring-boot-starter-actuator"
+	implementation "io.micrometer:micrometer-registry-prometheus:1.10.2"
+	implementation "io.prometheus:simpleclient_servlet:${prometheusVersion}"
+	implementation "io.prometheus:simpleclient_hotspot:${prometheusVersion}"
 }
 
-
-application {
-    mainClass.set("ru.tyumentsev.cryptopredator.macsaw.Application")
-}
-java {
-    sourceCompatibility = JavaVersion.toVersion("17")
-    targetCompatibility = JavaVersion.toVersion("17")
+jar {
+	project.version = ''
+	setArchivesBaseName('macsawbot')
+	setProperty('version', artifactVersion)
+//    setProperty('classifier', '') // build jar without "-plain" suffix
 }
 
-graalvmNative.toolchainDetection = false
-micronaut {
-    runtime("netty")
-    testRuntime("junit5")
-    processing {
-        incremental(true)
-        annotations("ru.tyumentsev.cryptopredator.macsaw.*")
-    }
+publishing {
+	publications {
+		maven(MavenPublication) {
+			groupId = 'ru.tyumentsev.cryptopredator'
+			artifactId = 'macsawbot'
+			version = artifactVersion
+
+			from components.java
+		}
+	}
+	repositories {
+		mavenLocal()
+	}
 }
 
+//graalvmNative {
+//	testSupport = false
+//}
 
-
-configurations.all {
-    resolutionStrategy.dependencySubstitution {
-        substitute(module("io.micronaut:micronaut-jackson-databind"))
-            .using(module("io.micronaut.serde:micronaut-serde-jackson:1.5.0"))
-    }
-}
-
+//tasks.named('test') {
+//	useJUnitPlatform()
+//}

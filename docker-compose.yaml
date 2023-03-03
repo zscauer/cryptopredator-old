@@ -13,7 +13,8 @@ services:
       - dailyvolumesbot/.env
     ports:
       - 101:8080
-      - 5101:5005
+      - 5101:5005 # debug agentlib
+      - 9101:9101 # profiling jmx
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
@@ -30,11 +31,31 @@ services:
       - indicatorvirginbot/.env
     ports:
       - 102:8080
-      - 5102:5005
+      - 5102:5005 # debug agentlib
+      - 9102:9102 # profiling jmx
+      - 1089:1089
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./metrics/logs/indicatorvirginbot:/tmp/logs
+    mem_limit: 512m
+
+  macsawbot:
+    image: macsawbot
+    container_name: macsawbot
+#    depends_on:
+#      - statekeeper
+    env_file:
+      - .env
+      - macsawbot_micronaut/.env
+    ports:
+      - 103:8080
+      - 5103:5005 # debug agentlib
+      - 9103:9103 # profiling jmx
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./metrics/logs/macsawbot:/tmp/logs
     mem_limit: 512m
 
   statekeeper:
@@ -48,7 +69,8 @@ services:
       - statekeeper/.env
     ports:
       - 100:8080
-      - 5100:5005
+      - 5100:5005 # debug agentlib
+      - 9100:9100 # profiling jmx
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
@@ -66,8 +88,8 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./data/redis:/data
-    mem_limit: 128m
-    mem_reservation: 64m
+    mem_limit: 64m
+    mem_reservation: 32m
 
   postgres:
     image: postgres:15.1-alpine
@@ -82,8 +104,8 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./data/postgres:/var/lib/postgresql/data
-    mem_limit: 512m
-    mem_reservation: 256m
+    mem_limit: 256m
+    mem_reservation: 128m
 
 # https://habr.com/ru/post/578744/
 #  postgres_exporter:
@@ -118,6 +140,10 @@ services:
     container_name: prometheus
     extra_hosts:
       - "host.docker.internal:host-gateway"
+      - "statekeeper:host-gateway"
+      - "dailyvolumesbot:host-gateway"
+      - "indicatorvirginbot:host-gateway"
+      - "macsawbot:host-gateway"
     ports:
       - 9096:9090
     volumes:
