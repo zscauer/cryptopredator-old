@@ -1,0 +1,94 @@
+logging:
+  level:
+    root: ${LOGGING_LEVEL_ROOT}
+    web: ${LOGGING_LEVEL_WEB}
+  pattern:
+    console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
+    file: "%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
+  file:
+    path: /tmp/logs
+  logback:
+    rollingpolicy:
+      file-name-pattern: "${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz"
+      max-history: 30
+
+server:
+  undertow:
+    accesslog:
+      enabled: true
+      dir: "/tmp/logs"
+      pattern: "common"
+      suffix: ".log"
+      prefix: "access_log"
+#  tomcat:
+#    accesslog:
+#      enabled: true
+#      rotate: false
+#      suffix: ".log"
+#      prefix: "access_log"
+#      directory: "/tmp/logs"
+#      pattern: "common"
+
+spring:
+  main:
+    banner-mode: off
+    lazy-initialization: true
+  profiles:
+    active: "default"
+  output:
+    ansi:
+      enabled: ALWAYS
+  # mvc:
+  #     pathmatch:
+  #         matching-strategy: ant-path-matcher
+
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include:
+          - prometheus
+          - health
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+
+applicationconfig:
+  testLaunch: ${TEST_LAUNCH}
+  useTestnet: ${BINANCE_USE_TESTNET}
+  useTestnetStreaming: ${BINANCE_USE_TESTNET_STREAMING}
+  apiKey: ${BINANCE_API_KEY}
+  secret: ${BINANCE_SECRET_KEY}
+  stateKeeperURL: http://${STATEKEEPER_HOST}:${STATEKEEPER_PORT}
+
+strategy:
+  # ------------------ global
+  global:
+    tradingAsset: ${STRATEGY_GLOBAL_TRADING_ASSET}
+    maximalPairPrice: ${STRATEGY_GLOBAL_MAXIMAL_PAIR_PRICE}
+    minimalAssetBalance: ${STRATEGY_GLOBAL_MINIMAL_ASSET_BALANCE}
+    baseOrderVolume: ${STRATEGY_GLOBAL_BASE_ORDER_VOLUME}
+  bigAssCandles:
+    enabled: ${BIGASSCANDLES_ENABLED}
+    followBtcTrend: ${BIGASSCANDLES_FOLLOW_BTC_TREND}
+    ordersQtyLimit: ${BIGASSCANDLES_ORDERS_QTY_LIMIT}
+    averagingEnabled: ${BIGASSCANDLES_AVERAGING_ENABLED}
+    priceDecreaseFactor: ${BIGASSCANDLES_PRICE_DECREASE_FACTOR}
+    pairTakeProfitFactor: ${BIGASSCANDLES_PAIR_TAKE_PROFIT_FACTOR}
+    takeProfitPriceDecreaseFactor: ${BIGASSCANDLES_TAKE_PROFIT_PRICE_DECREASE_FACTOR}
+    averagingTrigger: ${BIGASSCANDLES_AVERAGING_TRIGGER}
+    workedOutSignalsIgnoringPeriod: ${BIGASSCANDLES_WORKED_OUT_SIGNALS_IGNORING_PERIOD}
+#    monitoringExpirationTime: ${BIGASSCANDLES_MONITORING_EXPIRATION_TIME}
+    updateBtcTrend:
+      initialDelay: ${BIGASSCANDLES_UPDATE_BTC_TREND_INITIAL_DELAY}
+      fixedDelay: ${BIGASSCANDLES_UPDATE_BTC_TREND_FIXED_DELAY}
+    startCandlstickEventsCacheUpdating:
+      initialDelay: ${BIGASSCANDLES_START_CANDLESTICKEVENTS_CACHE_UPDATING_INITIAL_DELAY}
+      fixedDelay: ${BIGASSCANDLES_START_CANDLESTICKEVENTS_CACHE_UPDATING_FIXED_DELAY}

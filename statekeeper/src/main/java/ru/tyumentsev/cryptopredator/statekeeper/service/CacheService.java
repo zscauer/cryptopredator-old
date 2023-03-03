@@ -1,10 +1,14 @@
 package ru.tyumentsev.cryptopredator.statekeeper.service;
 
+import com.binance.api.client.BinanceApiRestClient;
+import com.binance.api.client.domain.market.CandlestickInterval;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import ru.tyumentsev.cryptopredator.commons.domain.BTCTrend;
 import ru.tyumentsev.cryptopredator.statekeeper.cache.OpenedPositionRepository;
 import ru.tyumentsev.cryptopredator.statekeeper.cache.PreviousCandleDataRepository;
 import ru.tyumentsev.cryptopredator.statekeeper.cache.SellRecordRepository;
@@ -19,13 +23,28 @@ import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 @Slf4j
 public class CacheService {
 
+    BinanceApiRestClient restClient;
     OpenedPositionRepository openedPositionRepository;
     SellRecordRepository sellRecordRepository;
     PreviousCandleDataRepository previousCandleDataRepository;
+
+    final BTCTrend btcTrend = new BTCTrend(CandlestickInterval.DAILY);
+
+    @Scheduled(fixedDelayString = "${monitoring.updateBtcTrend.fixedDelay}", initialDelayString = "${monitoring.updateBtcTrend.initialDelay}")
+    public void stateKeeper_updateBTCTrend() {
+            restClient.getCandlestickBars(btcTrend.getSymbol(), btcTrend.getInterval(), 1).stream()
+                    .findAny()
+                    .ifPresentOrElse(btcTrend::setLastCandle,
+                            () -> log.warn("BTC trend wasn't updated, because market info returned no Candlestick."));
+    }
+
+    public BTCTrend getBTCTrend() {
+        return btcTrend;
+    }
 
     public List<SellRecordData> saveAllSellRecords(Collection<SellRecordData> sellRecords) {
         return StreamSupport.stream(sellRecordRepository.saveAll(sellRecords).spliterator(), false).toList();

@@ -1,35 +1,36 @@
-package ru.tyumentsev.cryptopredator.macsaw.strategy;
+package ru.tyumentsev.cryptopredator.bigasscandlesbot.strategy;
 
 import com.binance.api.client.BinanceApiCallback;
 import com.binance.api.client.domain.Candle;
 import com.binance.api.client.domain.event.CandlestickEvent;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.market.CandlestickInterval;
-import io.micronaut.context.annotation.Value;
-import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 import org.ta4j.core.BaseBarSeries;
 import org.ta4j.core.BaseBarSeriesBuilder;
+import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.MACDIndicator;
+import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.SMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
-import org.ta4j.core.indicators.helpers.HighPriceIndicator;
-import org.ta4j.core.indicators.helpers.LowPriceIndicator;
 import org.ta4j.core.num.DoubleNum;
+import ru.tyumentsev.cryptopredator.bigasscandlesbot.cache.BigAssCandlesStrategyCondition;
 import ru.tyumentsev.cryptopredator.commons.TradingStrategy;
+import ru.tyumentsev.cryptopredator.commons.domain.BTCTrend;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.commons.mapping.CandlestickToBaseBarMapper;
 import ru.tyumentsev.cryptopredator.commons.service.BotStateService;
 import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.commons.service.SpotTrading;
-import ru.tyumentsev.cryptopredator.macsaw.cache.MacSawStrategyCondition;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -50,22 +51,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Singleton
+@Service
+@RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Slf4j
-public class MacSaw implements TradingStrategy {
+public class BigAssCandles implements TradingStrategy {
 
     final MarketInfo marketInfo;
-    final MacSawStrategyCondition macSawStrategyCondition;
+    final BigAssCandlesStrategyCondition bigAssCandlesStrategyCondition;
     final SpotTrading spotTrading;
     final DataService dataService;
     final BotStateService botStateService;
 
-
     final CandlestickInterval marketCandlestickInterval = CandlestickInterval.FIFTEEN_MINUTES;
     final CandlestickInterval openedPositionsCandlestickInterval = CandlestickInterval.FIFTEEN_MINUTES;
-    final int baseBarSeriesLimit = 26;
-
+    final int baseBarSeriesLimit = 200;
     @Getter
     final Map<String, Closeable> marketCandleStickEventsStreams = new ConcurrentHashMap<>();
     @Getter
@@ -76,43 +76,52 @@ public class MacSaw implements TradingStrategy {
     final Map<String, BaseBarSeries> openedPositionsBarSeriesMap = new ConcurrentHashMap<>();
 
     final BaseBarSeriesBuilder barSeriesBuilder = new BaseBarSeriesBuilder();
-    final static String STRATEGY_NAME = "macsaw";
-    final static Integer STRATEGY_ID = 1003;
-    final static String USER_DATA_UPDATE_ENDPOINT = "http://macsawbot:8080/state/userDataUpdateEvent";
+    @Getter
+    final BTCTrend btcTrend = new BTCTrend(CandlestickInterval.DAILY);
+    final static String STRATEGY_NAME = "bigasscandles";
+    final static Integer STRATEGY_ID = 1004;
+    final static String USER_DATA_UPDATE_ENDPOINT = "http://bigasscandlesbot:8080/state/userDataUpdateEvent";
 
     final Map<String, AtomicBoolean> emulatedPositions = new ConcurrentHashMap<>();
 
     @Value("${applicationconfig.testLaunch}")
     boolean testLaunch;
-    @Value("${strategy.macSaw.enabled}")
-    boolean macSawEnabled;
+    @Value("${strategy.bigAssCandles.enabled}")
+    boolean bigAssCandlesEnabled;
+    @Value("${strategy.bigAssCandles.followBtcTrend}")
+    boolean followBtcTrend;
+    @Value("${strategy.bigAssCandles.ordersQtyLimit}")
+    int ordersQtyLimit;
+    @Value("${strategy.bigAssCandles.averagingEnabled}")
+    boolean averagingEnabled;
     @Value("${strategy.global.tradingAsset}")
     String tradingAsset;
-    @Value("${strategy.macSaw.ordersQtyLimit}")
-    int ordersQtyLimit;
     @Value("${strategy.global.minimalAssetBalance}")
     int minimalAssetBalance;
     @Value("${strategy.global.baseOrderVolume}")
     int baseOrderVolume;
-    @Value("${strategy.macSaw.priceDecreaseFactor}")
+    @Value("${strategy.bigAssCandles.priceDecreaseFactor}")
     float priceDecreaseFactor;
+    @Value("${strategy.bigAssCandles.pairTakeProfitFactor}")
+    float pairTakeProfitFactor;
+    @Value("${strategy.bigAssCandles.takeProfitPriceDecreaseFactor}")
+    float takeProfitPriceDecreaseFactor;
+    @Value("${strategy.bigAssCandles.averagingTrigger}")
+    float averagingTrigger;
 
-    @Inject
-    public MacSaw(MarketInfo marketInfo, MacSawStrategyCondition macSawStrategyCondition, SpotTrading spotTrading, DataService dataService, BotStateService botStateService) {
-        this.marketInfo = marketInfo;
-        this.macSawStrategyCondition = macSawStrategyCondition;
-        this.spotTrading = spotTrading;
-        this.dataService = dataService;
-        this.botStateService = botStateService;
-    }
+//    @Scheduled(fixedDelayString = "${strategy.bigAssCandles.updateBtcTrend.fixedDelay}", initialDelayString = "${strategy.bigAssCandles.updateBtcTrend.initialDelay}")
+//    public void bigAssCandles_updateBTCTrend() {
+//        if (bigAssCandlesEnabled && followBtcTrend) {
+//            Optional.ofNullable(dataService.getBTCTrend()).map(BTCTrend::getLastCandle)
+//                    .ifPresentOrElse(btcTrend::setLastCandle,
+//                            () -> log.warn("BTC trend wasn't updated, because state keeper returned no Candlestick."));
+//        }
+//    }
 
-    @Scheduled(fixedDelay = "${strategy.macSaw.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelay = "${strategy.macSaw.startCandlstickEventsCacheUpdating.initialDelay}")
-    public void macSaw_startCandlstickEventsCacheUpdating() {
-        if (macSawEnabled && !testLaunch) {
+    @Scheduled(fixedDelayString = "${strategy.bigAssCandles.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.bigAssCandles.startCandlstickEventsCacheUpdating.initialDelay}")
+    public void bigAssCandles_startCandlstickEventsCacheUpdating() {
+        if (bigAssCandlesEnabled && !testLaunch) {
             startCandlstickEventsCacheUpdating();
-//            Thread.getAllStackTraces().keySet().stream().filter(Thread::isAlive).forEach(thread -> {
-//                log.info("Thread {} name: {} group: {}.", thread.getId(), thread.getName(), thread.getThreadGroup());
-//            });
         }
     }
 
@@ -128,7 +137,7 @@ public class MacSaw implements TradingStrategy {
 
     @Override
     public boolean isEnabled() {
-        return macSawEnabled;
+        return bigAssCandlesEnabled;
     }
 
     @Override
@@ -140,7 +149,7 @@ public class MacSaw implements TradingStrategy {
     }
 
     private void restoreSellJournalFromCache() {
-        var sellJournal = macSawStrategyCondition.getSellJournal();
+        var sellJournal = bigAssCandlesStrategyCondition.getSellJournal();
         dataService.findAllSellRecords(this)
                 .forEach(record -> sellJournal.put(record.symbol(), record));
         dataService.deleteAllSellRecords(sellJournal.values(), this);
@@ -151,20 +160,20 @@ public class MacSaw implements TradingStrategy {
                 .map(assetBalance -> assetBalance.getAsset() + tradingAsset).toList();
 
         List<OpenedPosition> cachedOpenedPositions = dataService.findAllOpenedPositions(this);
-        log.info("Found next cached opened positions: {}", cachedOpenedPositions);
+        log.debug("Found next cached opened positions: {}", cachedOpenedPositions);
         cachedOpenedPositions.forEach(pos -> {
             if (accountPositions.contains(pos.symbol())) {
                 pos.threadName(null)
                         .updateStamp(null);
-                macSawStrategyCondition.getLongPositions().put(pos.symbol(), pos);
+                bigAssCandlesStrategyCondition.getLongPositions().put(pos.symbol(), pos);
             }
         });
 
-        dataService.deleteAllOpenedPositions(macSawStrategyCondition.getLongPositions().values(), this);
+        dataService.deleteAllOpenedPositions(bigAssCandlesStrategyCondition.getLongPositions().values(), this);
     }
 
     private void defineAvailableOrdersLimit() {
-        int availableOrdersLimit = ordersQtyLimit - macSawStrategyCondition.getLongPositions().values().stream()
+        int availableOrdersLimit = ordersQtyLimit - bigAssCandlesStrategyCondition.getLongPositions().values().stream()
                 .map(openedPosition -> Math.ceil(openedPosition.avgPrice() * openedPosition.qty()))
                 .reduce(0D, Double::sum)
                 .intValue() / baseOrderVolume;
@@ -182,7 +191,7 @@ public class MacSaw implements TradingStrategy {
     @Override
     public void handleBuying(final OrderTradeUpdateEvent buyEvent) {
         log.debug("Get buy event of {} with strategy id {}", buyEvent.getSymbol(), buyEvent.getStrategyId());
-        if (macSawEnabled && getId().equals(buyEvent.getStrategyId())) {
+        if (bigAssCandlesEnabled && getId().equals(buyEvent.getStrategyId())) {
             final String symbol = buyEvent.getSymbol();
 
             // if price == 0 most likely it was market order, use last market price.
@@ -190,15 +199,15 @@ public class MacSaw implements TradingStrategy {
                     ? parsedFloat(marketInfo.getLastTickerPrice(symbol).getPrice())
                     : parsedFloat(buyEvent.getPrice());
 
-            log.info("BUY {} {} at {}.",
-                    buyEvent.getAccumulatedQuantity(), symbol, dealPrice);
-            macSawStrategyCondition.addOpenedPosition(symbol, dealPrice, parsedFloat(buyEvent.getAccumulatedQuantity()),
+            log.info("BUY {} {} at {}. Available orders limit is {}.",
+                    buyEvent.getAccumulatedQuantity(), symbol, dealPrice, botStateService.getAvailableOrdersCount(getId()));
+            bigAssCandlesStrategyCondition.addOpenedPosition(symbol, dealPrice, parsedFloat(buyEvent.getAccumulatedQuantity()),
                     priceDecreaseFactor, false, getName()
             );
+            bigAssCandlesStrategyCondition.removePositionFromMonitoring(symbol);
 
             marketInfo.pairOrderFilled(symbol, getName());
 
-            // + new logic
             Optional.ofNullable(openedPositionsCandleStickEventsStreams.get(symbol)).ifPresentOrElse(stream -> {
             }, () -> { // do nothing if stream is already running.
                 openedPositionsCandleStickEventsStreams.put(symbol,
@@ -206,7 +215,6 @@ public class MacSaw implements TradingStrategy {
                                 openedPositionMonitoringCallback())
                 );
             });
-            // - new logic
         }
     }
 
@@ -215,20 +223,19 @@ public class MacSaw implements TradingStrategy {
         final String symbol = sellEvent.getSymbol();
         log.debug("Get sell event of {} with strategy id {}.", symbol, sellEvent.getStrategyId());
 
-        if (macSawEnabled && (getId().equals(Optional.ofNullable(sellEvent.getStrategyId()).orElse(getId())))) {
+        if (bigAssCandlesEnabled && (getId().equals(Optional.ofNullable(sellEvent.getStrategyId()).orElse(getId())))) {
 
             // if price == 0 most likely it was market order, use last market price.
             float dealPrice = parsedFloat(sellEvent.getPrice()) == 0
                     ? parsedFloat(marketInfo.getLastTickerPrice(symbol).getPrice())
                     : parsedFloat(sellEvent.getPrice());
 
-            log.info("SELL {} {} at {}.",
-                    sellEvent.getOriginalQuantity(), symbol, dealPrice);
+            var openedPosition = bigAssCandlesStrategyCondition.removeOpenedPosition(symbol);;
+            log.info("SELL {} {} at {}. AVG = {} (profit {}%), stopLoss = {}. Available orders limit is {}.",
+                    sellEvent.getOriginalQuantity(), symbol, dealPrice, openedPosition.avgPrice(), percentageDifference(dealPrice, openedPosition.avgPrice()), openedPosition.priceDecreaseFactor(), botStateService.getAvailableOrdersCount(getId()));
 
-            macSawStrategyCondition.removeOpenedPosition(symbol);
-            macSawStrategyCondition.addSellRecordToJournal(symbol, getName());
+            bigAssCandlesStrategyCondition.addSellRecordToJournal(symbol, getName());
 
-            // + new logic
             Optional.ofNullable(openedPositionsCandleStickEventsStreams.remove(symbol)).ifPresentOrElse(stream -> {
                 try {
                     stream.close();
@@ -239,7 +246,6 @@ public class MacSaw implements TradingStrategy {
                 log.warn("Sell event of {} recieved, but have no opened position monitoring stream.", symbol);
             });
             openedPositionsBarSeriesMap.remove(symbol);
-            // - new logic
 
             marketInfo.pairOrderFilled(symbol, getName());
         }
@@ -274,7 +280,7 @@ public class MacSaw implements TradingStrategy {
             marketMonitoringThreadsCounter.getAndIncrement();
         });
 
-        macSawStrategyCondition.getLongPositions().keySet().forEach(symbol -> {
+        bigAssCandlesStrategyCondition.getLongPositions().keySet().forEach(symbol -> {
             openedPositionsCandleStickEventsStreams.put(symbol,
                     marketInfo.openCandleStickEventsStream(symbol.toLowerCase(), openedPositionsCandlestickInterval,
                             openedPositionMonitoringCallback()));
@@ -288,7 +294,7 @@ public class MacSaw implements TradingStrategy {
         return event -> {
             addEventToBaseBarSeries(event, marketBarSeriesMap, marketCandlestickInterval);
 
-            Optional.ofNullable(macSawStrategyCondition.getLongPositions().get(event.getSymbol())).ifPresentOrElse(
+            Optional.ofNullable(bigAssCandlesStrategyCondition.getLongPositions().get(event.getSymbol())).ifPresentOrElse(
                     openedPosition -> {},//analizeOpenedPosition(event, openedPosition), // ignore opened positions
                     () -> analizeMarketPosition(event));
         };
@@ -298,13 +304,7 @@ public class MacSaw implements TradingStrategy {
         return event -> {
             addEventToBaseBarSeries(event, openedPositionsBarSeriesMap, openedPositionsCandlestickInterval);
 
-//            Optional.ofNullable(emulatedPositions.get(event.getSymbol())).ifPresent(
-//                    inPos -> { if (inPos.get()) {
-//                        analizeOpenedPosition(event, null);
-//                    }
-//            });
-            // TODO: replace in production
-            Optional.ofNullable(macSawStrategyCondition.getLongPositions().get(event.getSymbol())).ifPresent(
+            Optional.ofNullable(bigAssCandlesStrategyCondition.getLongPositions().get(event.getSymbol())).ifPresent(
                     openedPosition -> analizeOpenedPosition(event, openedPosition));
         };
     }
@@ -323,42 +323,72 @@ public class MacSaw implements TradingStrategy {
         ) {
             return false;
         }
-//        if (marketInfo.pairOrderIsProcessing(event.getSymbol(), getName())) { //|| macSawStrategyCondition.thisSignalWorkedOutBefore(event.getSymbol())) {
+//        if (marketInfo.pairOrderIsProcessing(event.getSymbol(), getName()) || bigAssCandlesStrategyCondition.thisSignalWorkedOutBefore(event.getSymbol())) {
 //            return false;
 //        }
+
         BaseBarSeries series = Optional.ofNullable(marketBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new);
         if (series.getBarData().isEmpty()) {
             return false;
         }
-
         var endBarSeriesIndex = series.getEndIndex();
-        // define trend by MACD (s8,l16,sig6).
-        MACDIndicator macdTrendIndicator = new MACDIndicator(new ClosePriceIndicator(series), 8, 16);
-        float currentMacdValue = macdTrendIndicator.getValue(endBarSeriesIndex).floatValue();
-        float previousMacdValue = macdTrendIndicator.getValue(endBarSeriesIndex - 1).floatValue();
-        float currrentSignalLineValue = macdSignalLineValue(macdTrendIndicator, endBarSeriesIndex, 6);
-        float previousSignalLineValue = macdSignalLineValue(macdTrendIndicator, endBarSeriesIndex - 1, 6);
-        if (currentMacdValue > previousMacdValue && currentMacdValue > currrentSignalLineValue && previousMacdValue > previousSignalLineValue) { // uptrend
-//            SMAIndicator sma3high = new SMAIndicator(new HighPriceIndicator(series), 3);
-            SMAIndicator sma3low = new SMAIndicator(new LowPriceIndicator(series), 3);
-            // current price is close to avg low.
-            // MACD should be positive?
-            // прошлая свеча была бычьей
-            // и коснулась своей ema3low
-            // и текущая цена выше хая прошлой свечи
-            // и лоу текущей свечи выше лоу предыдущей
-            float currentPrice = parsedFloat(event.getClose());
-            var previousBar = series.getBar(endBarSeriesIndex - 1);
-            if (previousBar.isBullish()
-                    && previousBar.getLowPrice().isLessThanOrEqual(sma3low.getValue(endBarSeriesIndex - 1))
-                    && previousBar.getHighPrice().isLessThan(DoubleNum.valueOf(currentPrice))
-                    && previousBar.getLowPrice().isLessThan(series.getBar(endBarSeriesIndex).getLowPrice())) {
+
+        SMAIndicator sma200 = new SMAIndicator(new ClosePriceIndicator(series), 200);
+        RSIIndicator rsi14 = new RSIIndicator(new ClosePriceIndicator(series), 14);
+
+//        EMAIndicator ema7 = new EMAIndicator(new ClosePriceIndicator(series), 7);
+//        EMAIndicator ema25 = new EMAIndicator(new ClosePriceIndicator(series), 25);
+//        MACDIndicator macd = new MACDIndicator(new ClosePriceIndicator(series), 12, 26);
+
+//        var ema7Value = ema7.getValue(endBarSeriesIndex);
+//        var ema25Value = ema25.getValue(endBarSeriesIndex);
+        var currentPrice = DoubleNum.valueOf(parsedFloat(event.getClose()));
+        var previousBar = series.getBar(series.getEndIndex() - 1);
+        var sma200Value = sma200.getValue(endBarSeriesIndex);
+        var rsi14Value = rsi14.getValue(endBarSeriesIndex);
+
+        if (rsi14Value.isGreaterThanOrEqual(DoubleNum.valueOf(55)) &&
+                sma200Value.isLessThan(currentPrice) &&
+                previousBar.isBullish() && previousBar.getClosePrice().isLessThan(currentPrice) &&
+                allBarsAreBearish(series, series.getEndIndex() - 2, 3)
+            ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean allBarsAreBearish(final BaseBarSeries series, final int lastIndex, final int barsQty) {
+        for (int i = lastIndex; i > lastIndex - barsQty; i--) {
+            if (series.getBar(i).isBullish()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Growth is sustainable if short MA of last N bars are higher or equal than their long MA.
+     * @param ema7 short MA
+     * @param ema25 long MA
+     * @param endBarSeriesIndex last bar index
+     * @param barsQty quantity of bars to analize
+     * @return True if growth is sustainable.
+     */
+    private boolean itsSustainableGrowth(final EMAIndicator ema7, final EMAIndicator ema25, final int endBarSeriesIndex, final int barsQty) {
+        for (int i = endBarSeriesIndex; i > endBarSeriesIndex - barsQty; i--) {
+            if (ema25.getValue(i).isGreaterThan(ema7.getValue(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean haveBreakdown(final EMAIndicator ema7, final EMAIndicator ema25, final int endBarSeriesIndex, final int barsQty) {
+        for (int i = endBarSeriesIndex; i > endBarSeriesIndex - barsQty; i--) {
+            if (ema25.getValue(i).isGreaterThan(ema7.getValue(i))) {
                 return true;
             }
-
-//            if (sma3low.getValue(endBarSeriesIndex - 1).isGreaterThanOrEqual(DoubleNum.valueOf(currentPrice))) {
-//                return true;
-//            }
         }
         return false;
     }
@@ -367,15 +397,7 @@ public class MacSaw implements TradingStrategy {
         final String symbol = event.getSymbol();
         var currentPrice = parsedFloat(event.getClose());
 
-        macSawStrategyCondition.updateOpenedPositionLastPrice(symbol, currentPrice, macSawStrategyCondition.getLongPositions());
-
-//        if (currentPrice > openedPosition.avgPrice() * pairTakeProfitFactor && !openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor)) {
-//            openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
-//        }
-
-//        if (averagingEnabled && currentPrice > openedPosition.avgPrice() * averagingTrigger) {
-//            buyFast(symbol, currentPrice, tradingAsset, true);
-//        }
+        bigAssCandlesStrategyCondition.updateOpenedPositionLastPrice(symbol, currentPrice, bigAssCandlesStrategyCondition.getLongPositions());
 
         if (signalToCloseLongPosition(event, openedPosition)) {
             emulateSell(event.getSymbol(), currentPrice);
@@ -384,107 +406,9 @@ public class MacSaw implements TradingStrategy {
     }
 
     private void buyFast(final String symbol, final float price, String quoteAsset, boolean itsAveraging) {
-        if (!(marketInfo.pairOrderIsProcessing(symbol, getName()))) { //|| macSawStrategyCondition.thisSignalWorkedOutBefore(symbol))) {
+        if (!(marketInfo.pairOrderIsProcessing(symbol, getName()) || bigAssCandlesStrategyCondition.thisSignalWorkedOutBefore(symbol))) {
 //            emulateBuy(symbol, price);
-//            log.debug("Price of {} growth more than {}%, and now equals {}.", symbol, Float.valueOf(100 * priceGrowthFactor - 100).intValue(), price);
             spotTrading.placeBuyOrderFast(symbol, getName(), getId(), price, quoteAsset, minimalAssetBalance, baseOrderVolume);
-        }
-    }
-
-    private boolean signalToCloseLongPosition(final CandlestickEvent event, final OpenedPosition openedPosition) {
-        if (!Optional.ofNullable(emulatedPositions.get(event.getSymbol()))
-                .map(AtomicBoolean::get)
-                .orElse(false)
-        ) {
-            return false;
-        }
-//        if (marketInfo.pairOrderIsProcessing(event.getSymbol(), getName())) {
-//            return false;
-//        }
-
-        BaseBarSeries series = Optional.ofNullable(openedPositionsBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new);
-        if (series.getBarData().isEmpty()) {
-            return false;
-        }
-
-        var endBarSeriesIndex = series.getEndIndex();
-        // define trend by MACD (s8,l16,sig6).
-//        MACDIndicator macdTrendIndicator = new MACDIndicator(new ClosePriceIndicator(series), 8, 16);
-//        float currentMacdValue = macdTrendIndicator.getValue(endBarSeriesIndex).floatValue();
-//        float previousMacdValue = macdTrendIndicator.getValue(endBarSeriesIndex - 1).floatValue();
-//        float currrentSignalLineValue = macdSignalLineValue(macdTrendIndicator, endBarSeriesIndex, 6);
-//        float previousSignalLineValue = macdSignalLineValue(macdTrendIndicator, endBarSeriesIndex - 1, 6);
-//        if (currentMacdValue > previousMacdValue && currentMacdValue > currrentSignalLineValue && previousMacdValue > previousSignalLineValue) { // uptrend
-            SMAIndicator sma3high = new SMAIndicator(new HighPriceIndicator(series), 3);
-//            SMAIndicator sma3low = new SMAIndicator(new LowPriceIndicator(series), 3);
-            // current price is close to avg low.
-        float currentPrice = parsedFloat(event.getClose());
-        // set minimal profit (2%)?
-        if (currentPrice > openedPosition.avgPrice() * 1.02
-            && sma3high.getValue(endBarSeriesIndex).isLessThanOrEqual(DoubleNum.valueOf(currentPrice))) {
-            return true;
-        }
-//        }
-
-        return false;
-    }
-
-    private float macdSignalLineValue(final MACDIndicator macdIndicator, final int endBarSeriesIndex, final int signalLineLehgth) {
-        float macd9barsAVG = 0F;
-        for (int i = endBarSeriesIndex; i > endBarSeriesIndex - signalLineLehgth; i--) { // signal line
-            macd9barsAVG += macdIndicator.getValue(i).floatValue();
-        }
-        return  macd9barsAVG / signalLineLehgth;
-    }
-
-    public void addEventToBaseBarSeries(final CandlestickEvent event, final Map<String, BaseBarSeries> barSeriesMap, final CandlestickInterval candlestickInterval) {
-//        BaseBarSeries barSeries = barSeriesMap.get(event.getSymbol());
-//        if (barSeries != null && barSeries.getEndIndex() >= 0) {
-//
-//                if (ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).equals(barSeries.getBar(barSeries.getEndIndex()).getEndTime())) {
-//                    barSeries.addBar(CandlestickToBaseBarMapper.map(event, candlestickInterval), true);
-//                } else {
-//                    var mapperBar = CandlestickToBaseBarMapper.map(event, candlestickInterval);
-//                    try {
-//                        barSeries.addBar(mapperBar, false);
-//                    } catch (IllegalArgumentException e) {
-//                        log.error("Illegal argument in {} addBar.\nTime of event close: {}\nTime of barSeries endIndex({}): {}\nTime of mapped bar: {}",
-//                                event.getSymbol(),
-//                                ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()), barSeries.getEndIndex(),
-//                                barSeries.getBar(barSeries.getEndIndex()).getEndTime(),
-//                                mapperBar.getEndTime());
-////                        log.info();
-//                    }
-//                }
-//        } else {
-//            barSeriesMap.put(event.getSymbol(),
-//                    newBaseBarSeries(marketInfo.getCandleSticks(event.getSymbol(), candlestickInterval, baseBarSeriesLimit), event.getSymbol()));
-//        }
-
-        Optional.ofNullable(barSeriesMap.get(event.getSymbol())).ifPresentOrElse(barSeries -> {
-            if (barSeries.getEndIndex() >= 0) {
-                barSeries.addBar(CandlestickToBaseBarMapper.map(event, candlestickInterval),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).equals(barSeries.getBar(barSeries.getEndIndex()).getEndTime())
-                );
-            }
-        }, () -> {
-            barSeriesMap.put(event.getSymbol(),
-                    newBaseBarSeries(marketInfo.getCandleSticks(event.getSymbol(), candlestickInterval, baseBarSeriesLimit), event.getSymbol()));
-        });
-    }
-
-    private BaseBarSeries newBaseBarSeries(List<? extends Candle> candles, final String ticker) {
-        return barSeriesBuilder
-                .withMaxBarCount(baseBarSeriesLimit)
-                .withNumTypeOf(DoubleNum::valueOf)
-                .withBars(CandlestickToBaseBarMapper.map(candles, marketCandlestickInterval))
-                .withName(String.format("%s_%s", ticker, getName()))
-                .build();
-    }
-
-    private void sellFast(String symbol, float qty, String quoteAsset) {
-        if (!marketInfo.pairOrderIsProcessing(symbol, getName())) {
-            spotTrading.placeSellOrderFast(symbol, getName(), getId(), qty);
         }
     }
 
@@ -493,7 +417,7 @@ public class MacSaw implements TradingStrategy {
             if (!inPosition.get()) {
                 inPosition.set(true);
                 log.info("BUY {} at {}.", symbol, currentPrice);
-                macSawStrategyCondition.addOpenedPosition(symbol, currentPrice, 1F,
+                bigAssCandlesStrategyCondition.addOpenedPosition(symbol, currentPrice, 1F,
                         priceDecreaseFactor, false, getName()
                 );
 //                Optional.ofNullable(openedPositionsCandleStickEventsStreams.get(symbol)).ifPresentOrElse(stream -> {
@@ -507,7 +431,7 @@ public class MacSaw implements TradingStrategy {
         }, () -> {
             emulatedPositions.put(symbol, new AtomicBoolean(true));
             log.info("BUY {} at {}.", symbol, currentPrice);
-            macSawStrategyCondition.addOpenedPosition(symbol, currentPrice, 1F,
+            bigAssCandlesStrategyCondition.addOpenedPosition(symbol, currentPrice, 1F,
                     priceDecreaseFactor, false, getName()
             );
 //            Optional.ofNullable(openedPositionsCandleStickEventsStreams.get(symbol)).ifPresentOrElse(stream -> {
@@ -518,7 +442,7 @@ public class MacSaw implements TradingStrategy {
 //                );
 //            });
         });
-        Optional.ofNullable(macSawStrategyCondition.getLongPositions().get(symbol)).ifPresent(pos -> {
+        Optional.ofNullable(bigAssCandlesStrategyCondition.getLongPositions().get(symbol)).ifPresent(pos -> {
             pos.updateStamp(LocalDateTime.now());
             pos.threadName(String.format("%s:%s", Thread.currentThread().getName(), Thread.currentThread().getId()));
         });
@@ -531,12 +455,92 @@ public class MacSaw implements TradingStrategy {
         });
     }
 
+    private boolean signalToCloseLongPosition(final CandlestickEvent event, final OpenedPosition openedPosition) {
+        if (!Optional.ofNullable(emulatedPositions.get(event.getSymbol()))
+                .map(AtomicBoolean::get)
+                .orElse(false)
+        ) {
+            return false;
+        }
+//        if (marketInfo.pairOrderIsProcessing(event.getSymbol(), getName())) {
+//            return false;
+//        }
+        final String ticker = event.getSymbol();
+
+        BaseBarSeries series = Optional.ofNullable(openedPositionsBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new);
+        if (series.getBarData().isEmpty()) {
+            log.warn("Opened positions BaseBarSeries of {} is empty, cannot define signal to close opened position.", ticker);
+            return false;
+        }
+        var endBarSeriesIndex = series.getEndIndex();
+
+        RSIIndicator rsi14 = new RSIIndicator(new ClosePriceIndicator(series), 14);
+        MACDIndicator macdIndicator = new MACDIndicator(new ClosePriceIndicator(series), 10, 22);
+
+        float macd9barsAVG = macdSignalLineValue(macdIndicator, endBarSeriesIndex, 9);
+
+        var currentPrice = parsedFloat(event.getClose());
+//        float stopTriggerValue = openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor) ? openedPosition.maxPrice() : openedPosition.avgPrice();
+        float stopTriggerValue = openedPosition.maxPrice();
+
+        if (currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor() &&
+                series.getBar(endBarSeriesIndex - 1).isBearish() &&
+//                rsi14.getValue(endBarSeriesIndex).isLessThanOrEqual(DoubleNum.valueOf(67)) &&
+                macdIndicator.getValue(endBarSeriesIndex).isLessThan(DoubleNum.valueOf(macd9barsAVG)) // current MACD less or equals signal line.
+//                && (macdIndicator.getValue(endBarSeriesIndex).isLessThanOrEqual(macdIndicator.getValue(endBarSeriesIndex - 1))
+////                    || series.getBar(endBarSeriesIndex).getClosePrice().isGreaterThan(series.getBar(endBarSeriesIndex).getOpenPrice().multipliedBy(DoubleNum.valueOf(1.1)))
+//                    || currentPrice > openedPosition.avgPrice() * 1.1)
+        ) {
+            log.debug("PRICE of {} DECREASED and now equals '{}' (rsi14 is '{}', current MACD is '{}', signal MACD line is '{}'), price decrease factor is {} / {}.",
+                    ticker, currentPrice, rsi14.getValue(endBarSeriesIndex), macdIndicator.getValue(endBarSeriesIndex), macd9barsAVG,
+                    openedPosition.priceDecreaseFactor(), bigAssCandlesStrategyCondition.getLongPositions().get(openedPosition.symbol()).priceDecreaseFactor());
+            return true;
+        }
+        return false;
+    }
+
+    private float macdSignalLineValue(final MACDIndicator macdIndicator, final int endBarSeriesIndex, final int signalLineLehgth) {
+        float macdAVG = 0F;
+        for (int i = endBarSeriesIndex; i > endBarSeriesIndex - signalLineLehgth; i--) {
+            macdAVG += macdIndicator.getValue(i).floatValue();
+        }
+        return  macdAVG / signalLineLehgth;
+    }
+
+    public void addEventToBaseBarSeries(final CandlestickEvent event, final Map<String, BaseBarSeries> barSeriesMap, final CandlestickInterval candlestickInterval) {
+        Optional.ofNullable(barSeriesMap.get(event.getSymbol())).ifPresentOrElse(barSeries -> {
+            if (barSeries.getEndIndex() >= 0) {
+                barSeries.addBar(CandlestickToBaseBarMapper.map(event, candlestickInterval),
+                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).equals(barSeries.getBar(barSeries.getEndIndex()).getEndTime())
+                );
+            }
+        }, () -> {
+            barSeriesMap.put(event.getSymbol(),
+                    newBaseBarSeries(marketInfo.getCandleSticks(event.getSymbol(), candlestickInterval, baseBarSeriesLimit), event.getSymbol(), candlestickInterval));
+        });
+    }
+
+    private BaseBarSeries newBaseBarSeries(final List<? extends Candle> candles, final String ticker, final CandlestickInterval candlestickInterval) {
+        return barSeriesBuilder
+                .withMaxBarCount(baseBarSeriesLimit)
+                .withNumTypeOf(DoubleNum::valueOf)
+                .withBars(CandlestickToBaseBarMapper.map(candles, candlestickInterval))
+                .withName(String.format("%s_%s", ticker, getName()))
+                .build();
+    }
+
+    private void sellFast(String symbol, float qty, String quoteAsset) {
+        if (!marketInfo.pairOrderIsProcessing(symbol, getName())) {
+            spotTrading.placeSellOrderFast(symbol, getName(), getId(), qty);
+        }
+    }
+
     private void emulateSell(String symbol, float price) {
         Optional.ofNullable(emulatedPositions.get(symbol)).ifPresent(inPosition -> {
             if (inPosition.get()) {
                 inPosition.set(false);
-                log.info("SELL {} at {}, buy price was {}.", symbol, price, Optional.ofNullable(macSawStrategyCondition.getLongPositions().get(symbol)).map(OpenedPosition::avgPrice).orElse(null));
-                macSawStrategyCondition.removeOpenedPosition(symbol);
+                log.info("SELL {} at {}, buy price was {}.", symbol, price, Optional.ofNullable(bigAssCandlesStrategyCondition.getLongPositions().get(symbol)).map(OpenedPosition::avgPrice).orElse(null));
+                bigAssCandlesStrategyCondition.removeOpenedPosition(symbol);
                 Optional.ofNullable(openedPositionsCandleStickEventsStreams.remove(symbol)).ifPresentOrElse(stream -> {
                     try {
                         stream.close();
@@ -566,11 +570,11 @@ public class MacSaw implements TradingStrategy {
     }
 
     private void backupOpenedPositions() {
-        List<OpenedPosition> savedPositions = dataService.saveAllOpenedPositions(macSawStrategyCondition.getLongPositions().values(), this);
+        List<OpenedPosition> savedPositions = dataService.saveAllOpenedPositions(bigAssCandlesStrategyCondition.getLongPositions().values(), this);
     }
 
     private void backupSellRecords() {
-        dataService.saveAllSellRecords(macSawStrategyCondition.getSellJournal().values(), this);
+        dataService.saveAllSellRecords(bigAssCandlesStrategyCondition.getSellJournal().values(), this);
     }
 
     private void unSubscribeFromUserUpdateEvents() {
@@ -592,5 +596,4 @@ public class MacSaw implements TradingStrategy {
             log.error(e.getMessage(), e);
         }
     }
-
 }

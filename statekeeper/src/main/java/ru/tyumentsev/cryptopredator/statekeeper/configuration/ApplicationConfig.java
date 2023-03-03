@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration(proxyBeanMethods = false)
 @ConfigurationProperties(prefix = "applicationconfig")
 @EnableScheduling
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PROTECTED)
 public class ApplicationConfig {
 
     final OkHttpClient sharedClient;

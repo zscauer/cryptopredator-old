@@ -4,6 +4,7 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import ru.tyumentsev.cryptopredator.commons.domain.BTCTrend;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPositionContainer;
 import ru.tyumentsev.cryptopredator.commons.domain.PreviousCandleContainer;
 import ru.tyumentsev.cryptopredator.commons.domain.SellRecordContainer;
@@ -12,6 +13,9 @@ import java.util.Collection;
 import java.util.List;
 
 public interface CacheServiceClient {
+
+    @GET("/api/cache/v1/btcTrend")
+    public Call<BTCTrend> getBTCTrend();
 
     @GET("/api/cache/v1/sellRecord")
     public Call<List<SellRecordContainer>> findAllSellRecords();

@@ -110,10 +110,9 @@ public class IndicatorVirgin implements TradingStrategy {
     @Scheduled(fixedDelayString = "${strategy.indicatorVirgin.updateBtcTrend.fixedDelay}", initialDelayString = "${strategy.indicatorVirgin.updateBtcTrend.initialDelay}")
     public void indicatorVirgin_updateBTCTrend() {
         if (indicatorVirginEnabled && followBtcTrend) {
-            marketInfo.getCandleSticks(btcTrend.getSymbol(), btcTrend.getInterval(), 1).stream()
-                    .findAny()
+            Optional.ofNullable(dataService.getBTCTrend()).map(BTCTrend::getLastCandle)
                     .ifPresentOrElse(btcTrend::setLastCandle,
-                            () -> log.warn("BTC trend wasn't updated, because market info returned no Candlestick."));
+                            () -> log.warn("BTC trend wasn't updated, because state keeper returned no Candlestick."));
         }
     }
 
