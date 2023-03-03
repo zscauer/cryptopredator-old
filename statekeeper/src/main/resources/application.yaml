@@ -17,14 +17,21 @@ logging:
       max-history: 30
 
 server:
-  tomcat:
+  undertow:
     accesslog:
       enabled: true
-      rotate: false
+      dir: "/tmp/logs"
+      pattern: "common"
       suffix: ".log"
       prefix: "access_log"
-      directory: "/tmp/logs"
-      pattern: "common"
+#  tomcat:
+#    accesslog:
+#      enabled: true
+#      rotate: false
+#      suffix: ".log"
+#      prefix: "access_log"
+#      directory: "/tmp/logs"
+#      pattern: "common"
 
 spring:
   main:

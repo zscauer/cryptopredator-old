@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.ta4j.core.BarSeries;
+import ru.tyumentsev.cryptopredator.commons.domain.BTCTrend;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.commons.domain.PlacedOrder;
 import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
@@ -21,6 +22,7 @@ import ru.tyumentsev.cryptopredator.indicatorvirginbot.cache.IndicatorVirginStra
 import ru.tyumentsev.cryptopredator.indicatorvirginbot.strategy.IndicatorVirgin;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -39,8 +41,8 @@ public class StateController {
     IndicatorVirgin indicatorVirgin;
 
     @GetMapping("/btcTrend")
-    public boolean getBtcTrend() {
-        return indicatorVirgin.getBtcTrend().isBullish();
+    public Map<BTCTrend, Boolean> getBtcTrend() {
+        return Collections.singletonMap(indicatorVirgin.getBtcTrend(), indicatorVirgin.getBtcTrend().isBullish());
     }
 
     @GetMapping("/monitoredPositions")
