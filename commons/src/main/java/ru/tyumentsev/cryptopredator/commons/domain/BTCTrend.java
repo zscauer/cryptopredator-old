@@ -12,6 +12,8 @@ import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Getter
 @Setter
@@ -27,14 +29,26 @@ public class BTCTrend implements Serializable {
     @JsonProperty
     CandlestickInterval interval;
     @JsonProperty
-    volatile Candlestick lastCandle;
+    List<Candlestick> lastCandles;
 
     public BTCTrend(CandlestickInterval candlestickInterval) {
         interval = candlestickInterval;
     }
 
+    public void setLastCandles (final List<Candlestick> candles) {
+        lastCandles.clear();
+        lastCandles.addAll(candles);
+    }
+
     public boolean isBullish() {
-        return Float.parseFloat(lastCandle.getClose()) > Float.parseFloat(lastCandle.getOpen());
+        var bullish = new AtomicBoolean(true);
+        lastCandles.forEach(candlestick -> {
+            if (Float.parseFloat(candlestick.getClose()) < Float.parseFloat(candlestick.getOpen())) {
+                bullish.set(false);
+            }
+        });
+
+        return bullish.get();
     }
 
     public boolean isBearish() {

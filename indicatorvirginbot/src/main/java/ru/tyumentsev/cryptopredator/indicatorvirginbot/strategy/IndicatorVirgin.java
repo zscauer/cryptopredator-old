@@ -19,6 +19,7 @@ import org.ta4j.core.BaseBarSeriesBuilder;
 import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.RSIIndicator;
+import org.ta4j.core.indicators.SMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.num.DoubleNum;
 import ru.tyumentsev.cryptopredator.commons.TradingStrategy;
@@ -61,9 +62,9 @@ public class IndicatorVirgin implements TradingStrategy {
     final DataService dataService;
     final BotStateService botStateService;
 
-    final CandlestickInterval marketCandlestickInterval = CandlestickInterval.FIFTEEN_MINUTES;
-    final CandlestickInterval openedPositionsCandlestickInterval = CandlestickInterval.FIVE_MINUTES;
-    final int baseBarSeriesLimit = 26;
+    final CandlestickInterval marketCandlestickInterval = CandlestickInterval.HALF_HOURLY;
+    final CandlestickInterval openedPositionsCandlestickInterval = CandlestickInterval.HALF_HOURLY;
+    final int baseBarSeriesLimit = 200;
     @Getter
     final Map<String, Closeable> marketCandleStickEventsStreams = new ConcurrentHashMap<>();
     @Getter
@@ -110,8 +111,8 @@ public class IndicatorVirgin implements TradingStrategy {
     @Scheduled(fixedDelayString = "${strategy.indicatorVirgin.updateBtcTrend.fixedDelay}", initialDelayString = "${strategy.indicatorVirgin.updateBtcTrend.initialDelay}")
     public void indicatorVirgin_updateBTCTrend() {
         if (indicatorVirginEnabled && followBtcTrend) {
-            Optional.ofNullable(dataService.getBTCTrend()).map(BTCTrend::getLastCandle)
-                    .ifPresentOrElse(btcTrend::setLastCandle,
+            Optional.ofNullable(dataService.getBTCTrend()).map(BTCTrend::getLastCandles)
+                    .ifPresentOrElse(btcTrend::setLastCandles,
                             () -> log.warn("BTC trend wasn't updated, because state keeper returned no Candlestick."));
         }
     }
@@ -330,6 +331,7 @@ public class IndicatorVirgin implements TradingStrategy {
         }
         var endBarSeriesIndex = series.getEndIndex();
 
+        SMAIndicator sma200 = new SMAIndicator(new ClosePriceIndicator(series), 200);
         EMAIndicator ema7 = new EMAIndicator(new ClosePriceIndicator(series), 7);
         EMAIndicator ema25 = new EMAIndicator(new ClosePriceIndicator(series), 25);
         RSIIndicator rsi14 = new RSIIndicator(new ClosePriceIndicator(series), 14);
@@ -340,11 +342,12 @@ public class IndicatorVirgin implements TradingStrategy {
         var rsi14Value = rsi14.getValue(endBarSeriesIndex);
 
         if (btcTrend.isBullish() &&
+                ema25.getValue(series.getEndIndex() - 1).isGreaterThanOrEqual(sma200.getValue(endBarSeriesIndex)) &&
                 ema7Value.isGreaterThan(ema25Value) &&
 //                rsi14.getValue(endBarSeriesIndex).isGreaterThan(DoubleNum.valueOf(73)) &&
-                (itsSustainableGrowth(ema7, ema25, endBarSeriesIndex, 2)
-                        && haveBreakdown(ema7, ema25, endBarSeriesIndex, 13)
-//                        && rsi14.getValue(endBarSeriesIndex - 1).isGreaterThan(DoubleNum.valueOf(72))
+                (itsSustainableGrowth(ema7, ema25, endBarSeriesIndex, 2) &&
+                        haveBreakdown(ema7, ema25, endBarSeriesIndex, 12) &&
+                        rsi14.getValue(endBarSeriesIndex - 1).isGreaterThan(DoubleNum.valueOf(72))
                     )
             ) {
 //                && sma7Value.isLessThanOrEqual(sma25Value.multipliedBy(DoubleNum.valueOf(1.06F)))
@@ -448,7 +451,7 @@ public class IndicatorVirgin implements TradingStrategy {
         var endBarSeriesIndex = series.getEndIndex();
 
         RSIIndicator rsi14 = new RSIIndicator(new ClosePriceIndicator(series), 14);
-        MACDIndicator macdIndicator = new MACDIndicator(new ClosePriceIndicator(series), 10, 22);
+        MACDIndicator macdIndicator = new MACDIndicator(new ClosePriceIndicator(series), 12, 26);
 
         float macd9barsAVG = macdSignalLineValue(macdIndicator, endBarSeriesIndex, 9);
 
@@ -456,7 +459,7 @@ public class IndicatorVirgin implements TradingStrategy {
 //        float stopTriggerValue = openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor) ? openedPosition.maxPrice() : openedPosition.avgPrice();
         float stopTriggerValue = openedPosition.maxPrice();
 
-        if (currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor() &&
+        if (//currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor() &&
                 series.getBar(endBarSeriesIndex - 1).isBearish() &&
 //                rsi14.getValue(endBarSeriesIndex).isLessThanOrEqual(DoubleNum.valueOf(67)) &&
                 macdIndicator.getValue(endBarSeriesIndex).isLessThan(DoubleNum.valueOf(macd9barsAVG)) // current MACD less or equals signal line.
@@ -484,7 +487,7 @@ public class IndicatorVirgin implements TradingStrategy {
         Optional.ofNullable(barSeriesMap.get(event.getSymbol())).ifPresentOrElse(barSeries -> {
             if (barSeries.getEndIndex() >= 0) {
                 barSeries.addBar(CandlestickToBaseBarMapper.map(event, candlestickInterval),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).equals(barSeries.getBar(barSeries.getEndIndex()).getEndTime())
+                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).isEqual(barSeries.getLastBar().getEndTime())
                 );
             }
         }, () -> {

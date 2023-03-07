@@ -1,6 +1,11 @@
 package ru.tyumentsev.cryptopredator.commons;
 
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
+import org.ta4j.core.Bar;
+import org.ta4j.core.BaseBarSeries;
+
+import java.util.Comparator;
+import java.util.Optional;
 
 public interface TradingStrategy {
 
@@ -8,8 +13,17 @@ public interface TradingStrategy {
         return Float.parseFloat(stringToParse);
     }
 
-    default float percentageDifference(float bigger, float smaller) {
+    default float percentageDifference(final float bigger, final float smaller) {
         return 100 * (bigger - smaller) / bigger;
+    }
+
+    /**
+     * Search bar with lowest close price to define initial stop price.
+     * @param series source where to search bar with lowest price.
+     * @return {@link Bar} with lowest close price.
+     */
+    default Optional<Bar> lowestClosePrice(final BaseBarSeries series) {
+        return series.getBarData().stream().min(Comparator.comparing(Bar::getClosePrice));
     }
 
     String getName();

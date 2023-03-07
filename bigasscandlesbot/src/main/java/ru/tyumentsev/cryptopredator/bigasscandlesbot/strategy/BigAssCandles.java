@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.ta4j.core.Bar;
 import org.ta4j.core.BaseBarSeries;
 import org.ta4j.core.BaseBarSeriesBuilder;
 import org.ta4j.core.indicators.EMAIndicator;
@@ -39,6 +40,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -342,13 +344,14 @@ public class BigAssCandles implements TradingStrategy {
 
 //        var ema7Value = ema7.getValue(endBarSeriesIndex);
 //        var ema25Value = ema25.getValue(endBarSeriesIndex);
-        var currentPrice = DoubleNum.valueOf(parsedFloat(event.getClose()));
+//        var currentPrice = DoubleNum.valueOf(parsedFloat(event.getClose()));
         var previousBar = series.getBar(series.getEndIndex() - 1);
         var sma200Value = sma200.getValue(endBarSeriesIndex);
         var rsi14Value = rsi14.getValue(endBarSeriesIndex);
 
         if (rsi14Value.isGreaterThanOrEqual(DoubleNum.valueOf(55)) &&
-                sma200Value.isLessThan(currentPrice) &&
+                ema25.getValue(series.getEndIndex() - 1).isGreaterThan(sma200Value) &&
+//                sma200Value.isLessThan(currentPrice) &&
                 previousBar.isBullish() &&
                 previousBar.getClosePrice().isGreaterThan(ema25.getValue(series.getEndIndex() - 2)) &&
 //                previousBar.getClosePrice().isLessThan(currentPrice.multipliedBy(DoubleNum.valueOf(1.01))) &&
@@ -523,7 +526,7 @@ public class BigAssCandles implements TradingStrategy {
         Optional.ofNullable(barSeriesMap.get(event.getSymbol())).ifPresentOrElse(barSeries -> {
             if (barSeries.getEndIndex() >= 0) {
                 barSeries.addBar(CandlestickToBaseBarMapper.map(event, candlestickInterval),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).equals(barSeries.getBar(barSeries.getEndIndex()).getEndTime())
+                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(event.getCloseTime()), ZoneId.systemDefault()).isEqual(barSeries.getLastBar().getEndTime())
                 );
             }
         }, () -> {

@@ -39,8 +39,11 @@ public class OpenedPosition implements Serializable {
     @JsonProperty
     volatile Float takePrice; //bigasscandlesbot
     @JsonProperty
-    volatile LocalDateTime updateStamp;
+    volatile Float trendPriceStep; //bigasscandlesbot
+    volatile int lastBarSeriesIndex; //bigasscandlesbot
     @JsonProperty
-    volatile String threadName;
+    volatile LocalDateTime updateStamp; //threads debug
+    @JsonProperty
+    volatile String threadName; //threads debug
 
 }

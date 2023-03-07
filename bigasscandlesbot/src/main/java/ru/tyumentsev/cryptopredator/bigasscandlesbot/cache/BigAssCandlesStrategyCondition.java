@@ -7,14 +7,16 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.ta4j.core.Bar;
 import org.ta4j.core.BaseBarSeries;
-import org.ta4j.core.indicators.EMAIndicator;
-import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.num.DoubleNum;
 import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,14 +37,51 @@ public class BigAssCandlesStrategyCondition extends StrategyCondition {
 
     public void updateOpenedPositionStopPrice(final OpenedPosition position, final BaseBarSeries series) {
         if (!series.getBarData().isEmpty()) {
-            EMAIndicator ema25 = new EMAIndicator(new ClosePriceIndicator(series), 25);
-            var ema25VAlue = ema25.getValue(series.getEndIndex() - 1).floatValue();
-            if (ema25VAlue > Optional.ofNullable(position.stopPrice()).orElse(0F)) {
-                position.stopPrice(ema25VAlue);
+            if (position.trendPriceStep() == null) {
+                defineTrendPriceStep(series.getSubSeries(series.getEndIndex() - 50, series.getEndIndex())).ifPresent(position::trendPriceStep);
             }
+            if (series.getEndIndex() != position.lastBarSeriesIndex()) {
+                definePositionStopPrice(position, series);
+                position.stopPrice(position.stopPrice() + position.trendPriceStep());
+                position.lastBarSeriesIndex(series.getEndIndex());
+            }
+//            EMAIndicator ema25 = new EMAIndicator(new ClosePriceIndicator(series), 25);
+//            var ema25VAlue = ema25.getValue(series.getEndIndex() - 1).floatValue();
+//            if (ema25VAlue > Optional.ofNullable(position.stopPrice()).orElse(0F)) {
+//                position.stopPrice(ema25VAlue);
+//            }
         } else {
             log.info("Bar series of {} is empty, cannot update stop price.", position.symbol());
         }
+    }
+
+    private Optional<Float> defineTrendPriceStep(final BaseBarSeries series) {
+        List<Bar> lowestBars = series.getBarData().stream()
+                .sorted(Comparator.comparing(Bar::getLowPrice))
+                .limit(2)
+                .toList();
+        if (lowestBars.get(0).getEndTime().isBefore(lowestBars.get(1).getEndTime())) {
+            int olderLowestBarIndex = series.getBarData().indexOf(lowestBars.get(0)) + series.getRemovedBarsCount();
+            int lastLowerBarIndex = series.getBarData().indexOf(lowestBars.get(1)) + series.getRemovedBarsCount();
+            return Optional.of(lowestBars.get(1).getLowPrice().minus(lowestBars.get(0).getLowPrice())
+                    .dividedBy(DoubleNum.valueOf(lastLowerBarIndex - olderLowestBarIndex)).floatValue()
+            );
+        } else {
+            log.info("Cannot define trend price step for {} because end time of lowest bar is closer to current. Downtrend?", series.getName());
+            log.info("Lowest bar - {} / second lowest bar - {}.", lowestBars.get(0).getEndTime(), lowestBars.get(1).getEndTime());
+            return Optional.empty();
+        }
+    }
+
+    private void definePositionStopPrice (OpenedPosition position, final BaseBarSeries series) {
+        Optional.ofNullable(position.stopPrice()).ifPresentOrElse(stopPrice -> {
+            position.stopPrice(position.stopPrice() + position.trendPriceStep());
+        }, () -> {
+            var lowestPrice = series.getSubSeries(series.getEndIndex() - 5, series.getEndIndex()).getBarData().stream()
+                    .min(Comparator.comparing(Bar::getLowPrice))
+                    .map(Bar::getLowPrice).orElse(series.getLastBar().getLowPrice());
+            position.stopPrice(lowestPrice.floatValue());
+        });
     }
 
     @Override
