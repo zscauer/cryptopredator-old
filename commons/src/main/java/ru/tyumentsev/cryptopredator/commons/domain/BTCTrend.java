@@ -12,6 +12,7 @@ import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -29,7 +30,7 @@ public class BTCTrend implements Serializable {
     @JsonProperty
     CandlestickInterval interval;
     @JsonProperty
-    List<Candlestick> lastCandles;
+    List<Candlestick> lastCandles = new ArrayList<>();
 
     public BTCTrend(CandlestickInterval candlestickInterval) {
         interval = candlestickInterval;
