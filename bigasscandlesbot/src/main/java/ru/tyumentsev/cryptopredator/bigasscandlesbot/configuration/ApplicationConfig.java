@@ -53,10 +53,7 @@ public class ApplicationConfig {
         dispatcher.setMaxRequests(400);
         sharedClient = new OkHttpClient.Builder()
                 .dispatcher(dispatcher)
-//                .pingInterval(20, TimeUnit.SECONDS)
-//                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
                 .callTimeout(90, TimeUnit.SECONDS)
-//                .connectionPool(new ConnectionPool())
                 .build();
     }
 

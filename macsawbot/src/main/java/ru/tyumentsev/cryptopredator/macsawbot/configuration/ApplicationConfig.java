@@ -55,10 +55,7 @@ public class ApplicationConfig {
         dispatcher.setMaxRequests(400);
         sharedClient = new OkHttpClient.Builder()
                 .dispatcher(dispatcher)
-//                .pingInterval(20, TimeUnit.SECONDS)
-//                .connectionPool(new ConnectionPool(5, 3, TimeUnit.MINUTES))
                 .callTimeout(60, TimeUnit.SECONDS)
-//                .connectionPool(new ConnectionPool())
                 .build();
     }
 
@@ -107,7 +104,6 @@ public class ApplicationConfig {
                 .baseUrl(String.format(stateKeeperURL))
                 .addConverterFactory(JacksonConverterFactory.create(new ObjectMapper().registerModule(new JavaTimeModule())))
                 .client(sharedClient)
-//                .client(new OkHttpClient.Builder().build())
                 .build().create(CacheServiceClient.class)
         );
     }
@@ -118,7 +114,6 @@ public class ApplicationConfig {
                 .baseUrl(String.format(stateKeeperURL))
                 .addConverterFactory(JacksonConverterFactory.create())
                 .client(sharedClient)
-//                .client(new OkHttpClient.Builder().build())
                 .build().create(AccountServiceClient.class)
         );
     }
@@ -129,7 +124,6 @@ public class ApplicationConfig {
                 .baseUrl(String.format(stateKeeperURL))
                 .addConverterFactory(JacksonConverterFactory.create())
                 .client(sharedClient)
-//                .client(new OkHttpClient.Builder().build())
                 .build().create(BotStateServiceClient.class)
         );
     }

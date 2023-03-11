@@ -1,5 +1,3 @@
-# metrics configured by this article:
-# https://refactorfirst.com/spring-boot-prometheus-grafana
 
 services:
 
