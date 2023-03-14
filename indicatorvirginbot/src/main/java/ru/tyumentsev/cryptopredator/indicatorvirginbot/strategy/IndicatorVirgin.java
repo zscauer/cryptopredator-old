@@ -346,8 +346,8 @@ public class IndicatorVirgin implements TradingStrategy {
                 ema7Value.isGreaterThan(ema25Value) &&
 //                rsi14.getValue(endBarSeriesIndex).isGreaterThan(DoubleNum.valueOf(73)) &&
                 (itsSustainableGrowth(ema7, ema25, endBarSeriesIndex, 2) &&
-                        haveBreakdown(ema7, ema25, endBarSeriesIndex, 12) &&
-                        rsi14.getValue(endBarSeriesIndex - 1).isGreaterThan(DoubleNum.valueOf(72))
+                        haveBreakdown(ema7, ema25, endBarSeriesIndex, 12) //&&
+//                        rsi14.getValue(endBarSeriesIndex - 1).isGreaterThan(DoubleNum.valueOf(72))
                     )
             ) {
 //                && sma7Value.isLessThanOrEqual(sma25Value.multipliedBy(DoubleNum.valueOf(1.06F)))
@@ -460,9 +460,10 @@ public class IndicatorVirgin implements TradingStrategy {
         float stopTriggerValue = openedPosition.maxPrice();
 
         if (//currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor() &&
-                series.getBar(endBarSeriesIndex - 1).isBearish() &&
+                (series.getBar(endBarSeriesIndex - 1).isBearish() &&
 //                rsi14.getValue(endBarSeriesIndex).isLessThanOrEqual(DoubleNum.valueOf(67)) &&
-                macdIndicator.getValue(endBarSeriesIndex).isLessThan(DoubleNum.valueOf(macd9barsAVG)) // current MACD less or equals signal line.
+                macdIndicator.getValue(endBarSeriesIndex).isLessThan(DoubleNum.valueOf(macd9barsAVG))) // current MACD less or equals signal line.
+                || currentPrice > openedPosition.avgPrice() * 1.05
 //                && (macdIndicator.getValue(endBarSeriesIndex).isLessThanOrEqual(macdIndicator.getValue(endBarSeriesIndex - 1))
 ////                    || series.getBar(endBarSeriesIndex).getClosePrice().isGreaterThan(series.getBar(endBarSeriesIndex).getOpenPrice().multipliedBy(DoubleNum.valueOf(1.1)))
 //                    || currentPrice > openedPosition.avgPrice() * 1.1)

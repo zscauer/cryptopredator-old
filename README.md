@@ -60,5 +60,5 @@ When all docker images are built - it's ready to launch:
 Some services are ready to run as native image. To build and run native image (`statekeeper` for example):
 > cd statekeeper  
 > gradle --settings-file settings-native.gradle processAot  
-> gradle --settings-file settings-native.gradle bootBuildImage  
+> gradle --settings-file settings-native.gradle nativeCompile  
 > docker build --tag=statekeeper -f Dockerfile-native .

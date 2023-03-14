@@ -53,12 +53,13 @@ public class AccountService extends AccountManager {
                 public void onResponse(final UserDataUpdateEvent callback) {
                     if (callback.getEventType().equals(UserDataUpdateEvent.UserDataUpdateEventType.ORDER_TRADE_UPDATE)) {
                         OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();
+                        log.info("Get {} {} ORDER_TRADE_UPDATE of {}", event.getExecutionType(), event.getSide(), event.getSymbol());
                         switch (event.getExecutionType()) {
                             case NEW -> {
                                 updateLimits(event);
                             }
                             case TRADE -> {
-                                if (Float.parseFloat(event.getAccumulatedQuantity()) == Float.parseFloat(event.getOriginalQuantity())) {
+                                if (Float.valueOf(event.getAccumulatedQuantity()).equals(Float.valueOf(event.getOriginalQuantity()))) {
                                     if (!botState.getActiveBots().isEmpty()) {
                                         updateLimits(event);
                                         Optional.ofNullable(botState.getActiveBots().get(event.getStrategyId())).ifPresentOrElse(endpointURL -> {
@@ -67,9 +68,8 @@ public class AccountService extends AccountManager {
                                             log.info("Bot with strategy id '{}' from trade event not found, notify all bots.", event.getStrategyId());
                                             botState.getActiveBots().values().forEach(endpointURL -> notifyBot(endpointURL, event));
                                         });
-//                                botState.getActiveBots().values().forEach(endpointURL -> notifyBot(endpointURL, event));
                                     } else {
-                                        log.warn("No user data update event listeners found, but new trade event recieved:\n{}", event);
+                                        log.warn("No user data update event listeners found, but {} trade event recieved:\n{}", event.getExecutionType(), event);
                                     }
                                     refreshAccountBalances();
                                 }
@@ -108,8 +108,10 @@ public class AccountService extends AccountManager {
         int currentOrdersQtyLimitValue = strategyLimits.get(ORDERS_QTY);
         switch (event.getSide()) {
             case SELL -> {
-                int ordersQtyInTrade = ((Double) Math.ceil(Double.parseDouble(event.getCumulativeQuoteQty()))).intValue() / strategyLimits.get(ORDER_VOLUME);// qty of base orders in current trade.
-                return currentOrdersQtyLimitValue + ordersQtyInTrade;
+                if (event.getExecutionType() == ExecutionType.TRADE) {
+                    int ordersQtyInTrade = ((Double) Math.ceil(Double.parseDouble(event.getCumulativeQuoteQty()))).intValue() / strategyLimits.get(ORDER_VOLUME);// qty of base order in current trade.
+                    return currentOrdersQtyLimitValue + ordersQtyInTrade;
+                }
             }
             case BUY -> {
                 switch (event.getExecutionType()) {
@@ -121,11 +123,6 @@ public class AccountService extends AccountManager {
                         return currentOrdersQtyLimitValue + 1;
                     }
                 }
-//                if (event.getExecutionType().equals(ExecutionType.NEW)) {
-//                    return currentOrdersQtyLimitValue - 1;
-//                } else if (event.getExecutionType().equals(ExecutionType.CANCELED)) {
-//                    return currentOrdersQtyLimitValue + 1;
-//                }
             }
         }
         return currentOrdersQtyLimitValue;
@@ -141,6 +138,7 @@ public class AccountService extends AccountManager {
 
     private void notifyBot(final String listenerEndpoint, OrderTradeUpdateEvent event) {
         RestTemplate restTemplate = new RestTemplate();
+        log.info("Sending to {} event {}.", listenerEndpoint, event);
         restTemplate.exchange(listenerEndpoint, HttpMethod.POST, new HttpEntity<>(event), Void.class);
     }
 

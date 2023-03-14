@@ -51,9 +51,9 @@ public class CacheController {
     public List<SellRecordData> saveSellRecordsCache(@RequestBody List<SellRecordData> sellRecords) {
         log.debug("Request to save sell records: {}", sellRecords);
         List<SellRecordData> savedRecords = cacheService.saveAllSellRecords(sellRecords);
-        log.info("Saved {} sell records of {}.",
+        log.info("Saved {} sell records of {} strategy.",
                 savedRecords.size(),
-                savedRecords.stream().findFirst().map(sellRecordData -> sellRecordData.sellRecord().strategy())
+                savedRecords.stream().findFirst().map(sellRecordData -> sellRecordData.sellRecord().strategy()).orElse("NOT DEFINED")
         );
         return savedRecords;
     }
@@ -107,9 +107,9 @@ public class CacheController {
 //        log.info("saveOpenedPositionsCache({}) call from {}.", openedPositions, headers.map().get("bot-id"));
         log.debug("Request to save openend positions: {}", openedPositions);
         List<OpenedPositionData> openedPositionList = cacheService.saveAllOpenedPositions(openedPositions);
-        log.info("Saved {} opened positions of {}.",
+        log.info("Saved {} opened positions of {} strategy.",
                 openedPositionList.size(),
-                openedPositionList.stream().findFirst().map(openedPositionData -> openedPositionData.openedPosition().strategy())
+                openedPositionList.stream().findFirst().map(openedPositionData -> openedPositionData.openedPosition().strategy()).orElse("NOT DEFINED")
         );
         return openedPositionList;
     }
