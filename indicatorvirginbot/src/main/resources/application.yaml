@@ -92,3 +92,20 @@ strategy:
     startCandlstickEventsCacheUpdating:
       initialDelay: ${INDICATORVIRGIN_START_CANDLESTICKEVENTS_CACHE_UPDATING_INITIAL_DELAY}
       fixedDelay: ${INDICATORVIRGIN_START_CANDLESTICKEVENTS_CACHE_UPDATING_FIXED_DELAY}
+  levels:
+    enabled: ${LEVELS_ENABLED}
+    followBtcTrend: ${LEVELS_FOLLOW_BTC_TREND}
+    ordersQtyLimit: ${LEVELS_ORDERS_QTY_LIMIT}
+    averagingEnabled: ${LEVELS_AVERAGING_ENABLED}
+    priceDecreaseFactor: ${LEVELS_PRICE_DECREASE_FACTOR}
+    pairTakeProfitFactor: ${LEVELS_PAIR_TAKE_PROFIT_FACTOR}
+    takeProfitPriceDecreaseFactor: ${LEVELS_TAKE_PROFIT_PRICE_DECREASE_FACTOR}
+    averagingTrigger: ${LEVELS_AVERAGING_TRIGGER}
+    workedOutSignalsIgnoringPeriod: ${LEVELS_WORKED_OUT_SIGNALS_IGNORING_PERIOD}
+    monitoringExpirationTime: ${LEVELS_MONITORING_EXPIRATION_TIME}
+    updateBtcTrend:
+      initialDelay: ${LEVELS_UPDATE_BTC_TREND_INITIAL_DELAY}
+      fixedDelay: ${LEVELS_UPDATE_BTC_TREND_FIXED_DELAY}
+    startCandlstickEventsCacheUpdating:
+      initialDelay: ${LEVELS_START_CANDLESTICKEVENTS_CACHE_UPDATING_INITIAL_DELAY}
+      fixedDelay: ${LEVELS_START_CANDLESTICKEVENTS_CACHE_UPDATING_FIXED_DELAY}

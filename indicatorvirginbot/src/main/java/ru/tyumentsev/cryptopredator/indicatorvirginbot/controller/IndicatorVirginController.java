@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.ta4j.core.BarSeries;
 import ru.tyumentsev.cryptopredator.commons.domain.BTCTrend;
+import ru.tyumentsev.cryptopredator.commons.domain.MonitoredPosition;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.commons.domain.PlacedOrder;
 import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
@@ -22,7 +23,6 @@ import ru.tyumentsev.cryptopredator.indicatorvirginbot.cache.IndicatorVirginStra
 import ru.tyumentsev.cryptopredator.indicatorvirginbot.strategy.IndicatorVirgin;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -30,14 +30,15 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/state")
+@RequestMapping("/indicatorvirgin")
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
-public class StateController {
+@SuppressWarnings("unused")
+public class IndicatorVirginController {
 
-    IndicatorVirginStrategyCondition indicatorVirginStrategyCondition;
     MarketInfo marketInfo;
+    IndicatorVirginStrategyCondition indicatorVirginStrategyCondition;
     IndicatorVirgin indicatorVirgin;
 
     @GetMapping("/btcTrend")
@@ -46,9 +47,9 @@ public class StateController {
     }
 
     @GetMapping("/monitoredPositions")
-    public List<IndicatorVirginStrategyCondition.MonitoredPosition> getMonitoredPositions() {
+    public List<MonitoredPosition> getMonitoredPositions() {
         return indicatorVirginStrategyCondition.getMonitoredPositions().values().stream()
-                .sorted(Comparator.comparing(IndicatorVirginStrategyCondition.MonitoredPosition::beginMonitoringTime))
+                .sorted(Comparator.comparing(MonitoredPosition::beginMonitoringTime))
                 .toList();
     }
 

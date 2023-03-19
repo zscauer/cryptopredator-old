@@ -31,26 +31,33 @@ public class BTCTrend implements Serializable {
     CandlestickInterval interval;
     @JsonProperty
     List<Candlestick> lastCandles = new ArrayList<>();
+//    @JsonProperty
+    volatile boolean bullish = true;
 
     public BTCTrend(CandlestickInterval candlestickInterval) {
         interval = candlestickInterval;
     }
 
-    public void setLastCandles (final List<Candlestick> candles) {
+    public void setLastCandles(final List<Candlestick> candles) {
         lastCandles.clear();
         lastCandles.addAll(candles);
-    }
-
-    public boolean isBullish() {
-        var bullish = new AtomicBoolean(true);
         lastCandles.forEach(candlestick -> {
             if (Float.parseFloat(candlestick.getClose()) < Float.parseFloat(candlestick.getOpen())) {
-                bullish.set(false);
+                bullish = false;
             }
         });
-
-        return bullish.get();
     }
+
+//    public boolean isBullish() {
+//        var bullish = new AtomicBoolean(true);
+//        lastCandles.forEach(candlestick -> {
+//            if (Float.parseFloat(candlestick.getClose()) < Float.parseFloat(candlestick.getOpen())) {
+//                bullish.set(false);
+//            }
+//        });
+//
+//        return bullish.get();
+//    }
 
     public boolean isBearish() {
         return !isBullish();

@@ -39,7 +39,7 @@ public class MarketInfo implements TradingService {
     BinanceApiRestClient restClient;
     BinanceApiWebSocketClient binanceApiWebSocketClient;
 
-    List<String> fiatCurrency = List.of("EURUSDT", "AUDUSDT", "GBPUSDT", "BUSDT", "BNBUSDT");
+    List<String> fiatCurrency = List.of("EURUSDT", "AUDUSDT", "GBPUSDT", "BUSDT", "USDCUSDT", "BNBUSDT");
     /**
      * Store flags, which indicates that order already placed.
      */

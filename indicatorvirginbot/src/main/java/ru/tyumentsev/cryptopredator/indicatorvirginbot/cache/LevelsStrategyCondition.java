@@ -24,13 +24,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Slf4j
-public class IndicatorVirginStrategyCondition extends StrategyCondition {
+public class LevelsStrategyCondition extends StrategyCondition {
 
     @Getter
     final Map<String, MonitoredPosition> monitoredPositions = new ConcurrentHashMap<>();
-    @Value("${strategy.indicatorVirgin.workedOutSignalsIgnoringPeriod}")
+    @Value("${strategy.levels.workedOutSignalsIgnoringPeriod}")
     int workedOutSignalsIgnoringPeriod;
-    @Value("${strategy.indicatorVirgin.monitoringExpirationTime}")
+    @Value("${strategy.levels.monitoringExpirationTime}")
     long monitoringExpirationTime;
 
     @Override
@@ -59,7 +59,7 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
 
     public boolean pairOnMonitoring(final String symbol, final BaseBarSeries series) {
         Optional.ofNullable(monitoredPositions.get(symbol)).ifPresent(monitoredPosition -> {
-            if (monitoredPosition.beginMonitoringTime().isBefore(ZonedDateTime.now().minusHours(monitoringExpirationTime)) ||
+            if ((monitoredPosition.beginMonitoringTime().isBefore(ZonedDateTime.now().minusMinutes(monitoringExpirationTime))) ||
                     monitoredPairPriceTurnedBack(series)) {
                 monitoredPositions.remove(symbol);
             }
