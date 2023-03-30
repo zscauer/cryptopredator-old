@@ -211,7 +211,7 @@ public class IndicatorVirgin implements TradingStrategy {
             );
             indicatorVirginStrategyCondition.removePositionFromMonitoring(symbol);
 
-            marketInfo.pairOrderFilled(symbol, getName());
+            marketInfo.pairOrderFilled(symbol, getId());
 
             Optional.ofNullable(openedPositionsCandleStickEventsStreams.get(symbol)).ifPresentOrElse(stream -> {
             }, () -> { // do nothing if stream is already running.
@@ -252,7 +252,7 @@ public class IndicatorVirgin implements TradingStrategy {
             });
             openedPositionsBarSeriesMap.remove(symbol);
 
-            marketInfo.pairOrderFilled(symbol, getName());
+            marketInfo.pairOrderFilled(symbol, getId());
         }
     }
 
@@ -330,7 +330,7 @@ public class IndicatorVirgin implements TradingStrategy {
 //        if (Optional.ofNullable(emulatedPositions.get(event.getSymbol())).map(AtomicBoolean::get).orElse(false)) {
 //            return false;
 //        }
-        if ((marketInfo.pairOrderIsProcessing(event.getSymbol(), getName()) || indicatorVirginStrategyCondition.thisSignalWorkedOutBefore(event.getSymbol()))
+        if ((marketInfo.pairOrderIsProcessing(event.getSymbol(), getId()) || indicatorVirginStrategyCondition.thisSignalWorkedOutBefore(event.getSymbol()))
                 || (followBtcTrend && btcTrend.isBearish())) {
             return false;
         }
@@ -400,15 +400,18 @@ public class IndicatorVirgin implements TradingStrategy {
         }
 
         indicatorVirginStrategyCondition.getMonitoredPositionPrice(event.getSymbol()).ifPresent(startPrice -> {
+            float currentPrice = parsedFloat(event.getClose());
             var endBarSeriesIndex = series.getEndIndex();
 
-            RSIIndicator rsi14 = new RSIIndicator(new ClosePriceIndicator(series), 14);
-            var rsi14Value = rsi14.getValue(endBarSeriesIndex - 1);
+//            RSIIndicator rsi14 = new RSIIndicator(new ClosePriceIndicator(series), 14);
+//            var rsi14Value = rsi14.getValue(endBarSeriesIndex - 1);
 
-            if (series.getBar(endBarSeriesIndex - 1).getClosePrice().isGreaterThan(DoubleNum.valueOf(startPrice)) &&
-                    rsi14Value.isGreaterThanOrEqual(DoubleNum.valueOf(70))
+            if (series.getBar(endBarSeriesIndex - 1).getClosePrice()
+                    .isGreaterThan(DoubleNum.valueOf(startPrice).multipliedBy(DoubleNum.valueOf(1.02)))
+                //                    && rsi14Value.isGreaterThanOrEqual(DoubleNum.valueOf(70))
+                    && indicatorVirginStrategyCondition.pairOnUptrend(event.getSymbol(), currentPrice, CandlestickInterval.DAILY, marketInfo)
             ) {
-                buyFast(event.getSymbol(), parsedFloat(event.getClose()), tradingAsset, false);
+                buyFast(event.getSymbol(), currentPrice, tradingAsset, false);
             }
         });
 //        Optional<Float> startPrice = indicatorVirginStrategyCondition.getMonitoredPositionPrice(event.getSymbol());
@@ -452,9 +455,10 @@ public class IndicatorVirgin implements TradingStrategy {
     }
 
     private void buyFast(final String symbol, final float price, String quoteAsset, boolean itsAveraging) {
-        if (!(marketInfo.pairOrderIsProcessing(symbol, getName()) || indicatorVirginStrategyCondition.thisSignalWorkedOutBefore(symbol))) {
+        if (!(marketInfo.pairOrderIsProcessing(symbol, getId()) || indicatorVirginStrategyCondition.thisSignalWorkedOutBefore(symbol))) {
 //            emulateBuy(symbol, price);
-            spotTrading.placeBuyOrderFast(symbol, getName(), getId(), price, quoteAsset, minimalAssetBalance, baseOrderVolume);
+            log.info("Try to place {} buy order fast.", symbol);
+            spotTrading.placeBuyOrderFast(symbol, getId(), price, quoteAsset, minimalAssetBalance, baseOrderVolume);
         }
     }
 
@@ -471,7 +475,7 @@ public class IndicatorVirgin implements TradingStrategy {
     }
 
     private boolean signalToCloseLongPosition(final CandlestickEvent event, final OpenedPosition openedPosition) {
-        if (marketInfo.pairOrderIsProcessing(event.getSymbol(), getName())) {
+        if (marketInfo.pairOrderIsProcessing(event.getSymbol(), getId())) {
             return false;
         }
         final String ticker = event.getSymbol();
@@ -543,8 +547,8 @@ public class IndicatorVirgin implements TradingStrategy {
     }
 
     private void sellFast(String symbol, float qty, String quoteAsset) {
-        if (!marketInfo.pairOrderIsProcessing(symbol, getName())) {
-            spotTrading.placeSellOrderFast(symbol, getName(), getId(), qty);
+        if (!marketInfo.pairOrderIsProcessing(symbol, getId())) {
+            spotTrading.placeSellOrderFast(symbol, getId(), qty);
         }
     }
 

@@ -211,7 +211,7 @@ public class Levels implements TradingStrategy {
             );
             levelsStrategyCondition.removePositionFromMonitoring(symbol);
 
-            marketInfo.pairOrderFilled(symbol, getName());
+            marketInfo.pairOrderFilled(symbol, getId());
 
             Optional.ofNullable(openedPositionsCandleStickEventsStreams.get(symbol)).ifPresentOrElse(stream -> {
             }, () -> { // do nothing if stream is already running.
@@ -252,7 +252,7 @@ public class Levels implements TradingStrategy {
             });
             openedPositionsBarSeriesMap.remove(symbol);
 
-            marketInfo.pairOrderFilled(symbol, getName());
+            marketInfo.pairOrderFilled(symbol, getId());
         }
     }
 
@@ -330,7 +330,7 @@ public class Levels implements TradingStrategy {
 //        if (Optional.ofNullable(emulatedPositions.get(event.getSymbol())).map(AtomicBoolean::get).orElse(false)) {
 //            return false;
 //        }
-        if (marketInfo.pairOrderIsProcessing(event.getSymbol(), getName()) || levelsStrategyCondition.thisSignalWorkedOutBefore(event.getSymbol())) {
+        if (marketInfo.pairOrderIsProcessing(event.getSymbol(), getId()) || levelsStrategyCondition.thisSignalWorkedOutBefore(event.getSymbol())) {
             return false;
         }
 
@@ -451,9 +451,9 @@ public class Levels implements TradingStrategy {
     }
 
     private void buyFast(final String symbol, final float price, String quoteAsset, boolean itsAveraging) {
-        if (!(marketInfo.pairOrderIsProcessing(symbol, getName()) || levelsStrategyCondition.thisSignalWorkedOutBefore(symbol))) {
+        if (!(marketInfo.pairOrderIsProcessing(symbol, getId()) || levelsStrategyCondition.thisSignalWorkedOutBefore(symbol))) {
 //            emulateBuy(symbol, price);
-            spotTrading.placeBuyOrderFast(symbol, getName(), getId(), price, quoteAsset, minimalAssetBalance, baseOrderVolume);
+            spotTrading.placeBuyOrderFast(symbol, getId(), price, quoteAsset, minimalAssetBalance, baseOrderVolume);
         }
     }
 
@@ -470,7 +470,7 @@ public class Levels implements TradingStrategy {
     }
 
     private boolean signalToCloseLongPosition(final CandlestickEvent event, final OpenedPosition openedPosition) {
-        if (marketInfo.pairOrderIsProcessing(event.getSymbol(), getName())) {
+        if (marketInfo.pairOrderIsProcessing(event.getSymbol(), getId())) {
             return false;
         }
         final String ticker = event.getSymbol();
@@ -543,8 +543,8 @@ public class Levels implements TradingStrategy {
     }
 
     private void sellFast(String symbol, float qty, String quoteAsset) {
-        if (!marketInfo.pairOrderIsProcessing(symbol, getName())) {
-            spotTrading.placeSellOrderFast(symbol, getName(), getId(), qty);
+        if (!marketInfo.pairOrderIsProcessing(symbol, getId())) {
+            spotTrading.placeSellOrderFast(symbol, getId(), qty);
         }
     }
 

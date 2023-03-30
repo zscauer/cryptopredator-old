@@ -1,6 +1,7 @@
 package ru.tyumentsev.cryptopredator.indicatorvirginbot.controller;
 
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
+import com.binance.api.client.domain.market.Candlestick;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -114,6 +115,11 @@ public class IndicatorVirginController {
     @GetMapping("/barSeries/opened/{symbol}")
     public BarSeries getOpenedPositionBarSeries(@PathVariable String symbol) {
         return indicatorVirgin.getOpenedPositionsBarSeriesMap().get(symbol);
+    }
+
+    @GetMapping("/upperTimeframeCandles")
+    public Map<String, List<Candlestick>> getUpperTimeframeCandles() {
+        return indicatorVirginStrategyCondition.getUpperTimeframeCandles();
     }
 
     @PostMapping("/userDataUpdateEvent")

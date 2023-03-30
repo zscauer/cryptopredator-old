@@ -1,5 +1,7 @@
 package ru.tyumentsev.cryptopredator.indicatorvirginbot.cache;
 
+import com.binance.api.client.domain.market.Candlestick;
+import com.binance.api.client.domain.market.CandlestickInterval;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -12,9 +14,13 @@ import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
 import ru.tyumentsev.cryptopredator.commons.domain.MonitoredPosition;
+import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,6 +34,9 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
 
     @Getter
     final Map<String, MonitoredPosition> monitoredPositions = new ConcurrentHashMap<>();
+    @Getter
+    final Map<String, List<Candlestick>> upperTimeframeCandles = new ConcurrentHashMap<>();
+
     @Value("${strategy.indicatorVirgin.workedOutSignalsIgnoringPeriod}")
     int workedOutSignalsIgnoringPeriod;
     @Value("${strategy.indicatorVirgin.monitoringExpirationTime}")
@@ -87,4 +96,27 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
         monitoredPositions.remove(symbol);
     }
 
+    public boolean pairOnUptrend(String symbol, float currentPrice, CandlestickInterval interval, MarketInfo marketInfo) {
+        Optional.ofNullable(upperTimeframeCandles.get(symbol)).ifPresentOrElse(candles -> {
+            if (candles.size() < 3) {
+                log.info("List of candles in lambda of {} is less then 3 and contains {} elements: {}.", symbol, candles.size(), candles);
+                return;
+            }
+            if (ZonedDateTime.ofInstant(Instant.ofEpochMilli(candles.get(2).getCloseTime()), ZoneId.systemDefault()).isBefore(ZonedDateTime.now(ZoneId.systemDefault()))) {
+                upperTimeframeCandles.put(symbol, marketInfo.getCandleSticks(symbol, interval, 3));
+            }
+        }, () -> {
+            upperTimeframeCandles.put(symbol, marketInfo.getCandleSticks(symbol, interval, 3));
+        });
+
+        var candles = upperTimeframeCandles.get(symbol);
+
+        if (candles.size() > 2) {
+//            log.info("Prices of {}: currentPrice/get(1)/get(0)/: {}/{}/{}", symbol, currentPrice, candles.get(1).getClose(), candles.get(0).getClose());
+            return currentPrice > Float.parseFloat(candles.get(1).getClose()) && currentPrice > Float.parseFloat(candles.get(0).getClose());
+        } else {
+            log.info("List of candles of {} is less then 3 and contains {} elements: {}.", symbol, candles.size(), candles);
+            return false;
+        }
+    }
 }

@@ -4,7 +4,7 @@ import com.binance.api.client.domain.OrderSide;
 
 public record PlacedOrder(
         String symbol,
-        String strategyName,
+        Integer strategyId,
         float qty,
         OrderSide side
 ) {}
