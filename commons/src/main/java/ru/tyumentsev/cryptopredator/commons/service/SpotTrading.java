@@ -49,7 +49,8 @@ public class SpotTrading implements TradingService {
             if (availableOrdersCount > 0) {
                 if (buyOrdersDelays.get(strategyId)) {
                     try {
-                        Thread.sleep(300); // pause to not exceed strategy limit.
+                        log.info("Pause thread before placing buy order of {} (availableOrdersCount is {}).", symbol, availableOrdersCount);
+                        Thread.sleep(500); // pause to not exceed strategy limit.
                     } catch (InterruptedException e) {
                         log.error("Thread error while trying to sleep before placing buy order of {}: {}.", symbol, e.getMessage());
                         marketInfo.pairOrderFilled(symbol, strategyId);

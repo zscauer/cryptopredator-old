@@ -42,6 +42,11 @@ public class IndicatorVirginController {
     IndicatorVirginStrategyCondition indicatorVirginStrategyCondition;
     IndicatorVirgin indicatorVirgin;
 
+    @GetMapping("/ping/{pair}")
+    public void ping(@PathVariable String pair) {
+        indicatorVirginStrategyCondition.ping(pair);
+    }
+
     @GetMapping("/btcTrend")
     public BTCTrend getBtcTrend() {
         return indicatorVirgin.getBtcTrend();

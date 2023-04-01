@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,11 +37,26 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
     final Map<String, MonitoredPosition> monitoredPositions = new ConcurrentHashMap<>();
     @Getter
     final Map<String, List<Candlestick>> upperTimeframeCandles = new ConcurrentHashMap<>();
+    @Getter
+    final Map<String, Boolean> pingPongs = new ConcurrentHashMap<>();
 
     @Value("${strategy.indicatorVirgin.workedOutSignalsIgnoringPeriod}")
     int workedOutSignalsIgnoringPeriod;
     @Value("${strategy.indicatorVirgin.monitoringExpirationTime}")
     long monitoringExpirationTime;
+
+    public void ping(final String pair) {
+        pingPongs.put(pair, true);
+    }
+
+    public boolean pong(final String pair) {
+        if (pingPongs.getOrDefault(pair, false)) {
+            pingPongs.remove(pair);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     @Override
     public boolean thisSignalWorkedOutBefore(final String pair) {
@@ -64,6 +80,10 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
         }, () -> {
             monitoredPositions.put(symbol, new MonitoredPosition(symbol, price, ZonedDateTime.now()));
         });
+    }
+
+    public void setMonitoredPairWeight(final String symbol, final int percentageDiff) {
+        monitoredPositions.get(symbol).weight(percentageDiff);
     }
 
     public boolean pairOnMonitoring(final String symbol, final BaseBarSeries series) {
@@ -113,10 +133,18 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
 
         if (candles.size() > 2) {
 //            log.info("Prices of {}: currentPrice/get(1)/get(0)/: {}/{}/{}", symbol, currentPrice, candles.get(1).getClose(), candles.get(0).getClose());
-            return currentPrice > Float.parseFloat(candles.get(1).getClose()) && currentPrice > Float.parseFloat(candles.get(0).getClose());
+            return currentPrice > Float.parseFloat(candles.get(1).getHigh()) && currentPrice > Float.parseFloat(candles.get(0).getHigh());
         } else {
             log.info("List of candles of {} is less then 3 and contains {} elements: {}.", symbol, candles.size(), candles);
             return false;
         }
     }
+
+    public boolean itsHeaviestMonitoredPair(final String symbol) {
+        return monitoredPositions.values().stream()
+                .max(Comparator.comparing(MonitoredPosition::weight))
+                .map(heaviestPair -> heaviestPair.symbol().equals(symbol))
+                .orElse(false);
+    }
+
 }
