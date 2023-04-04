@@ -148,8 +148,8 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
       - ./metrics/prometheus.yaml:/etc/prometheus.yaml
-    mem_limit: 128m
-    mem_reservation: 64m
+    mem_limit: 256m
+    mem_reservation: 128m
     command: [
       "--config.file=/etc/prometheus.yaml" 
       # "--enable-feature=exemplar-storage",
@@ -177,8 +177,8 @@ services:
       - ./metrics/grafana:/var/lib/grafana
       - ./metrics/grafana-dashboards:/etc/grafana/provisioning/dashboards
       - ./metrics/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
-    mem_limit: 128m
-    mem_reservation: 64m
+    mem_limit: 256m
+    mem_reservation: 128m
 
 
 # --- archived

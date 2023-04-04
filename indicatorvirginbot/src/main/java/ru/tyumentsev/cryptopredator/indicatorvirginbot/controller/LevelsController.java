@@ -50,7 +50,7 @@ public class LevelsController {
     @GetMapping("/monitoredPositions")
     public List<MonitoredPosition> getMonitoredPositions() {
         return levelsStrategyCondition.getMonitoredPositions().values().stream()
-                .sorted(Comparator.comparing(MonitoredPosition::beginMonitoringTime))
+                .sorted(Comparator.comparing(MonitoredPosition::getBeginMonitoringTime))
                 .toList();
     }
 

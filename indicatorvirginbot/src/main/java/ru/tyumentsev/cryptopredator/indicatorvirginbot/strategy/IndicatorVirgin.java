@@ -2,6 +2,7 @@ package ru.tyumentsev.cryptopredator.indicatorvirginbot.strategy;
 
 import com.binance.api.client.BinanceApiCallback;
 import com.binance.api.client.domain.Candle;
+import com.binance.api.client.domain.OrderSide;
 import com.binance.api.client.domain.event.CandlestickEvent;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.market.CandlestickInterval;
@@ -77,6 +78,7 @@ public class IndicatorVirgin implements TradingStrategy {
     final Map<String, BaseBarSeries> openedPositionsBarSeriesMap = new ConcurrentHashMap<>();
 
     final BaseBarSeriesBuilder barSeriesBuilder = new BaseBarSeriesBuilder();
+    final BaseBarSeries emptyBarSeries = new BaseBarSeries("EmptyBarSeries");
     @Getter
     final BTCTrend btcTrend = new BTCTrend(CandlestickInterval.DAILY);
     final static String STRATEGY_NAME = "indicatorvirgin";
@@ -167,7 +169,7 @@ public class IndicatorVirgin implements TradingStrategy {
         log.debug("Found next cached opened positions: {}", cachedOpenedPositions);
         cachedOpenedPositions.forEach(pos -> {
             if (accountPositions.contains(pos.symbol())) {
-                pos.threadName(null)
+                pos.threadStatus(null)
                         .updateStamp(null);
                 strategyCondition.getLongPositions().put(pos.symbol(), pos);
             }
@@ -204,7 +206,11 @@ public class IndicatorVirgin implements TradingStrategy {
                     : parsedFloat(buyEvent.getPrice());
 
             log.info("BUY {} {} at {} (weight: {}). Available orders limit is {}.",
-                    buyEvent.getAccumulatedQuantity(), symbol, dealPrice, strategyCondition.getMonitoredPositions().get(symbol).weight(), botStateService.getAvailableOrdersCount(getId()));
+                    buyEvent.getAccumulatedQuantity(), symbol, dealPrice,
+                    Optional.ofNullable(strategyCondition.getMonitoredPositions().get(symbol)).map(pos -> String.valueOf(pos.getWeight())).orElse("No monitored position"),
+                    botStateService.getAvailableOrdersCount(getId())
+            );
+//                    buyEvent.getAccumulatedQuantity(), symbol, dealPrice, strategyCondition.getMonitoredPositions().get(symbol).weight(), botStateService.getAvailableOrdersCount(getId()));
             strategyCondition.addOpenedPosition(symbol, dealPrice, parsedFloat(buyEvent.getAccumulatedQuantity()),
                     priceDecreaseFactor, false, getName()
             );
@@ -315,12 +321,13 @@ public class IndicatorVirgin implements TradingStrategy {
 
     private void analizeMarketPosition(final CandlestickEvent event) {
         if (strategyCondition.pong(event.getSymbol())) {
-            log.info("Pong from market monitoring event for pair {}:\nisAlive/state: {}/{}.\n{}", event.getSymbol(), Thread.currentThread().isAlive(), Thread.currentThread().getState(), event);
+            log.info("Pong from market monitoring event for pair {}:\nisAlive:{}/state:{}.\n{}", event.getSymbol(), Thread.currentThread().isAlive(), Thread.currentThread().getState(), event);
         }
         if (marketBarSeriesMap.get(event.getSymbol()).getBarCount() < baseBarSeriesLimit - 1) {
             return;
         }
-        if (strategyCondition.pairOnMonitoring(event.getSymbol(), Optional.ofNullable(marketBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new))) {
+        if (strategyCondition.pairOnMonitoring(event.getSymbol(), marketBarSeriesMap.getOrDefault(event.getSymbol(), new BaseBarSeries()))) {
+//        if (strategyCondition.pairOnMonitoring(event.getSymbol(), Optional.ofNullable(marketBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new))) {
             analizeMonitoredPosition(event);
 //            buyFast(event.getSymbol(), parsedFloat(event.getClose()), tradingAsset, false);
         } else if (signalToOpenLongPosition(event)) {
@@ -337,7 +344,8 @@ public class IndicatorVirgin implements TradingStrategy {
             return false;
         }
 
-        BaseBarSeries series = Optional.ofNullable(marketBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new);
+        BaseBarSeries series = marketBarSeriesMap.getOrDefault(event.getSymbol(), emptyBarSeries);
+//        BaseBarSeries series = Optional.ofNullable(marketBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new);
         if (series.getBarData().isEmpty()) {
             return false;
         }
@@ -357,7 +365,7 @@ public class IndicatorVirgin implements TradingStrategy {
                 ema7Value.isGreaterThan(ema25Value) &&
 //                rsi14.getValue(endBarSeriesIndex).isGreaterThan(DoubleNum.valueOf(73)) &&
                 (itsSustainableGrowth(ema7, ema25, endBarSeriesIndex, 2) &&
-                        haveBreakdown(ema7, ema25, endBarSeriesIndex, 6) //&&
+                        haveBreakdown(ema7, ema25, endBarSeriesIndex, 8) //&&
 //                        rsi14.getValue(endBarSeriesIndex - 1).isGreaterThan(DoubleNum.valueOf(72))
                     )
             ) {
@@ -396,7 +404,8 @@ public class IndicatorVirgin implements TradingStrategy {
     }
 
     private void analizeMonitoredPosition(final CandlestickEvent event) {
-        BaseBarSeries series = Optional.ofNullable(marketBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new);
+        BaseBarSeries series = marketBarSeriesMap.getOrDefault(event.getSymbol(), emptyBarSeries);
+//        BaseBarSeries series = Optional.ofNullable(marketBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new);
         if (series.getBarData().isEmpty() || !strategyHaveAvailableOrdersLimit()) {
             return;
         }
@@ -415,21 +424,13 @@ public class IndicatorVirgin implements TradingStrategy {
             if (series.getBar(endBarSeriesIndex - 1).getClosePrice()
                     .isGreaterThan(DoubleNum.valueOf(startPrice).multipliedBy(DoubleNum.valueOf(1.03)))
                 //                    && rsi14Value.isGreaterThanOrEqual(DoubleNum.valueOf(70))
-                    && strategyCondition.pairOnUptrend(symbol, currentPrice, CandlestickInterval.DAILY, marketInfo)
+                    && series.getBar(endBarSeriesIndex).getClosePrice().isGreaterThan(series.getBar(endBarSeriesIndex - 1).getHighPrice())
                     && strategyCondition.itsHeaviestMonitoredPair(symbol)
+                    && strategyCondition.pairOnUptrend(symbol, currentPrice, CandlestickInterval.DAILY, marketInfo)
             ) {
                 buyFast(symbol, currentPrice, tradingAsset, false);
             }
         });
-//        Optional<Float> startPrice = indicatorVirginStrategyCondition.getMonitoredPositionPrice(event.getSymbol());
-//        if (startPrice.isEmpty()) {
-//            return;
-//        }
-//        if (parsedFloat(event.getClose()) > startPrice.get() * 1.015 && strategyHaveAvailableOrdersLimit()) {
-//            log.debug("Price of monitored pair {} growth more then 1.5%. First signal was in {} with price {}.",
-//                    event.getSymbol(), indicatorVirginStrategyCondition.getMonitoredPositions().get(event.getSymbol()).beginMonitoringTime(), startPrice.get());
-//            buyFast(event.getSymbol(), parsedFloat(event.getClose()), tradingAsset, false);
-//        }
     }
 
     private boolean strategyHaveAvailableOrdersLimit() {
@@ -441,28 +442,48 @@ public class IndicatorVirgin implements TradingStrategy {
         }
     }
 
-    private void analizeOpenedPosition(final CandlestickEvent event, final OpenedPosition openedPosition) {
+    private void analizeOpenedPosition(final CandlestickEvent event, OpenedPosition openedPosition) {
         final String symbol = event.getSymbol();
         var currentPrice = parsedFloat(event.getClose());
 
         if (strategyCondition.pong(symbol)) {
-            log.info("Pong from opened position monitoring event for pair {}:\nisAlive/state: {}/{}.\n{}", symbol, Thread.currentThread().isAlive(), Thread.currentThread().getState(), event);
+            log.info("Pong from opened position monitoring event for pair {}:\nisAlive:{}/state:{}.\n{}", symbol, Thread.currentThread().isAlive(), Thread.currentThread().getState(), event);
         }
 
-        strategyCondition.updateOpenedPositionLastPrice(symbol, currentPrice, strategyCondition.getLongPositions());
+        openedPosition.updateLastPrice(currentPrice);
+//        strategyCondition.updateOpenedPositionLastPrice(symbol, currentPrice, strategyCondition.getLongPositions());
 
         if (currentPrice > openedPosition.avgPrice() * pairTakeProfitFactor && !openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor)) {
             openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
         }
 
-        if (averagingEnabled && currentPrice > openedPosition.avgPrice() * averagingTrigger) {
+        if (signalToCloseLongPosition(event, openedPosition)) {
+            sellFast(event.getSymbol(), openedPosition.qty(), tradingAsset);
+        } else if (needToAverage(openedPosition)) {
+//        } else if (averagingEnabled && currentPrice > openedPosition.avgPrice() * averagingTrigger) {
             openedPosition.rocketCandidate(true);
             buyFast(symbol, currentPrice, tradingAsset, true);
         }
 
-        if (signalToCloseLongPosition(event, openedPosition)) {
-            sellFast(event.getSymbol(), openedPosition.qty(), tradingAsset);
+    }
+
+    private boolean needToAverage(final OpenedPosition openedPosition) {
+        if (!averagingEnabled) {
+            return false;
         }
+
+//        if (openedPosition.lastPrice() > openedPosition.avgPrice() * averagingTrigger) {
+//            BaseBarSeries series = openedPositionsBarSeriesMap.getOrDefault(openedPosition.symbol(), emptyBarSeries);
+//            if (series.getBarData().isEmpty()) {
+//                return false;
+//            }
+        return openedPosition.lastPrice() > openedPosition.stopPrice()
+                && openedPosition.calculateFutureAvgPrice(baseOrderVolume, OrderSide.BUY) < openedPosition.stopPrice() * averagingTrigger;
+//            EMAIndicator ema25 = new EMAIndicator(new HighPriceIndicator(series), 25);
+//            return ema25.getValue(series.getEndIndex()).isGreaterThan(DoubleNum.valueOf(openedPosition.calculateFutureAvgPrice(baseOrderVolume)));
+//        } else {
+//            return false;
+//        }
     }
 
     private void buyFast(final String symbol, final float price, String quoteAsset, boolean itsAveraging) {
@@ -484,13 +505,14 @@ public class IndicatorVirgin implements TradingStrategy {
         });
     }
 
-    private boolean signalToCloseLongPosition(final CandlestickEvent event, final OpenedPosition openedPosition) {
+    private boolean signalToCloseLongPosition(final CandlestickEvent event, OpenedPosition openedPosition) {
         if (marketInfo.pairOrderIsProcessing(event.getSymbol(), getId())) {
             return false;
         }
         final String ticker = event.getSymbol();
 
-        BaseBarSeries series = Optional.ofNullable(openedPositionsBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new);
+        BaseBarSeries series = openedPositionsBarSeriesMap.getOrDefault(event.getSymbol(), emptyBarSeries);
+//        BaseBarSeries series = Optional.ofNullable(openedPositionsBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new);
         if (series.getBarData().isEmpty()) {
             log.warn("Opened positions BaseBarSeries of {} is empty, cannot define signal to close opened position.", ticker);
             return false;
@@ -498,6 +520,8 @@ public class IndicatorVirgin implements TradingStrategy {
         var endBarSeriesIndex = series.getEndIndex();
         EMAIndicator ema7 = new EMAIndicator(new ClosePriceIndicator(series), 7);
         EMAIndicator ema25 = new EMAIndicator(new HighPriceIndicator(series), 25);
+
+        openedPosition.stopPrice(ema25.getValue(endBarSeriesIndex - 1).floatValue());
 
 //        RSIIndicator rsi14 = new RSIIndicator(new ClosePriceIndicator(series), 14);
 //        MACDIndicator macdIndicator = new MACDIndicator(new ClosePriceIndicator(series), 12, 26);

@@ -19,16 +19,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
 @RequiredArgsConstructor
+@Getter
 @FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 @Slf4j
 public abstract class StrategyCondition {
-    @Getter
-    Map<String, OpenedPosition> longPositions = new ConcurrentHashMap<>();
-    @Getter
-    Map<String, OpenedPosition> shortPositions = new ConcurrentHashMap<>();
 
-    // stores time of last selling to avoid repeated buy signals.
-    @Getter
+    Map<String, OpenedPosition> longPositions = new ConcurrentHashMap<>();
+    Map<String, OpenedPosition> shortPositions = new ConcurrentHashMap<>();
     Map<String, SellRecord> sellJournal = new ConcurrentHashMap<>();
 
     public void addOpenedPosition(String pair, float price, float qty, float priceDecreaseFactor,
@@ -54,16 +51,16 @@ public abstract class StrategyCondition {
         }
     }
 
-    public void updateOpenedPositionLastPrice(String pair, float lastPrice, Map<String, OpenedPosition> openedPositions) {
-        Optional.ofNullable(openedPositions.get(pair)).ifPresent(pos -> {
-            pos.lastPrice(lastPrice);
-            if (lastPrice > pos.maxPrice()) {
-                pos.maxPrice(lastPrice);
-            }
-            pos.updateStamp(LocalDateTime.now());
-            pos.threadName(String.format("%s:%s", Thread.currentThread().getName(), Thread.currentThread().getId()));
-        });
-    }
+//    public void updateOpenedPositionLastPrice(String pair, float lastPrice, Map<String, OpenedPosition> openedPositions) {
+//        Optional.ofNullable(openedPositions.get(pair)).ifPresent(pos -> {
+//            pos.lastPrice(lastPrice);
+//            if (lastPrice > pos.maxPrice()) {
+//                pos.maxPrice(lastPrice);
+//            }
+//            pos.updateStamp(LocalDateTime.now());
+//            pos.threadName(String.format("%s:%s", Thread.currentThread().getName(), Thread.currentThread().getId()));
+//        });
+//    }
 
     public OpenedPosition removeOpenedPosition(String pair) {
         return longPositions.remove(pair);

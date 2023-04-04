@@ -50,12 +50,7 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
     }
 
     public boolean pong(final String pair) {
-        if (pingPongs.getOrDefault(pair, false)) {
-            pingPongs.remove(pair);
-            return true;
-        } else {
-            return false;
-        }
+        return pingPongs.remove(pair, true);
     }
 
     @Override
@@ -75,25 +70,21 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
     }
 
     public void addPairToMonitoring(final String symbol, final float price) {
-        Optional.ofNullable(monitoredPositions.get(symbol)).ifPresentOrElse(monitoredPosition -> {
-
-        }, () -> {
-            monitoredPositions.put(symbol, new MonitoredPosition(symbol, price, ZonedDateTime.now()));
-        });
+        monitoredPositions.putIfAbsent(symbol, new MonitoredPosition(symbol, price, ZonedDateTime.now()));
     }
 
     public void setMonitoredPairWeight(final String symbol, final int percentageDiff) {
-        monitoredPositions.get(symbol).weight(percentageDiff);
+        monitoredPositions.get(symbol).setWeight(percentageDiff);
     }
 
     public boolean pairOnMonitoring(final String symbol, final BaseBarSeries series) {
         Optional.ofNullable(monitoredPositions.get(symbol)).ifPresent(monitoredPosition -> {
-            if (monitoredPosition.beginMonitoringTime().isBefore(ZonedDateTime.now().minusHours(monitoringExpirationTime)) ||
+            if (monitoredPosition.getBeginMonitoringTime().isBefore(ZonedDateTime.now().minusHours(monitoringExpirationTime)) ||
                     monitoredPairPriceTurnedBack(series)) {
                 monitoredPositions.remove(symbol);
             }
         });
-        return Optional.ofNullable(monitoredPositions.get(symbol)).isPresent();
+        return monitoredPositions.containsKey(symbol);
     }
 
     private boolean monitoredPairPriceTurnedBack(final BaseBarSeries series) {
@@ -109,7 +100,7 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
     }
 
     public Optional<Float> getMonitoredPositionPrice(final String symbol) {
-        return Optional.ofNullable(monitoredPositions.get(symbol)).map(MonitoredPosition::price);
+        return Optional.ofNullable(monitoredPositions.get(symbol)).map(MonitoredPosition::getPrice);
     }
 
     public void removePositionFromMonitoring(final String symbol) {
@@ -142,8 +133,8 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
 
     public boolean itsHeaviestMonitoredPair(final String symbol) {
         return monitoredPositions.values().stream()
-                .max(Comparator.comparing(MonitoredPosition::weight))
-                .map(heaviestPair -> heaviestPair.symbol().equals(symbol))
+                .max(Comparator.comparing(MonitoredPosition::getWeight))
+                .map(heaviestPair -> heaviestPair.getSymbol().equals(symbol))
                 .orElse(false);
     }
 

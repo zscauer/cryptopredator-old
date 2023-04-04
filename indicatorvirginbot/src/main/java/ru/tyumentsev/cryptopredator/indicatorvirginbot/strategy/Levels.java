@@ -168,7 +168,7 @@ public class Levels implements TradingStrategy {
         log.debug("Found next cached opened positions: {}", cachedOpenedPositions);
         cachedOpenedPositions.forEach(pos -> {
             if (accountPositions.contains(pos.symbol())) {
-                pos.threadName(null)
+                pos.threadStatus(null)
                         .updateStamp(null);
                 levelsStrategyCondition.getLongPositions().put(pos.symbol(), pos);
             }
@@ -434,7 +434,8 @@ public class Levels implements TradingStrategy {
         final String symbol = event.getSymbol();
         var currentPrice = parsedFloat(event.getClose());
 
-        levelsStrategyCondition.updateOpenedPositionLastPrice(symbol, currentPrice, levelsStrategyCondition.getLongPositions());
+        openedPosition.updateLastPrice(currentPrice);
+//        levelsStrategyCondition.updateOpenedPositionLastPrice(symbol, currentPrice, levelsStrategyCondition.getLongPositions());
 
         if (currentPrice > openedPosition.avgPrice() * pairTakeProfitFactor && !openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor)) {
             openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);

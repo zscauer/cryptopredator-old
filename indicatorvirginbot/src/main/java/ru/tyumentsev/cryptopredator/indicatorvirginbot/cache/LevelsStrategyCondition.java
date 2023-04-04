@@ -50,16 +50,13 @@ public class LevelsStrategyCondition extends StrategyCondition {
     }
 
     public void addPairToMonitoring(final String symbol, final float price) {
-        Optional.ofNullable(monitoredPositions.get(symbol)).ifPresentOrElse(monitoredPosition -> {
-
-        }, () -> {
-            monitoredPositions.put(symbol, new MonitoredPosition(symbol, price, ZonedDateTime.now()));
-        });
+        Optional.ofNullable(monitoredPositions.get(symbol)).ifPresentOrElse(monitoredPosition -> {},
+                () -> monitoredPositions.put(symbol, new MonitoredPosition(symbol, price, ZonedDateTime.now())));
     }
 
     public boolean pairOnMonitoring(final String symbol, final BaseBarSeries series) {
         Optional.ofNullable(monitoredPositions.get(symbol)).ifPresent(monitoredPosition -> {
-            if ((monitoredPosition.beginMonitoringTime().isBefore(ZonedDateTime.now().minusMinutes(monitoringExpirationTime))) ||
+            if ((monitoredPosition.getBeginMonitoringTime().isBefore(ZonedDateTime.now().minusMinutes(monitoringExpirationTime))) ||
                     monitoredPairPriceTurnedBack(series)) {
                 monitoredPositions.remove(symbol);
             }
@@ -80,7 +77,7 @@ public class LevelsStrategyCondition extends StrategyCondition {
     }
 
     public Optional<Float> getMonitoredPositionPrice(final String symbol) {
-        return Optional.ofNullable(monitoredPositions.get(symbol)).map(MonitoredPosition::price);
+        return Optional.ofNullable(monitoredPositions.get(symbol)).map(MonitoredPosition::getPrice);
     }
 
     public void removePositionFromMonitoring(final String symbol) {

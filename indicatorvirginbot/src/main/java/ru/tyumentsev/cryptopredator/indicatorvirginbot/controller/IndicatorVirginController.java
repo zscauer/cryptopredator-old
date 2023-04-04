@@ -55,7 +55,7 @@ public class IndicatorVirginController {
     @GetMapping("/monitoredPositions")
     public List<MonitoredPosition> getMonitoredPositions() {
         return indicatorVirginStrategyCondition.getMonitoredPositions().values().stream()
-                .sorted(Comparator.comparing(MonitoredPosition::beginMonitoringTime))
+                .sorted(Comparator.comparingInt(MonitoredPosition::getWeight).reversed().thenComparing(MonitoredPosition::getBeginMonitoringTime))
                 .toList();
     }
 
@@ -65,10 +65,13 @@ public class IndicatorVirginController {
     }
 
     @GetMapping("/openedPositions/long")
-    public List<OpenedPosition> getOpenedLongPositions() {
+    public Map<String, List<OpenedPosition>> getOpenedLongPositions() {
         return indicatorVirginStrategyCondition.getLongPositions().values().stream()
                 .sorted(Comparator.comparing(OpenedPosition::updateStamp))
-                .collect(Collectors.toList());
+                .collect(Collectors.groupingBy(position -> {
+                    if (position.isProfitable()) return "Profitable";
+                    else return "NOT profitable";
+                }));
     }
 
     @GetMapping("/openedPositions/short")

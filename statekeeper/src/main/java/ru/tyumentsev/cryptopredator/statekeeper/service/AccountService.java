@@ -38,6 +38,7 @@ public class AccountService extends AccountManager {
     BotState botState;
     @Value("${applicationconfig.testLaunch}")
     boolean testLaunch;
+    final Map<StrategyLimit, Integer> emptyStrategyLimits = new HashMap<>();
 
     public AccountService(BinanceApiRestClient restClient, BinanceApiWebSocketClient webSocketClient) {
         super(restClient, webSocketClient);
@@ -98,7 +99,8 @@ public class AccountService extends AccountManager {
     }
 
     private void updateLimits(final OrderTradeUpdateEvent event) {
-        var strategyLimits = Optional.ofNullable(botState.getStrategyLimits().get(event.getStrategyId())).orElseGet(HashMap::new);
+        var strategyLimits = botState.getStrategyLimits().getOrDefault(event.getStrategyId(), emptyStrategyLimits);
+//        var strategyLimits = Optional.ofNullable(botState.getStrategyLimits().get(event.getStrategyId())).orElseGet(HashMap::new);
         if (!strategyLimits.isEmpty()) {
             strategyLimits.put(ORDERS_QTY, calculateNewOrdersQtyLimitValue(event, strategyLimits));
         }

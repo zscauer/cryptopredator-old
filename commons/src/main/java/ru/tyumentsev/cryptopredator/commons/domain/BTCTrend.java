@@ -26,12 +26,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class BTCTrend implements Serializable {
 
     @JsonProperty
-    String symbol = "BTCUSDT";
+    final String symbol = "BTCUSDT";
     @JsonProperty
     CandlestickInterval interval;
     @JsonProperty
-    List<Candlestick> lastCandles = new ArrayList<>();
-//    @JsonProperty
+    final List<Candlestick> lastCandles = new ArrayList<>();
     volatile boolean bullish = true;
 
     public BTCTrend(CandlestickInterval candlestickInterval) {
@@ -47,17 +46,6 @@ public class BTCTrend implements Serializable {
             }
         });
     }
-
-//    public boolean isBullish() {
-//        var bullish = new AtomicBoolean(true);
-//        lastCandles.forEach(candlestick -> {
-//            if (Float.parseFloat(candlestick.getClose()) < Float.parseFloat(candlestick.getOpen())) {
-//                bullish.set(false);
-//            }
-//        });
-//
-//        return bullish.get();
-//    }
 
     public boolean isBearish() {
         return !isBullish();
