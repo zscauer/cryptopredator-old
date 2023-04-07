@@ -28,22 +28,28 @@ repositories {
 }
 
 dependencies {
-    implementation "com.binance.api:binance-api-client:1.2.2"
     implementation "ru.tyumentsev.cryptopredator:commons:0.4"
+    implementation "com.binance.api:binance-api-client:1.2.2"
     implementation 'org.postgresql:postgresql:42.5.1'
+
     runtimeOnly "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
-    implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
+    implementation ("org.springframework.boot:spring-boot-starter-web:${springBootVersion}") {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+    }
+    implementation "org.springframework.boot:spring-boot-starter-undertow:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-configuration-processor:${springBootVersion}"
 //    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-actuator:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-aop:${springBootVersion}"
     implementation "org.springframework.data:spring-data-redis:${springBootVersion}"
-    implementation "redis.clients:jedis:3.8.0"
+
+    implementation "redis.clients:jedis:4.3.1"
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+
     implementation "io.micrometer:micrometer-registry-prometheus:1.10.2"
-    implementation "io.prometheus:simpleclient_common:${prometheusVersion}"
+//    implementation "io.prometheus:simpleclient_common:${prometheusVersion}"
     implementation "io.prometheus:simpleclient_servlet:${prometheusVersion}"
     implementation "io.prometheus:simpleclient_hotspot:${prometheusVersion}"
 }

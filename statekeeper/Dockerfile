@@ -1,9 +1,10 @@
-#FROM resurfaceio/alpine-jdk17:3.17.0a
-FROM springci/graalvm-ce:java17-0.12.x
+FROM resurfaceio/alpine-jdk17:3.17.0a
+#FROM springci/graalvm-ce:java17-0.12.x
 
 ADD ./build/libs/statekeeper.jar .
 
-ENTRYPOINT ["java", "-agentlib:native-image-agent=config-output-dir=/tmp/logs/native-image", "-jar", \
+#ENTRYPOINT ["java", "-agentlib:native-image-agent=config-output-dir=/tmp/logs/native-image", "-jar", \
+ENTRYPOINT ["java", "-jar", \
 "-Xms256m", "-Xmx256m", \
 "-XX:NewSize=128m", "-XX:MaxNewSize=128m", \
 "-XX:MaxMetaspaceSize=100m", \

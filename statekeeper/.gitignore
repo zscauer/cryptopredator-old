@@ -2,6 +2,7 @@
 data/*
 metrics/logs/
 metrics/grafana/
+src/main/resources/META-INF/native-image
 
 ### Gradle ###
 HELP.md

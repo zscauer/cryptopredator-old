@@ -58,7 +58,34 @@ When all docker images are built - it's ready to launch:
 
 ### Native
 Some services are ready to run as native image. To build and run native image (`statekeeper` for example):
-> cd statekeeper  
+
+First of all, need to it launch [with special agent](https://www.graalvm.org/22.0/reference-manual/native-image/Agent/), which will define proxy usage in application and collect information about it.
+
+```dockerfile
+# Dockerfile
+FROM springci/graalvm-ce:java17-0.12.x
+
+ADD ./build/libs/statekeeper.jar .
+
+ENTRYPOINT ["java", \
+"-agentlib:native-image-agent=config-output-dir=/tmp/logs/native-image", \
+"-jar", \
+"statekeeper.jar"]
+```
+
+It needs to service to work in all possible scenarios while agent collecting information.
+After service shut down, directory `native-image` will contains all required to compiler information
+and should be copied into `src/main/resources/META-INF/`, after that, native service can be built (by JDK with GraalVM):
+
 > gradle --settings-file settings-native.gradle processAot  
 > gradle --settings-file settings-native.gradle nativeCompile  
 > docker build --tag=statekeeper -f Dockerfile-native .
+
+Difference in memory consumption and startup time between JVM and native versions of service:
+
+JVM:
+![statekeeper_JVM_memory_consumption](metrics/statekeeper_memory_usage_jar_version_spring.png)
+
+Native:
+![statekeeper_native_startup_time](metrics/statekeeper_startup_time_native_version_spring.png)
+![statekeeper_JVM_memory_consumption](metrics/statekeeper_memory_usage_native_version_spring.png)

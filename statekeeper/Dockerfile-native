@@ -1,5 +1,6 @@
 #FROM resurfaceio/alpine-jdk17:3.17.0a
-FROM springci/graalvm-ce:java17-0.12.x
+#FROM springci/graalvm-ce:java17-0.12.x
+FROM ubuntu:kinetic
 
 ADD ./build/native/nativeCompile/statekeeper statekeeper/
 
