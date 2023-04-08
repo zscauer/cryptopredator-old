@@ -28,6 +28,11 @@ public class AccountController {
 
     AccountService accountService;
 
+    @GetMapping("/ping")
+    public void ping() {
+        accountService.ping();
+    }
+
     @GetMapping("/accountBalance")
     public List<AssetBalance> getAccountBalance() {
         return accountService.getAccountBalances();

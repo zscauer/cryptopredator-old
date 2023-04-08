@@ -2,6 +2,6 @@
 #FROM springci/graalvm-ce:java17-0.12.x
 FROM ubuntu:kinetic
 
-ADD ./build/native/nativeCompile/statekeeper statekeeper/
+ADD ./build/native/nativeCompile/statekeeper .
 
-ENTRYPOINT ["/bin/sh", "-c", "./statekeeper/statekeeper"]
+ENTRYPOINT ["/bin/sh", "-c", "./statekeeper"]

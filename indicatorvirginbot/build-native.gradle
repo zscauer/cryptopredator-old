@@ -1,0 +1,51 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.0.3'
+	id 'io.spring.dependency-management' version '1.1.0'
+	id 'io.freefair.lombok' version '6.6.1'
+	id 'maven-publish'
+	id 'org.graalvm.buildtools.native' version '0.9.18'
+}
+
+def artifactVersion = 'native'
+def springBootVersion = '3.0.3'
+def prometheusVersion = '0.16.0'
+
+group = 'ru.tyumentsev.cryptopredator'
+version = artifactVersion
+sourceCompatibility = '17'
+description = 'indicatorvirginbot'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
+dependencies {
+	implementation "ru.tyumentsev.cryptopredator:commons:0.4"
+	implementation "com.binance.api:binance-api-client:1.2.2"
+	implementation "org.ta4j:ta4j-core:0.16-SNAPSHOT"
+
+	runtimeOnly "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
+	implementation ("org.springframework.boot:spring-boot-starter-web:${springBootVersion}") {
+		exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+	}
+	implementation "org.springframework.boot:spring-boot-starter-undertow:${springBootVersion}"
+	implementation "org.springframework.boot:spring-boot-configuration-processor:${springBootVersion}"
+	implementation "org.springframework.boot:spring-boot-starter-actuator:${springBootVersion}"
+	testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+
+	implementation "io.micrometer:micrometer-registry-prometheus:1.10.2"
+	implementation "io.prometheus:simpleclient_servlet:${prometheusVersion}"
+	implementation "io.prometheus:simpleclient_hotspot:${prometheusVersion}"
+}
+
+graalvmNative {
+	testSupport = false
+}

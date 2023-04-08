@@ -1,0 +1,5 @@
+FROM ubuntu:kinetic
+
+ADD ./build/native/nativeCompile/indicatorvirginbot .
+
+ENTRYPOINT ["/bin/sh", "-c", "./indicatorvirginbot"]

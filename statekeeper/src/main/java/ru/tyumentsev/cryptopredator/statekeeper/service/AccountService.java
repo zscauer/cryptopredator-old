@@ -7,6 +7,7 @@ import com.binance.api.client.domain.ExecutionType;
 import com.binance.api.client.domain.event.OrderTradeUpdateEvent;
 import com.binance.api.client.domain.event.UserDataUpdateEvent;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -19,11 +20,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import ru.tyumentsev.cryptopredator.commons.domain.StrategyLimit;
 import ru.tyumentsev.cryptopredator.commons.service.AccountManager;
+import ru.tyumentsev.cryptopredator.commons.service.TradingService;
 import ru.tyumentsev.cryptopredator.statekeeper.cache.BotState;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static ru.tyumentsev.cryptopredator.commons.domain.StrategyLimit.*;
 
@@ -39,19 +42,33 @@ public class AccountService extends AccountManager {
     @Value("${applicationconfig.testLaunch}")
     boolean testLaunch;
     final Map<StrategyLimit, Integer> emptyStrategyLimits = new HashMap<>();
+    @Getter
+    final Map<TradingService, Boolean> pingPongs = new ConcurrentHashMap<>();
 
     public AccountService(BinanceApiRestClient restClient, BinanceApiWebSocketClient webSocketClient) {
         super(restClient, webSocketClient);
+    }
+
+    public void ping() {
+        pingPongs.put(this, true);
+    }
+
+    private boolean pong() {
+        return pingPongs.remove(this, true);
     }
 
     @Scheduled(fixedDelayString = "${monitoring.initializeUserDataUpdateStream.fixedDelay}", initialDelayString = "${monitoring.initializeUserDataUpdateStream.initialDelay}")
     public void monitoring_initializeAliveUserDataUpdateStream() {
         if (!testLaunch) {
             log.info("initializeAliveUserDataUpdateStream()");
-            // User data stream are closing by binance after 24 hours of opening.
+            // User data stream are closing by binance after 24 hours after opening.
             initializeUserDataUpdateStream(new BinanceApiCallback<>() {
                 @Override
                 public void onResponse(final UserDataUpdateEvent callback) {
+                    if (pong()) {
+                        log.info("Pong from initializeUserDataUpdateStream():\nisAlive:{}/state:{}.\n{}", Thread.currentThread().isAlive(), Thread.currentThread().getState(), callback);
+                    }
+
                     if (callback.getEventType().equals(UserDataUpdateEvent.UserDataUpdateEventType.ORDER_TRADE_UPDATE)) {
                         OrderTradeUpdateEvent event = callback.getOrderTradeUpdateEvent();
                         log.info("Get {} {} ORDER_TRADE_UPDATE of {}", event.getExecutionType(), event.getSide(), event.getSymbol());
@@ -100,7 +117,6 @@ public class AccountService extends AccountManager {
 
     private void updateLimits(final OrderTradeUpdateEvent event) {
         var strategyLimits = botState.getStrategyLimits().getOrDefault(event.getStrategyId(), emptyStrategyLimits);
-//        var strategyLimits = Optional.ofNullable(botState.getStrategyLimits().get(event.getStrategyId())).orElseGet(HashMap::new);
         if (!strategyLimits.isEmpty()) {
             strategyLimits.put(ORDERS_QTY, calculateNewOrdersQtyLimitValue(event, strategyLimits));
         }

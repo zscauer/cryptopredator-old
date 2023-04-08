@@ -55,6 +55,13 @@ public class BotsController {
         log.info("Limits for strategy with id '{}' set to {}.", strategyId, currentLimits);
     }
 
+    @GetMapping("/strategyLimits")
+    public Map<Integer, Map<StrategyLimit, Integer>> getAllAvailableStrategyLimits() {
+//        return Optional.ofNullable(botState.getStrategyLimits().get(strategyId)).orElseGet(HashMap::new);
+        return botState.getStrategyLimits();
+//        return botState.getStrategyLimits().entrySet().stream().collect(Collectors.groupingBy(Map.Entry::getKey));
+    }
+
     @GetMapping("/strategyLimits/{strategyId}")
     public Map<StrategyLimit, Integer> getAvailableStrategyLimits(@PathVariable Integer strategyId) {
         return Optional.ofNullable(botState.getStrategyLimits().get(strategyId)).orElseGet(HashMap::new);

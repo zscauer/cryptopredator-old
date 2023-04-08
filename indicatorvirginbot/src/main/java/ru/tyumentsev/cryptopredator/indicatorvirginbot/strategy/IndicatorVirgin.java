@@ -67,7 +67,7 @@ public class IndicatorVirgin implements TradingStrategy {
     final Lock lock = new ReentrantLock();
     final CandlestickInterval marketCandlestickInterval = CandlestickInterval.HALF_HOURLY;
     final CandlestickInterval openedPositionsCandlestickInterval = CandlestickInterval.HALF_HOURLY;
-    final int baseBarSeriesLimit = 120;
+    final int baseBarSeriesLimit = 100;
     @Getter
     final Map<String, Closeable> marketCandleStickEventsStreams = new ConcurrentHashMap<>();
     @Getter
@@ -235,14 +235,15 @@ public class IndicatorVirgin implements TradingStrategy {
 
         if (indicatorVirginEnabled && (getId().equals(Optional.ofNullable(sellEvent.getStrategyId()).orElse(getId())))) {
 
-            // if price == 0 most likely it was market order, use last market price.
-            float dealPrice = parsedFloat(sellEvent.getPrice()) == 0
-                    ? parsedFloat(marketInfo.getLastTickerPrice(symbol).getPrice())
-                    : parsedFloat(sellEvent.getPrice());
+            Optional.ofNullable(strategyCondition.removeOpenedPosition(symbol)).ifPresent(openedPosition -> {
+                // if price == 0 most likely it was market order, use last market price.
+                float dealPrice = parsedFloat(sellEvent.getPrice()) == 0
+                        ? parsedFloat(marketInfo.getLastTickerPrice(symbol).getPrice())
+                        : parsedFloat(sellEvent.getPrice());
 
-            var openedPosition = strategyCondition.removeOpenedPosition(symbol);;
-            log.info("SELL {} {} at {}. AVG = {} (profit {}%), stopLoss = {}. Available orders limit is {}.",
-                    sellEvent.getOriginalQuantity(), symbol, dealPrice, openedPosition.avgPrice(), percentageDifference(dealPrice, openedPosition.avgPrice()), openedPosition.priceDecreaseFactor(), botStateService.getAvailableOrdersCount(getId()));
+                log.info("SELL {} {} at {}. AVG = {} (profit {}%), stopLoss = {}. Available orders limit is {}.",
+                        sellEvent.getOriginalQuantity(), symbol, dealPrice, openedPosition.avgPrice(), percentageDifference(dealPrice, openedPosition.avgPrice()), openedPosition.priceDecreaseFactor(), botStateService.getAvailableOrdersCount(getId()));
+            });
 
             strategyCondition.addSellRecordToJournal(symbol, getName());
 
@@ -421,6 +422,12 @@ public class IndicatorVirgin implements TradingStrategy {
 //            RSIIndicator rsi14 = new RSIIndicator(new ClosePriceIndicator(series), 14);
 //            var rsi14Value = rsi14.getValue(endBarSeriesIndex - 1);
 
+            var currentTime = ZonedDateTime.now(ZoneId.systemDefault());
+            if (series.getBar(endBarSeriesIndex).getEndTime().isBefore(currentTime)
+                    || currentTime.isBefore(series.getBar(endBarSeriesIndex).getBeginTime().plusMinutes(5))) {
+                return;
+            }
+
             if (series.getBar(endBarSeriesIndex - 1).getClosePrice()
                     .isGreaterThan(DoubleNum.valueOf(startPrice).multipliedBy(DoubleNum.valueOf(1.03)))
                 //                    && rsi14Value.isGreaterThanOrEqual(DoubleNum.valueOf(70))
@@ -477,8 +484,10 @@ public class IndicatorVirgin implements TradingStrategy {
 //            if (series.getBarData().isEmpty()) {
 //                return false;
 //            }
+        float futureAvgPrice = openedPosition.calculateFutureAvgPrice(baseOrderVolume, OrderSide.BUY);
         return openedPosition.lastPrice() > openedPosition.stopPrice()
-                && openedPosition.calculateFutureAvgPrice(baseOrderVolume, OrderSide.BUY) < openedPosition.stopPrice() * averagingTrigger;
+                && futureAvgPrice < openedPosition.stopPrice() * averagingTrigger
+                && futureAvgPrice < openedPosition.lastPrice() * averagingTrigger;
 //            EMAIndicator ema25 = new EMAIndicator(new HighPriceIndicator(series), 25);
 //            return ema25.getValue(series.getEndIndex()).isGreaterThan(DoubleNum.valueOf(openedPosition.calculateFutureAvgPrice(baseOrderVolume)));
 //        } else {

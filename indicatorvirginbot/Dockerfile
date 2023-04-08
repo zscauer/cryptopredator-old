@@ -1,8 +1,10 @@
 FROM resurfaceio/alpine-jdk17:3.17.0a
+#FROM springci/graalvm-ce:java17-0.12.x
 
 ADD ./build/libs/indicatorvirginbot.jar .
 #ENV HOST_NAME = "192.168.1.66"
 
+#ENTRYPOINT ["java", "-agentlib:native-image-agent=config-output-dir=/tmp/logs/native-image", "-jar", \
 ENTRYPOINT ["java", "-jar", \
 "-Xms256m", "-Xmx300m", \
 "-XX:NewSize=164m", "-XX:MaxNewSize=164m", \
