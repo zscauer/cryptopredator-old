@@ -42,7 +42,8 @@ public abstract class StrategyCondition {
                     .qty(qty)
                     .priceDecreaseFactor(priceDecreaseFactor)
                     .rocketCandidate(rocketCandidate)
-                    .strategy(strategy);
+                    .strategy(strategy)
+                    .lastDealTime(LocalDateTime.now(ZoneId.systemDefault()));
             log.debug("{} not found in opened long positions, adding new one - '{}'.", pair, pos);
             longPositions.put(pair, pos);
         });

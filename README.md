@@ -84,6 +84,7 @@ and should be copied into `src/main/resources/META-INF/`, after that, native ser
 Difference in memory consumption and startup time between JVM and native versions of service:
 
 JVM:
+![statekeeper_JVM_startup_time](metrics/statekeeper_startup_time_jar_version_spring.png)
 ![statekeeper_JVM_memory_consumption](metrics/statekeeper_memory_usage_jar_version_spring.png)
 
 Native:

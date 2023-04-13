@@ -35,6 +35,7 @@ import ru.tyumentsev.cryptopredator.indicatorvirginbot.cache.IndicatorVirginStra
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -541,7 +542,8 @@ public class IndicatorVirgin implements TradingStrategy {
 //        float stopTriggerValue = openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor) ? openedPosition.maxPrice() : openedPosition.avgPrice();
 //        float stopTriggerValue = openedPosition.maxPrice();
 
-        if (ema7.getValue(endBarSeriesIndex - 1).isLessThan(ema25.getValue(endBarSeriesIndex - 1))
+        if (LocalDateTime.now(ZoneId.systemDefault()).minusDays(2L).isAfter(openedPosition.lastDealTime()) &&
+                ema7.getValue(endBarSeriesIndex - 1).isLessThan(ema25.getValue(endBarSeriesIndex - 1))
                 //currentPrice < stopTriggerValue * openedPosition.priceDecreaseFactor() &&
 //                (series.getBar(endBarSeriesIndex - 1).isBearish() &&
 //                rsi14.getValue(endBarSeriesIndex).isLessThanOrEqual(DoubleNum.valueOf(67)) &&

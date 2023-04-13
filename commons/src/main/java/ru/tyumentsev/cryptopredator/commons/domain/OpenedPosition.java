@@ -48,6 +48,8 @@ public class OpenedPosition implements Serializable {
     volatile LocalDateTime updateStamp; //threads debug
     @JsonProperty
     volatile String threadStatus; //threads debug
+    @JsonProperty
+    LocalDateTime lastDealTime;
 
     @JsonIgnore
     public boolean isProfitable() {

@@ -23,9 +23,11 @@ import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.indicators.helpers.HighPriceIndicator;
 import org.ta4j.core.num.DoubleNum;
 import ru.tyumentsev.cryptopredator.commons.TradingStrategy;
+import ru.tyumentsev.cryptopredator.commons.cache.CandleSeries;
 import ru.tyumentsev.cryptopredator.commons.domain.BTCTrend;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.commons.mapping.CandlestickToBaseBarMapper;
+import ru.tyumentsev.cryptopredator.commons.mapping.CandlestickToEventMapper;
 import ru.tyumentsev.cryptopredator.commons.service.BotStateService;
 import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
@@ -77,6 +79,8 @@ public class VolumeNimble implements TradingStrategy {
     final Map<String, BaseBarSeries> marketBarSeriesMap = new ConcurrentHashMap<>();
     @Getter
     final Map<String, BaseBarSeries> openedPositionsBarSeriesMap = new ConcurrentHashMap<>();
+    @Getter
+    final Map<String, CandleSeries> candleSeriesMap = new ConcurrentHashMap<>();
 
     final BaseBarSeriesBuilder barSeriesBuilder = new BaseBarSeriesBuilder();
     final BaseBarSeries emptyBarSeries = new BaseBarSeries("EmptyBarSeries");
@@ -151,6 +155,7 @@ public class VolumeNimble implements TradingStrategy {
     public void prepareData() {
         restoreSellJournalFromCache();
         prepareOpenedLongPositions();
+        constructCandleStickEventsCache();
         defineAvailableOrdersLimit();
         subscribeToUserUpdateEvents();
     }
@@ -177,6 +182,25 @@ public class VolumeNimble implements TradingStrategy {
         });
 
         dataService.deleteAllOpenedPositions(strategyCondition.getLongPositions().values(), this);
+    }
+
+    private void constructCandleStickEventsCache() {
+        Optional.ofNullable(marketInfo.getCheapPairs().get(tradingAsset)).ifPresentOrElse(list -> {
+            list.forEach(pair -> {
+                candleSeriesMap.put(pair, new CandleSeries(2, pair));
+            });
+            log.debug("Cache of candle stick events constructed with {} elements.", candleSeriesMap.size());
+        }, () -> {
+            log.warn("Can't construct queues of candlestick events cache for {} - list of cheap pairs for this asset is empty.", tradingAsset);
+        });
+
+        candleSeriesMap.values().forEach(series -> {
+                    List<CandlestickEvent> mappedCandles = new ArrayList<>();
+                    marketInfo.getCandleSticks(series.getSymbol(), marketCandlestickInterval, series.getSeriesSize())
+                            .forEach(marketCandleStick -> CandlestickToEventMapper.map(series.getSymbol(), marketCandleStick)
+                                    .ifPresent(mappedCandles::add));
+                    mappedCandles.forEach(series::addCandleToSeries);
+                });
     }
 
     private void defineAvailableOrdersLimit() {
@@ -304,7 +328,8 @@ public class VolumeNimble implements TradingStrategy {
 
     private BinanceApiCallback<CandlestickEvent> marketMonitoringCallback() {
         return event -> {
-            addEventToBaseBarSeries(event, marketBarSeriesMap, marketCandlestickInterval);
+//            addEventToBaseBarSeries(event, marketBarSeriesMap, marketCandlestickInterval);
+            candleSeriesMap.get(event.getSymbol()).addCandleToSeries(event);
 
             Optional.ofNullable(strategyCondition.getLongPositions().get(event.getSymbol())).ifPresentOrElse(
                     openedPosition -> {},//analizeOpenedPosition(event, openedPosition), // ignore opened positions
@@ -314,7 +339,8 @@ public class VolumeNimble implements TradingStrategy {
 
     private BinanceApiCallback<CandlestickEvent> openedPositionMonitoringCallback() {
         return event -> {
-            addEventToBaseBarSeries(event, openedPositionsBarSeriesMap, openedPositionsCandlestickInterval);
+//            addEventToBaseBarSeries(event, openedPositionsBarSeriesMap, openedPositionsCandlestickInterval);
+            candleSeriesMap.get(event.getSymbol()).addCandleToSeries(event);
 
             Optional.ofNullable(strategyCondition.getLongPositions().get(event.getSymbol())).ifPresent(
                     openedPosition -> analizeOpenedPosition(event, openedPosition));
@@ -326,9 +352,9 @@ public class VolumeNimble implements TradingStrategy {
             log.info("Pong from market monitoring event for pair {}:\nisAlive:{}/state:{}.\n{}", event.getSymbol(), Thread.currentThread().isAlive(), Thread.currentThread().getState(), event);
         }
 
-        if (marketBarSeriesMap.get(event.getSymbol()).getBarCount() < baseBarSeriesLimit - 1) {
-            return;
-        }
+//        if (marketBarSeriesMap.get(event.getSymbol()).getBarCount() < baseBarSeriesLimit - 1) {
+//            return;
+//        }
 
         if (strategyCondition.pairOnMonitoring(event.getSymbol(), marketBarSeriesMap.getOrDefault(event.getSymbol(), emptyBarSeries))) {
 //        if (strategyCondition.pairOnMonitoring(event.getSymbol(), Optional.ofNullable(marketBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new))) {
@@ -353,12 +379,16 @@ public class VolumeNimble implements TradingStrategy {
             return false;
         }
 
-        BaseBarSeries series = marketBarSeriesMap.getOrDefault(event.getSymbol(), emptyBarSeries);
-//        BaseBarSeries series = Optional.ofNullable(marketBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new);
-        if (series.getBarData().isEmpty()) {
+//        BaseBarSeries series = marketBarSeriesMap.getOrDefault(event.getSymbol(), emptyBarSeries);
+////        BaseBarSeries series = Optional.ofNullable(marketBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new);
+//        if (series.getBarData().isEmpty()) {
+//            return false;
+//        }
+//        var endBarSeriesIndex = series.getEndIndex();
+        CandleSeries series = candleSeriesMap.get(event.getSymbol());
+        if (series.getSeriesSize() < 1) {
             return false;
         }
-        var endBarSeriesIndex = series.getEndIndex();
 
 //        SMAIndicator sma200 = new SMAIndicator(new ClosePriceIndicator(series), 200);
 //        EMAIndicator ema7 = new EMAIndicator(new ClosePriceIndicator(series), 7);
@@ -370,7 +400,7 @@ public class VolumeNimble implements TradingStrategy {
 //        var ema25Value = ema25.getValue(endBarSeriesIndex);
 //        var rsi14Value = rsi14.getValue(endBarSeriesIndex);
 
-        if (percentageDifference(parsedFloat(event.getVolume()), parsedFloat(event.getTakerBuyBaseAssetVolume())) > 60
+        if (percentageDifference(parsedFloat(series.getFirst().getVolume()), parsedFloat(series.getFirst().getTakerBuyBaseAssetVolume())) < 25
 
                 //ema25.getValue(series.getEndIndex() - 1).isGreaterThanOrEqual(sma200.getValue(endBarSeriesIndex)) &&
 //                ema7Value.isGreaterThan(ema25Value) &&
@@ -534,8 +564,8 @@ public class VolumeNimble implements TradingStrategy {
 
         Optional.ofNullable(strategyCondition.getLongPositions().get(symbol)).ifPresent(pos -> {
             pos.updateLastPrice(currentPrice);
-            pos.stopPrice(currentPrice * 0.98F);
-            pos.takePrice(currentPrice * 1.04F);
+            pos.stopPrice(currentPrice * 0.99F);
+            pos.takePrice(currentPrice * 1.02F);
 
 //            strategyCondition.updateOpenedPositionStopPrice(pos, Optional.ofNullable(marketBarSeriesMap.get(pos.symbol())).orElseGet(BaseBarSeries::new));
         });
@@ -559,12 +589,12 @@ public class VolumeNimble implements TradingStrategy {
 
         final String ticker = event.getSymbol();
 
-        BaseBarSeries series = openedPositionsBarSeriesMap.getOrDefault(event.getSymbol(), emptyBarSeries);
-//        BaseBarSeries series = Optional.ofNullable(openedPositionsBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new);
-        if (series.getBarData().isEmpty()) {
-            log.warn("Opened positions BaseBarSeries of {} is empty, cannot define signal to close opened position.", ticker);
-            return false;
-        }
+//        BaseBarSeries series = openedPositionsBarSeriesMap.getOrDefault(event.getSymbol(), emptyBarSeries);
+////        BaseBarSeries series = Optional.ofNullable(openedPositionsBarSeriesMap.get(event.getSymbol())).orElseGet(BaseBarSeries::new);
+//        if (series.getBarData().isEmpty()) {
+//            log.warn("Opened positions BaseBarSeries of {} is empty, cannot define signal to close opened position.", ticker);
+//            return false;
+//        }
 //        var endBarSeriesIndex = series.getEndIndex();
 //        EMAIndicator ema7 = new EMAIndicator(new ClosePriceIndicator(series), 7);
 //        EMAIndicator ema25 = new EMAIndicator(new HighPriceIndicator(series), 25);
@@ -699,8 +729,8 @@ public class VolumeNimble implements TradingStrategy {
         unSubscribeFromUserUpdateEvents();
         try {
             closeOpenedWebSocketStreams();
-            backupOpenedPositions();
-            backupSellRecords();
+//            backupOpenedPositions();
+//            backupSellRecords();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }

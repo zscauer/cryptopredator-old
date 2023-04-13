@@ -36,9 +36,13 @@ public class CacheService {
 
     @Scheduled(fixedDelayString = "${monitoring.updateBtcTrend.fixedDelay}", initialDelayString = "${monitoring.updateBtcTrend.initialDelay}")
     public void stateKeeper_updateBTCTrend() {
-        Optional.ofNullable(restClient.getCandlestickBars(btcTrend.getSymbol(), btcTrend.getInterval(), 2))
-                .ifPresentOrElse(btcTrend::setLastCandles,
-                        () -> log.warn("BTC trend wasn't updated, because market info returned no Candlesticks."));
+        try {
+            Optional.ofNullable(restClient.getCandlestickBars(btcTrend.getSymbol(), btcTrend.getInterval(), 2))
+                    .ifPresentOrElse(btcTrend::setLastCandles,
+                            () -> log.warn("BTC trend wasn't updated, because market info returned no Candlesticks."));
+        } catch (Exception e) {
+            log.error(String.format("Exception in stateKeeper_updateBTCTrend(): %s", e.getMessage()), e);
+        }
 //            restClient.getCandlestickBars(btcTrend.getSymbol(), btcTrend.getInterval(), 2).stream()
 //                    .findAny()
 //                    .ifPresentOrElse(btcTrend::setLastCandle,

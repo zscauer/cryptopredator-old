@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.ta4j.core.BarSeries;
+import ru.tyumentsev.cryptopredator.commons.cache.CandleSeries;
 import ru.tyumentsev.cryptopredator.commons.domain.BTCTrend;
 import ru.tyumentsev.cryptopredator.commons.domain.MonitoredPosition;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
@@ -57,6 +58,11 @@ public class VolumeNimbleController {
         return volumeNimbleStrategyCondition.getMonitoredPositions().values().stream()
                 .sorted(Comparator.comparingInt(MonitoredPosition::getWeight).reversed().thenComparing(MonitoredPosition::getBeginMonitoringTime))
                 .toList();
+    }
+
+    @GetMapping("/candleSeries/{symbol}")
+    public CandleSeries getCandleSeries(@PathVariable String symbol) {
+        return volumeNimble.getCandleSeriesMap().get(symbol);
     }
 
     @GetMapping("/placedOrders")
