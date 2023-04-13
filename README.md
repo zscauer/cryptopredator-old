@@ -59,7 +59,7 @@ When all docker images are built - it's ready to launch:
 ### Native
 Some services are ready to run as native image. To build and run native image (`statekeeper` for example):
 
-First of all, need to it launch [with special agent](https://www.graalvm.org/22.0/reference-manual/native-image/Agent/), which will define proxy usage in application and collect information about it.
+First of all, need to launch it [with special agent](https://www.graalvm.org/22.0/reference-manual/native-image/Agent/), which will define proxy usage in application and collect information about it.
 
 ```dockerfile
 # Dockerfile

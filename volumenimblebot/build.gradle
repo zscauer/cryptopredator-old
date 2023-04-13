@@ -1,19 +1,19 @@
 plugins {
 	id 'java-library'
 	id 'maven-publish'
-	id 'org.springframework.boot' version '3.0.3'
+	id 'org.springframework.boot' version '3.0.5'
 	id 'io.spring.dependency-management' version '1.1.0'
 	id 'io.freefair.lombok' version '6.6.1'
 }
 
-def artifactVersion = '0.4'
-def springBootVersion = '3.0.3'
+def artifactVersion = '0.1'
+def springBootVersion = '3.0.5'
 def prometheusVersion = '0.16.0'
 
 group = 'ru.tyumentsev.cryptopredator'
 version = artifactVersion
 sourceCompatibility = '17'
-description = 'indicatorvirginbot'
+description = 'volumenimblebot'
 
 configurations {
 	compileOnly {
@@ -47,20 +47,16 @@ dependencies {
 
 jar {
 	project.version = ''
-	setArchivesBaseName('indicatorvirginbot')
+	setArchivesBaseName('volumenimblebot')
 	setProperty('version', artifactVersion)
 //    setProperty('classifier', '') // build jar without "-plain" suffix
 }
-
-//tasks.withType(JavaCompile) {
-//	options.encoding = 'UTF-8'
-//}
 
 publishing {
 	publications {
 		maven(MavenPublication) {
 			groupId = 'ru.tyumentsev.cryptopredator'
-			artifactId = 'indicatorvirginbot'
+			artifactId = 'volumenimblebot'
 			version = artifactVersion
 
 			from components.java
@@ -70,6 +66,7 @@ publishing {
 		mavenLocal()
 	}
 }
+
 //tasks.named('test') {
 //	useJUnitPlatform()
 //}

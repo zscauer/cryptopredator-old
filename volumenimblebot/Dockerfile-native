@@ -1,0 +1,5 @@
+FROM ubuntu:kinetic
+
+ADD ./build/native/nativeCompile/volumenimblebot .
+
+ENTRYPOINT ["/bin/sh", "-c", "./volumenimblebot"]

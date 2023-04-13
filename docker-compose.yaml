@@ -56,6 +56,24 @@ services:
       - ./metrics/logs/bigasscandlesbot:/tmp/logs
     mem_limit: 512m
 
+  volumenimblebot:
+    image: volumenimblebot
+    container_name: volumenimblebot
+    depends_on:
+      - statekeeper
+    env_file:
+      - .env
+      - volumenimblebot/.env
+    ports:
+      - 105:8080
+      - 5105:5005 # debug agentlib
+      - 9105:9105 # profiling jmx
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./metrics/logs/volumenimblebot:/tmp/logs
+    mem_limit: 512m
+
   statekeeper:
     image: statekeeper
     container_name: statekeeper
