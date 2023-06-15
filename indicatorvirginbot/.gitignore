@@ -1,5 +1,4 @@
 .java-version
-src/main/resources/META-INF/native-image
 
 ### Gradle ###
 .gradle

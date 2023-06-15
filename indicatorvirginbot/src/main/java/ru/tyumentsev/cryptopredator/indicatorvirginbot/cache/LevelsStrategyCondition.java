@@ -12,6 +12,7 @@ import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
 import ru.tyumentsev.cryptopredator.commons.domain.MonitoredPosition;
+import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
 
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -37,31 +38,32 @@ public class LevelsStrategyCondition extends StrategyCondition {
     public boolean thisSignalWorkedOutBefore(final String pair) {
         AtomicBoolean ignoreSignal = new AtomicBoolean(false);
 
-        Optional.ofNullable(sellJournal.get(pair)).ifPresent(sellRecord -> {
+        if (sellJournal.containsKey(pair)) {
+            SellRecord sellRecord = sellJournal.get(pair);
             if (sellRecord.sellTime().isAfter(LocalDateTime.now().minusHours(workedOutSignalsIgnoringPeriod))) {
                 ignoreSignal.set(true);
             } else {
                 log.debug("Period of signal ignoring for {} expired, remove pair from sell journal.", pair);
                 sellJournal.remove(pair);
             }
-        });
+        }
 
         return ignoreSignal.get();
     }
 
     public void addPairToMonitoring(final String symbol, final float price) {
-        Optional.ofNullable(monitoredPositions.get(symbol)).ifPresentOrElse(monitoredPosition -> {},
-                () -> monitoredPositions.put(symbol, new MonitoredPosition(symbol, price, ZonedDateTime.now())));
+        monitoredPositions.putIfAbsent(symbol, new MonitoredPosition(symbol, price, ZonedDateTime.now()));
     }
 
     public boolean pairOnMonitoring(final String symbol, final BaseBarSeries series) {
-        Optional.ofNullable(monitoredPositions.get(symbol)).ifPresent(monitoredPosition -> {
-            if ((monitoredPosition.getBeginMonitoringTime().isBefore(ZonedDateTime.now().minusMinutes(monitoringExpirationTime))) ||
+        if (monitoredPositions.containsKey(symbol)) {
+            MonitoredPosition monitoredPosition = monitoredPositions.get(symbol);
+            if (monitoredPosition.getBeginMonitoringTime().isBefore(ZonedDateTime.now().minusHours(monitoringExpirationTime)) ||
                     monitoredPairPriceTurnedBack(series)) {
                 monitoredPositions.remove(symbol);
             }
-        });
-        return Optional.ofNullable(monitoredPositions.get(symbol)).isPresent();
+        }
+        return monitoredPositions.containsKey(symbol);
     }
 
     private boolean monitoredPairPriceTurnedBack(final BaseBarSeries series) {

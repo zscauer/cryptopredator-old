@@ -67,6 +67,8 @@ applicationconfig:
   apiKey: ${BINANCE_API_KEY}
   secret: ${BINANCE_SECRET_KEY}
   stateKeeperURL: http://${STATEKEEPER_HOST}:${STATEKEEPER_PORT}
+  security:
+    adminPassword: ${CRYPTOPREDATOR_ADMIN_PWD}
 
 strategy:
   # ------------------ global

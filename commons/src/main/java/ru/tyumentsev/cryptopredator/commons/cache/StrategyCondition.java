@@ -11,10 +11,8 @@ import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Deque;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
@@ -30,13 +28,14 @@ public abstract class StrategyCondition {
 
     public void addOpenedPosition(String pair, float price, float qty, float priceDecreaseFactor,
                                   boolean rocketCandidate, String strategy) {
-        Optional.ofNullable(longPositions.get(pair)).ifPresentOrElse(pos -> {
-            var newQty = pos.qty() + qty;
-            pos.avgPrice((pos.avgPrice() * pos.qty() + price * qty) / newQty)
+        if (longPositions.containsKey(pair)) {
+            OpenedPosition position = longPositions.get(pair);
+            var newQty = position.qty() + qty;
+            position.avgPrice((position.avgPrice() * position.qty() + price * qty) / newQty)
                     .qty(newQty);
-        }, () -> {
-            var pos = new OpenedPosition();
-            pos.symbol(pair)
+        } else {
+            var position = new OpenedPosition();
+            position.symbol(pair)
                     .maxPrice(price)
                     .avgPrice(price)
                     .qty(qty)
@@ -44,9 +43,9 @@ public abstract class StrategyCondition {
                     .rocketCandidate(rocketCandidate)
                     .strategy(strategy)
                     .lastDealTime(LocalDateTime.now(ZoneId.systemDefault()));
-            log.debug("{} not found in opened long positions, adding new one - '{}'.", pair, pos);
-            longPositions.put(pair, pos);
-        });
+            log.debug("{} not found in opened long positions, adding new one - '{}'.", pair, position);
+            longPositions.put(pair, position);
+        }
         if (rocketCandidate) {
             log.info("{} added to opened positions as rocket candidate.", pair);
         }
@@ -63,18 +62,18 @@ public abstract class StrategyCondition {
 //        });
 //    }
 
-    public OpenedPosition removeOpenedPosition(String pair) {
+    public OpenedPosition removeOpenedPosition(final String pair) {
         return longPositions.remove(pair);
     }
 
 
-    public void addSellRecordToJournal(String pair, String strategy) {
+    public void addSellRecordToJournal(final String pair, final String strategy) {
         sellJournal.put(pair, new SellRecord(pair, LocalDateTime.now(), strategy));
     }
 
     protected abstract boolean thisSignalWorkedOutBefore(final String pair);
 
-    public void removeCandlestickEventsCacheForPair(String ticker, Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents) {
+    public void removeCandlestickEventsCacheForPair(final String ticker, Map<String, Deque<CandlestickEvent>> cachedCandlestickEvents) {
         cachedCandlestickEvents.get(ticker).clear();
     }
 }

@@ -11,7 +11,6 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.Deque;
 import java.util.LinkedList;
-import java.util.Optional;
 
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -31,12 +30,11 @@ public class CandleSeries {
     Deque<Candle> candlestickSeries = new LinkedList<>();
 
     public void addCandleToSeries(Candle candle) {
-        Optional.ofNullable(candlestickSeries.peekLast()).ifPresentOrElse(lastCandle -> {
-            if (lastCandle.getOpenTime().equals(candle.getOpenTime())) { // refreshed candle event.
-                candlestickSeries.remove(lastCandle); // remove previous version of this event.
-            }
-            candlestickSeries.addLast(candle);
-        }, () -> candlestickSeries.addLast(candle));
+        Candle lastCandle = candlestickSeries.peekLast();
+        if (lastCandle != null && lastCandle.getOpenTime().equals(candle.getOpenTime())) {
+            candlestickSeries.remove(lastCandle); // remove previous version of this event.
+        }
+        candlestickSeries.addLast(candle);
 
         if (candlestickSeries.size() > seriesSize) {
             candlestickSeries.removeFirst();

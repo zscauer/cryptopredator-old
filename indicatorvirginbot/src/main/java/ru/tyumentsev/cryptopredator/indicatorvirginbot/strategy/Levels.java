@@ -10,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,6 +26,7 @@ import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.num.DoubleNum;
 import org.ta4j.core.num.Num;
 import ru.tyumentsev.cryptopredator.commons.TradingStrategy;
+import ru.tyumentsev.cryptopredator.commons.backtesting.EmulatorService;
 import ru.tyumentsev.cryptopredator.commons.domain.BTCTrend;
 import ru.tyumentsev.cryptopredator.commons.domain.OpenedPosition;
 import ru.tyumentsev.cryptopredator.commons.mapping.CandlestickToBaseBarMapper;
@@ -33,6 +35,7 @@ import ru.tyumentsev.cryptopredator.commons.service.DataService;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 import ru.tyumentsev.cryptopredator.commons.service.SpotTrading;
 import ru.tyumentsev.cryptopredator.indicatorvirginbot.cache.LevelsStrategyCondition;
+import ru.tyumentsev.cryptopredator.indicatorvirginbot.configuration.LevelsConfiguration;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -57,66 +60,40 @@ import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PROTECTED)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class Levels implements TradingStrategy {
 
-    final MarketInfo marketInfo;
-    final LevelsStrategyCondition levelsStrategyCondition;
-    final SpotTrading spotTrading;
-    final DataService dataService;
-    final BotStateService botStateService;
+    LevelsConfiguration configuration;
+    LevelsStrategyCondition levelsStrategyCondition;
+    MarketInfo marketInfo;
+    SpotTrading spotTrading;
+    DataService dataService;
+    BotStateService botStateService;
+    @NonFinal
+    @Getter
+    EmulatorService emulatorService;
 
-    final Lock lock = new ReentrantLock();
-    final CandlestickInterval marketCandlestickInterval = CandlestickInterval.HOURLY;
-    final CandlestickInterval openedPositionsCandlestickInterval = CandlestickInterval.HOURLY;
-    final int baseBarSeriesLimit = 150;
+    Lock lock = new ReentrantLock();
+    CandlestickInterval marketCandlestickInterval = CandlestickInterval.HOURLY;
+    CandlestickInterval openedPositionsCandlestickInterval = CandlestickInterval.HOURLY;
+    int baseBarSeriesLimit = 150;
     @Getter
-    final Map<String, Closeable> marketCandleStickEventsStreams = new ConcurrentHashMap<>();
+    Map<String, Closeable> marketCandleStickEventsStreams = new ConcurrentHashMap<>();
     @Getter
-    final Map<String, Closeable> openedPositionsCandleStickEventsStreams = new ConcurrentHashMap<>();
+    Map<String, Closeable> openedPositionsCandleStickEventsStreams = new ConcurrentHashMap<>();
     @Getter
-    final Map<String, BaseBarSeries> marketBarSeriesMap = new ConcurrentHashMap<>();
+    Map<String, BaseBarSeries> marketBarSeriesMap = new ConcurrentHashMap<>();
     @Getter
-    final Map<String, BaseBarSeries> openedPositionsBarSeriesMap = new ConcurrentHashMap<>();
+    Map<String, BaseBarSeries> openedPositionsBarSeriesMap = new ConcurrentHashMap<>();
 
-    final BaseBarSeriesBuilder barSeriesBuilder = new BaseBarSeriesBuilder();
+    BaseBarSeriesBuilder barSeriesBuilder = new BaseBarSeriesBuilder();
     @Getter
-    final BTCTrend btcTrend = new BTCTrend(CandlestickInterval.DAILY);
-    final static String STRATEGY_NAME = "levels";
-    final static Integer STRATEGY_ID = 1022;
-    final static String USER_DATA_UPDATE_ENDPOINT = String.format("http://indicatorvirginbot:8080/%s/userDataUpdateEvent", STRATEGY_NAME);
-
-    final Map<String, AtomicBoolean> emulatedPositions = new ConcurrentHashMap<>();
-
-    @Value("${applicationconfig.testLaunch}")
-    boolean testLaunch;
-    @Value("${strategy.levels.enabled}")
-    boolean levelsEnabled;
-    @Value("${strategy.levels.followBtcTrend}")
-    boolean followBtcTrend;
-    @Value("${strategy.levels.ordersQtyLimit}")
-    int ordersQtyLimit;
-    @Value("${strategy.levels.averagingEnabled}")
-    boolean averagingEnabled;
-    @Value("${strategy.global.tradingAsset}")
-    String tradingAsset;
-    @Value("${strategy.global.minimalAssetBalance}")
-    int minimalAssetBalance;
-    @Value("${strategy.global.baseOrderVolume}")
-    int baseOrderVolume;
-    @Value("${strategy.levels.priceDecreaseFactor}")
-    float priceDecreaseFactor;
-    @Value("${strategy.levels.pairTakeProfitFactor}")
-    float pairTakeProfitFactor;
-    @Value("${strategy.levels.takeProfitPriceDecreaseFactor}")
-    float takeProfitPriceDecreaseFactor;
-    @Value("${strategy.levels.averagingTrigger}")
-    float averagingTrigger;
+    BTCTrend btcTrend = new BTCTrend(CandlestickInterval.DAILY);
 
     @Scheduled(fixedDelayString = "${strategy.levels.updateBtcTrend.fixedDelay}", initialDelayString = "${strategy.levels.updateBtcTrend.initialDelay}")
     public void indicatorVirgin_updateBTCTrend() {
-        if (levelsEnabled && followBtcTrend) {
+        if (configuration.levelsEnabled() && configuration.followBtcTrend()) {
             Optional.ofNullable(dataService.getBTCTrend()).map(BTCTrend::getLastCandles)
                     .ifPresentOrElse(btcTrend::setLastCandles,
                             () -> log.warn("BTC trend wasn't updated, because state keeper returned no Candlestick."));
@@ -125,32 +102,43 @@ public class Levels implements TradingStrategy {
 
     @Scheduled(fixedDelayString = "${strategy.levels.startCandlstickEventsCacheUpdating.fixedDelay}", initialDelayString = "${strategy.levels.startCandlstickEventsCacheUpdating.initialDelay}")
     public void indicatorVirgin_startCandlstickEventsCacheUpdating() {
-        if (levelsEnabled && !testLaunch) {
+        if (configuration.levelsEnabled() && !configuration.testLaunch()) {
             startCandlstickEventsCacheUpdating();
         }
     }
 
     @Override
     public String getName() {
-        return STRATEGY_NAME;
+        return LevelsConfiguration.STRATEGY_NAME;
     }
 
     @Override
     public Integer getId() {
-        return STRATEGY_ID;
+        return LevelsConfiguration.STRATEGY_ID;
     }
 
     @Override
     public boolean isEnabled() {
-        return levelsEnabled;
+        return configuration.levelsEnabled();
     }
 
     @Override
     public void prepareData() {
-        restoreSellJournalFromCache();
-        prepareOpenedLongPositions();
-        defineAvailableOrdersLimit();
-        subscribeToUserUpdateEvents();
+        if (configuration.testLaunch()) {
+            injectEmulatorService();
+        } else {
+            restoreSellJournalFromCache();
+            prepareOpenedLongPositions();
+            defineAvailableOrdersLimit();
+            subscribeToUserUpdateEvents();
+        }
+    }
+
+    void injectEmulatorService() {
+        levelsStrategyCondition.getLongPositions().clear();
+        levelsStrategyCondition.getShortPositions().clear();
+        emulatorService = new EmulatorService(this, levelsStrategyCondition);
+        log.debug("Emulator service injected into '{}'.", getName());
     }
 
     private void restoreSellJournalFromCache() {
@@ -162,7 +150,7 @@ public class Levels implements TradingStrategy {
 
     private void prepareOpenedLongPositions() {
         List<String> accountPositions = spotTrading.recieveOpenedLongPositionsFromMarket().stream()
-                .map(assetBalance -> assetBalance.getAsset() + tradingAsset).toList();
+                .map(assetBalance -> assetBalance.getAsset() + configuration.tradingAsset()).toList();
 
         List<OpenedPosition> cachedOpenedPositions = dataService.findAllOpenedPositions(this);
         log.debug("Found next cached opened positions: {}", cachedOpenedPositions);
@@ -178,25 +166,25 @@ public class Levels implements TradingStrategy {
     }
 
     private void defineAvailableOrdersLimit() {
-        int availableOrdersLimit = ordersQtyLimit - levelsStrategyCondition.getLongPositions().values().stream()
+        int availableOrdersLimit = configuration.ordersQtyLimit() - levelsStrategyCondition.getLongPositions().values().stream()
                 .map(openedPosition -> Math.ceil(openedPosition.avgPrice() * openedPosition.qty()))
                 .reduce(0D, Double::sum)
-                .intValue() / baseOrderVolume;
+                .intValue() / configuration.baseOrderVolume();
 
-        botStateService.setAvailableOrdersLimit(getId(), availableOrdersLimit, baseOrderVolume);
+        botStateService.setAvailableOrdersLimit(getId(), availableOrdersLimit, configuration.baseOrderVolume());
     }
 
     private void subscribeToUserUpdateEvents() {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("strategyId", getId().toString());
-        parameters.put("botAddress", USER_DATA_UPDATE_ENDPOINT);
+        parameters.put("botAddress", LevelsConfiguration.USER_DATA_UPDATE_ENDPOINT);
         botStateService.addActiveStrategy(parameters);
     }
 
     @Override
     public void handleBuying(final OrderTradeUpdateEvent buyEvent) {
         log.debug("Get buy event of {} with strategy id {}", buyEvent.getSymbol(), buyEvent.getStrategyId());
-        if (levelsEnabled && getId().equals(buyEvent.getStrategyId())) {
+        if (configuration.levelsEnabled() && getId().equals(buyEvent.getStrategyId())) {
             final String symbol = buyEvent.getSymbol();
 
             // if price == 0 most likely it was market order, use last market price.
@@ -207,7 +195,7 @@ public class Levels implements TradingStrategy {
             log.info("BUY {} {} at {}. Available orders limit is {}.",
                     buyEvent.getAccumulatedQuantity(), symbol, dealPrice, botStateService.getAvailableOrdersCount(getId()));
             levelsStrategyCondition.addOpenedPosition(symbol, dealPrice, parsedFloat(buyEvent.getAccumulatedQuantity()),
-                    priceDecreaseFactor, false, getName()
+                    configuration.priceDecreaseFactor(), false, getName()
             );
             levelsStrategyCondition.removePositionFromMonitoring(symbol);
 
@@ -228,7 +216,7 @@ public class Levels implements TradingStrategy {
         final String symbol = sellEvent.getSymbol();
         log.debug("Get sell event of {} with strategy id {}.", symbol, sellEvent.getStrategyId());
 
-        if (levelsEnabled && (getId().equals(Optional.ofNullable(sellEvent.getStrategyId()).orElse(getId())))) {
+        if (configuration.levelsEnabled() && (getId().equals(Optional.ofNullable(sellEvent.getStrategyId()).orElse(getId())))) {
 
             // if price == 0 most likely it was market order, use last market price.
             float dealPrice = parsedFloat(sellEvent.getPrice()) == 0
@@ -261,7 +249,7 @@ public class Levels implements TradingStrategy {
         AtomicInteger marketMonitoringThreadsCounter = new AtomicInteger();
         AtomicInteger openedPositionsMonitoringThreadsCounter = new AtomicInteger();
 
-        Deque<String> marketTickers = marketInfo.getCheapPairs().get(tradingAsset).stream().sorted().collect(Collectors.toCollection(LinkedList::new));
+        Deque<String> marketTickers = marketInfo.getCheapPairs().get(configuration.tradingAsset()).stream().sorted().collect(Collectors.toCollection(LinkedList::new));
 
         var streamsCount = marketTickers.size() / 2 + marketTickers.size() % 2;
         List<List<String>> combinedPairsList = new ArrayList<>();
@@ -309,8 +297,9 @@ public class Levels implements TradingStrategy {
         return event -> {
             addEventToBaseBarSeries(event, openedPositionsBarSeriesMap, openedPositionsCandlestickInterval);
 
-            Optional.ofNullable(levelsStrategyCondition.getLongPositions().get(event.getSymbol())).ifPresent(
-                    openedPosition -> analizeOpenedPosition(event, openedPosition));
+            if (levelsStrategyCondition.getLongPositions().containsKey(event.getSymbol())) {
+                analizeOpenedPosition(event, levelsStrategyCondition.getLongPositions().get(event.getSymbol()));
+            }
         };
     }
 
@@ -408,7 +397,7 @@ public class Levels implements TradingStrategy {
                     //previousBar.isBullish() &&
                     previousBar.getClosePrice().isGreaterThan(highestBarHighPrice)
             ) {
-                buyFast(event.getSymbol(), parsedFloat(event.getClose()), tradingAsset, false);
+                buyFast(event.getSymbol(), parsedFloat(event.getClose()), configuration.tradingAsset(), false);
             }
         });
     }
@@ -437,37 +426,26 @@ public class Levels implements TradingStrategy {
         openedPosition.updateLastPrice(currentPrice);
 //        levelsStrategyCondition.updateOpenedPositionLastPrice(symbol, currentPrice, levelsStrategyCondition.getLongPositions());
 
-        if (currentPrice > openedPosition.avgPrice() * pairTakeProfitFactor && !openedPosition.priceDecreaseFactor().equals(takeProfitPriceDecreaseFactor)) {
-            openedPosition.priceDecreaseFactor(takeProfitPriceDecreaseFactor);
+        if (currentPrice > openedPosition.avgPrice() * configuration.pairTakeProfitFactor() && !openedPosition.priceDecreaseFactor().equals(configuration.takeProfitPriceDecreaseFactor())) {
+            openedPosition.priceDecreaseFactor(configuration.takeProfitPriceDecreaseFactor());
         }
 
-        if (averagingEnabled && currentPrice > openedPosition.avgPrice() * averagingTrigger) {
+        if (configuration.averagingEnabled() && currentPrice > openedPosition.avgPrice() * configuration.averagingTrigger()) {
             openedPosition.rocketCandidate(true);
-            buyFast(symbol, currentPrice, tradingAsset, true);
+            buyFast(symbol, currentPrice, configuration.tradingAsset(), true);
         }
 
         if (signalToCloseLongPosition(event, openedPosition)) {
-            sellFast(event.getSymbol(), openedPosition.qty(), tradingAsset);
+            emulatorService.emulateSell(event.getSymbol(), currentPrice);
+//            sellFast(event.getSymbol(), openedPosition.qty(), configuration.tradingAsset());
         }
     }
 
     private void buyFast(final String symbol, final float price, String quoteAsset, boolean itsAveraging) {
         if (!(marketInfo.pairOrderIsProcessing(symbol, getId()) || levelsStrategyCondition.thisSignalWorkedOutBefore(symbol))) {
-//            emulateBuy(symbol, price);
-            spotTrading.placeBuyOrderFast(symbol, getId(), price, quoteAsset, minimalAssetBalance, baseOrderVolume);
+            emulatorService.emulateBuy(symbol, price);
+//            spotTrading.placeBuyOrderFast(symbol, getId(), price, quoteAsset, configuration.minimalAssetBalance(), configuration.baseOrderVolume());
         }
-    }
-
-    private void emulateBuy(String ticker, float currentPrice) {
-        Optional.ofNullable(emulatedPositions.get(ticker)).ifPresentOrElse(inPosition -> {
-            if (!inPosition.get()) {
-                inPosition.set(true);
-                log.info("BUY {} at {}.", ticker, currentPrice);
-            }
-        }, () -> {
-            emulatedPositions.put(ticker, new AtomicBoolean(true));
-            log.info("BUY {} at {}.", ticker, currentPrice);
-        });
     }
 
     private boolean signalToCloseLongPosition(final CandlestickEvent event, final OpenedPosition openedPosition) {
@@ -549,15 +527,6 @@ public class Levels implements TradingStrategy {
         }
     }
 
-    private void emulateSell(String symbol) {
-        Optional.ofNullable(emulatedPositions.get(symbol)).ifPresent(inPosition -> {
-            if (inPosition.get()) {
-                inPosition.set(false);
-                log.info("SELL {}.", symbol);
-            }
-        });
-    }
-
     private void closeOpenedWebSocketStreams() {
         Stream.concat(marketCandleStickEventsStreams.entrySet().stream(), openedPositionsCandleStickEventsStreams.entrySet().stream())
                 .forEach(entry -> {
@@ -590,7 +559,7 @@ public class Levels implements TradingStrategy {
 
     @PreDestroy
     public void destroy() {
-        if (!levelsEnabled) {
+        if (!configuration.levelsEnabled()) {
             return;
         }
 

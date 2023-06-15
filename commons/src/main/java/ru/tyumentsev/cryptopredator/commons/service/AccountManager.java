@@ -4,7 +4,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 import com.binance.api.client.BinanceApiCallback;
 import com.binance.api.client.BinanceApiRestClient;

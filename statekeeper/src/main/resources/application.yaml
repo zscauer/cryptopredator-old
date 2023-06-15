@@ -84,6 +84,8 @@ applicationconfig:
   useTestnetStreaming: ${BINANCE_USE_TESTNET_STREAMING}
   apiKey: ${BINANCE_API_KEY}
   secret: ${BINANCE_SECRET_KEY}
+  security:
+    adminPassword: ${CRYPTOPREDATOR_ADMIN_PWD}
 
 monitoring:
   updateBtcTrend:

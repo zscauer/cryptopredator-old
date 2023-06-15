@@ -20,60 +20,6 @@ services:
       - ./metrics/logs/indicatorvirginbot:/tmp/logs
     mem_limit: 512m
 
-  macsawbot:
-    image: macsawbot
-    container_name: macsawbot
-    depends_on:
-      - statekeeper
-    env_file:
-      - .env
-      - macsawbot/.env
-    ports:
-      - 103:8080
-      - 5103:5005 # debug agentlib
-      - 9103:9103 # profiling jmx
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - ./metrics/logs/macsawbot:/tmp/logs
-    mem_limit: 512m
-
-  bigasscandlesbot:
-    image: bigasscandlesbot
-    container_name: bigasscandlesbot
-    depends_on:
-      - statekeeper
-    env_file:
-      - .env
-      - bigasscandlesbot/.env
-    ports:
-      - 104:8080
-      - 5104:5005 # debug agentlib
-      - 9104:9104 # profiling jmx
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - ./metrics/logs/bigasscandlesbot:/tmp/logs
-    mem_limit: 512m
-
-  volumenimblebot:
-    image: volumenimblebot
-    container_name: volumenimblebot
-    depends_on:
-      - statekeeper
-    env_file:
-      - .env
-      - volumenimblebot/.env
-    ports:
-      - 105:8080
-      - 5105:5005 # debug agentlib
-      - 9105:9105 # profiling jmx
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - ./metrics/logs/volumenimblebot:/tmp/logs
-    mem_limit: 512m
-
   statekeeper:
     image: statekeeper
     container_name: statekeeper
@@ -197,24 +143,3 @@ services:
       - ./metrics/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
     mem_limit: 256m
     mem_reservation: 128m
-
-
-# --- archived
-
-#  dailyvolumesbot:
-#    image: dailyvolumesbot
-#    container_name: dailyvolumesbot
-#    depends_on:
-#      - statekeeper
-#    env_file:
-#      - .env
-#      - dailyvolumesbot/.env
-#    ports:
-#      - 101:8080
-#      - 5101:5005 # debug agentlib
-#      - 9101:9101 # profiling jmx
-#    volumes:
-#      - /etc/timezone:/etc/timezone:ro
-#      - /etc/localtime:/etc/localtime:ro
-#      - ./metrics/logs/dailyvolumesbot:/tmp/logs
-#    mem_limit: 512m

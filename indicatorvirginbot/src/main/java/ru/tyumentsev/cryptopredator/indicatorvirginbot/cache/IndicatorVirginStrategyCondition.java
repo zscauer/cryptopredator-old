@@ -14,6 +14,7 @@ import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import ru.tyumentsev.cryptopredator.commons.cache.StrategyCondition;
 import ru.tyumentsev.cryptopredator.commons.domain.MonitoredPosition;
+import ru.tyumentsev.cryptopredator.commons.domain.SellRecord;
 import ru.tyumentsev.cryptopredator.commons.service.MarketInfo;
 
 import java.time.Instant;
@@ -46,25 +47,26 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
     long monitoringExpirationTime;
 
     public void ping(final String pair) {
-        pingPongs.put(pair, true);
+        pingPongs.put(pair, Boolean.TRUE);
     }
 
     public boolean pong(final String pair) {
-        return pingPongs.remove(pair, true);
+        return pingPongs.remove(pair, Boolean.TRUE);
     }
 
     @Override
     public boolean thisSignalWorkedOutBefore(final String pair) {
         AtomicBoolean ignoreSignal = new AtomicBoolean(false);
 
-        Optional.ofNullable(sellJournal.get(pair)).ifPresent(sellRecord -> {
+        if (sellJournal.containsKey(pair)) {
+            SellRecord sellRecord = sellJournal.get(pair);
             if (sellRecord.sellTime().isAfter(LocalDateTime.now().minusHours(workedOutSignalsIgnoringPeriod))) {
                 ignoreSignal.set(true);
             } else {
                 log.debug("Period of signal ignoring for {} expired, remove pair from sell journal.", pair);
                 sellJournal.remove(pair);
             }
-        });
+        }
 
         return ignoreSignal.get();
     }
@@ -78,12 +80,13 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
     }
 
     public boolean pairOnMonitoring(final String symbol, final BaseBarSeries series) {
-        Optional.ofNullable(monitoredPositions.get(symbol)).ifPresent(monitoredPosition -> {
+        if (monitoredPositions.containsKey(symbol)) {
+            MonitoredPosition monitoredPosition = monitoredPositions.get(symbol);
             if (monitoredPosition.getBeginMonitoringTime().isBefore(ZonedDateTime.now().minusHours(monitoringExpirationTime)) ||
                     monitoredPairPriceTurnedBack(series)) {
                 monitoredPositions.remove(symbol);
             }
-        });
+        }
         return monitoredPositions.containsKey(symbol);
     }
 
@@ -108,22 +111,20 @@ public class IndicatorVirginStrategyCondition extends StrategyCondition {
     }
 
     public boolean pairOnUptrend(String symbol, float currentPrice, CandlestickInterval interval, MarketInfo marketInfo) {
-        Optional.ofNullable(upperTimeframeCandles.get(symbol)).ifPresentOrElse(candles -> {
-            if (candles.size() < 3) {
-                log.info("List of candles in lambda of {} is less then 3 and contains {} elements: {}.", symbol, candles.size(), candles);
-                return;
+        if (upperTimeframeCandles.containsKey(symbol)) {
+            List<Candlestick> candles = upperTimeframeCandles.get(symbol);
+            if (candles.size() > 2) {
+                if (ZonedDateTime.ofInstant(Instant.ofEpochMilli(candles.get(2).getCloseTime()), ZoneId.systemDefault()).isBefore(ZonedDateTime.now(ZoneId.systemDefault()))) {
+                    upperTimeframeCandles.put(symbol, marketInfo.getCandleSticks(symbol, interval, 3));
+                }
             }
-            if (ZonedDateTime.ofInstant(Instant.ofEpochMilli(candles.get(2).getCloseTime()), ZoneId.systemDefault()).isBefore(ZonedDateTime.now(ZoneId.systemDefault()))) {
-                upperTimeframeCandles.put(symbol, marketInfo.getCandleSticks(symbol, interval, 3));
-            }
-        }, () -> {
+        } else {
             upperTimeframeCandles.put(symbol, marketInfo.getCandleSticks(symbol, interval, 3));
-        });
+        }
 
         var candles = upperTimeframeCandles.get(symbol);
 
         if (candles.size() > 2) {
-//            log.info("Prices of {}: currentPrice/get(1)/get(0)/: {}/{}/{}", symbol, currentPrice, candles.get(1).getClose(), candles.get(0).getClose());
             return currentPrice > Float.parseFloat(candles.get(1).getHigh()) && currentPrice > Float.parseFloat(candles.get(0).getHigh());
         } else {
             log.info("List of candles of {} is less then 3 and contains {} elements: {}.", symbol, candles.size(), candles);
